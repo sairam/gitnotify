@@ -3,7 +3,7 @@
 ### Project Name
 * gitnotify
 
-### Simple Process
+### Development Flow
 1. Users login via Github
 1. Users keep "an eye" on a project
 1. Notifies users on
