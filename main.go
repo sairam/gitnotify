@@ -2,76 +2,67 @@ package main
 
 import (
 	"fmt"
-	"html/template"
 	"net/http"
 	"os"
-	"sort"
+	"sync"
 
-	"github.com/gorilla/pat"
-	"github.com/gorilla/sessions"
-	"github.com/markbates/goth"
-	"github.com/markbates/goth/gothic"
-	"github.com/markbates/goth/providers/github"
+	yaml "gopkg.in/yaml.v2"
+
+	"golang.org/x/oauth2"
+
+	githubApp "github.com/google/go-github/github"
 )
 
-func init() {
-	gothic.Store = sessions.NewFilesystemStore(os.TempDir(), []byte("goth-example"))
+var (
+	wg      sync.WaitGroup
+	conf    *config
+	verbose bool
+)
+
+const configFile = "data/github/sairam/settings.yml"
+
+var accessTokenByUser = os.Getenv("GITHUB_USER_TOKEN") // this is temporary for validating responses
+
+func getData() {
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: accessTokenByUser},
+	)
+	tc := oauth2.NewClient(oauth2.NoContext, ts)
+
+	client := githubApp.NewClient(tc)
+
+	// list all repositories for the authenticated user
+	// repos, _, _ := client.Repositories.List("", nil)
+	//
+	// for _, repo := range repos {
+	// 	fmt.Println(*repo.Name, *repo.DefaultBranch, *repo.BranchesURL)
+	// }
+
+	verbose = true
+	conf, err := loadConfig(configFile)
+	out, err := yaml.Marshal(conf)
+	fmt.Printf("%s", out)
+	branchesURL := "https://api.github.com/repos/sairam/daata-portal/branches"
+	fmt.Println(err)
+	fmt.Println(conf)
+
+	// client = githubApp.NewClient(tc)
+	v := new([]*BranchInfo)
+	req, _ := http.NewRequest("GET", branchesURL, nil)
+	client.Do(req, v)
+	fmt.Println(*v)
+	fmt.Println("Done")
+
+	// check data difference with previously saved one
+	// TODO
+	// diff := diffData(v)
+	// sendEmail(diff)
+	// persistChanges(v)
 }
 
 func main() {
-	goth.UseProviders(
-		github.New(os.Getenv("GITHUB_KEY"), os.Getenv("GITHUB_SECRET"), "http://localhost:3000/auth/github/callback"),
-	)
 
-	m := make(map[string]string)
-	m["github"] = "Github"
+	getData()
+	Init()
 
-	var keys []string
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	providerIndex := &ProviderIndex{Providers: keys, ProvidersMap: m}
-
-	p := pat.New()
-	p.Get("/auth/{provider}/callback", func(res http.ResponseWriter, req *http.Request) {
-
-		user, err := gothic.CompleteUserAuth(res, req)
-		if err != nil {
-			fmt.Fprintln(res, err)
-			return
-		}
-		t, _ := template.New("foo").Parse(userTemplate)
-		t.Execute(res, user)
-	})
-
-	p.Get("/auth/{provider}", gothic.BeginAuthHandler)
-	p.Get("/", func(res http.ResponseWriter, req *http.Request) {
-		t, _ := template.New("foo").Parse(indexTemplate)
-		t.Execute(res, providerIndex)
-	})
-	http.ListenAndServe(":3000", p)
 }
-
-type ProviderIndex struct {
-	Providers    []string
-	ProvidersMap map[string]string
-}
-
-var indexTemplate = `{{range $key,$value:=.Providers}}
-    <p><a href="/auth/{{$value}}">Log in with {{index $.ProvidersMap $value}}</a></p>
-{{end}}`
-
-var userTemplate = `
-<p>Name: {{.Name}} [{{.LastName}}, {{.FirstName}}]</p>
-<p>Email: {{.Email}}</p>
-<p>NickName: {{.NickName}}</p>
-<p>Location: {{.Location}}</p>
-<p>AvatarURL: {{.AvatarURL}} <img src="{{.AvatarURL}}"></p>
-<p>Description: {{.Description}}</p>
-<p>UserID: {{.UserID}}</p>
-<p>AccessToken: {{.AccessToken}}</p>
-<p>ExpiresAt: {{.ExpiresAt}}</p>
-<p>RefreshToken: {{.RefreshToken}}</p>
-`
