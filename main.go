@@ -1,68 +1,35 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net/http"
-	"os"
-	"sync"
+	"time"
 
-	yaml "gopkg.in/yaml.v2"
-
-	"golang.org/x/oauth2"
-
-	githubApp "github.com/google/go-github/github"
+	"github.com/gorilla/mux"
 )
 
-var (
-	wg      sync.WaitGroup
-	conf    *config
-	verbose bool
-)
-
-const configFile = "data/github/sairam/settings.yml"
-
-var accessTokenByUser = os.Getenv("GITHUB_USER_TOKEN") // this is temporary for validating responses
-
-func getData() {
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: accessTokenByUser},
-	)
-	tc := oauth2.NewClient(oauth2.NoContext, ts)
-
-	client := githubApp.NewClient(tc)
-
-	// list all repositories for the authenticated user
-	// repos, _, _ := client.Repositories.List("", nil)
-	//
-	// for _, repo := range repos {
-	// 	fmt.Println(*repo.Name, *repo.DefaultBranch, *repo.BranchesURL)
-	// }
-
-	verbose = true
-	conf, err := loadConfig(configFile)
-	out, err := yaml.Marshal(conf)
-	fmt.Printf("%s", out)
-	branchesURL := "https://api.github.com/repos/sairam/daata-portal/branches"
-	fmt.Println(err)
-	fmt.Println(conf)
-
-	// client = githubApp.NewClient(tc)
-	v := new([]*BranchInfo)
-	req, _ := http.NewRequest("GET", branchesURL, nil)
-	client.Do(req, v)
-	fmt.Println(*v)
-	fmt.Println("Done")
-
-	// check data difference with previously saved one
-	// TODO
-	// diff := diffData(v)
-	// sendEmail(diff)
-	// persistChanges(v)
-}
-
+// 1. Make a router to redirect user if not logged into website
+// 2. Redirect to /home
+// 3. Display /home page with content from tmpl/home.html
+// 4. Users once logged in user goes /
+// 5. Display partial to add new repository to track and information via AJAX to auto fill branch names separated with ','
 func main() {
 
-	getData()
-	Init()
+	// Session handler is created?
+	// initSession()
+
+	r := mux.NewRouter()
+	r.HandleFunc("/", settingsHandler)
+	r.HandleFunc("/home", homeHandler)
+	auth := r.PathPrefix("/auth").Subrouter()
+	initAuth(auth)
+
+	srv := &http.Server{
+		Handler:      r,
+		Addr:         "127.0.0.1:3000",
+		WriteTimeout: 60 * time.Second,
+		ReadTimeout:  60 * time.Second,
+	}
+	log.Fatal(srv.ListenAndServe())
 
 }
