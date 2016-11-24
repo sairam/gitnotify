@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io"
 	"io/ioutil"
+	"strings"
 )
 
 var (
@@ -17,6 +18,9 @@ var (
 	}
 )
 
+const PartialTemplatePath = "tmpl/partials/"
+const TemplatePath = "tmpl/"
+
 type SimpleTemplate struct {
 	prefix      string
 	partialsDir string
@@ -26,6 +30,10 @@ type SimpleTemplate struct {
 var templates *SimpleTemplate
 
 func init() {
+	ReloadTemplates()
+}
+
+func ReloadTemplates() {
 	// Templates with functions available to them
 	templates = &SimpleTemplate{
 		"tmpl/",
@@ -33,20 +41,55 @@ func init() {
 		template.New("").Funcs(templateMap),
 	}
 	load()
+	loadPartials()
 }
 
 func load() {
-	name := templates.partialsDir + "header.html"
-	fmt.Println(name)
-	b, err := ioutil.ReadFile(name)
-	_, err = templates.t.New("tmpl/partials/header").Parse(string(b))
+	fis, err := ioutil.ReadDir(templates.prefix)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 
-	// , "tmpl/settings.html"
-	// fmt.Printf("%#v\n", x)
-	// _, err := templates.t.New(name).Parse(tpl)
+	for _, fi := range fis {
+		if fi.IsDir() {
+			continue
+		}
+		name := templates.prefix + fi.Name()
+		tmplName := strings.Replace(fi.Name(), ".html", "", 1)
+
+		b, err := ioutil.ReadFile(name)
+		_, err = templates.t.New(TemplatePath + tmplName).Parse(string(b))
+
+		if err != nil {
+			fmt.Println(err)
+		}
+
+	}
+}
+
+// Duplicated from above. DRY
+func loadPartials() {
+	fis, err := ioutil.ReadDir(templates.partialsDir)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for _, fi := range fis {
+		if fi.IsDir() {
+			continue
+		}
+		name := templates.partialsDir + fi.Name()
+		tmplName := strings.Replace(fi.Name(), ".html", "", 1)
+
+		b, err := ioutil.ReadFile(name)
+		_, err = templates.t.New(PartialTemplatePath + tmplName).Parse(string(b))
+
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
 }
 
 // https://github.com/spf13/hugo/blob/master/tpl/template_funcs.go
@@ -59,24 +102,14 @@ func partial(name string, contextList ...interface{}) template.HTML {
 	} else {
 		context = contextList[0]
 	}
-	// _ = context
-	// var buf []byte
 	b := &bytes.Buffer{}
-	executeTemplate(context, b, templates.partialsDir+name+".html")
+	executeTemplate(context, b, PartialTemplatePath+name)
 	return template.HTML(b.String())
-	// return template.HTML("yello")
 }
 
-func executeTemplate(context interface{}, w io.Writer, name string) {
-	// fmt.Println("fix me recursive issue")
-	err := templates.t.ExecuteTemplate(w, "tmpl/partials/header", context)
+func executeTemplate(context interface{}, w io.Writer, tmplName string) {
+	err := templates.t.ExecuteTemplate(w, tmplName, context)
 	if err != nil {
 		fmt.Println(err)
 	}
-	// err := templ.Execute(w, context)
 }
-
-// init takes in a directory like "tmpl/" to search templates from.
-// you can use "partial" like hugo
-// Walk through all the files
-//

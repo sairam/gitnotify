@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -38,6 +39,7 @@ type ProviderIndex struct {
 
 func init() {
 	gothic.Store = sessions.NewFilesystemStore(os.TempDir(), []byte("goth-example"))
+	gothic.GetProviderName = getProviderName
 }
 
 // load envconfig via https://github.com/kelseyhightower/envconfig
@@ -71,10 +73,22 @@ func initAuth(p *mux.Router) {
 	}).Methods("GET")
 
 	p.HandleFunc("/{provider}", gothic.BeginAuthHandler).Methods("GET")
+
 	p.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
 		t, _ := template.New("foo").Parse(indexTemplate)
 		t.Execute(res, providerIndex)
 	}).Methods("GET")
+}
+
+// See gothic/gothic.go: GetProviderName function
+// Overridden since we use mux
+func getProviderName(req *http.Request) (string, error) {
+	vars := mux.Vars(req)
+	provider := vars["provider"]
+	if provider == "" {
+		return provider, errors.New("you must select a provider")
+	}
+	return provider, nil
 }
 
 var indexTemplate = `{{range $key,$value:=.Providers}}

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -72,28 +71,10 @@ func (c *Setting) save(settingFile string) error {
 	return nil
 }
 
-var tv *template.Template
-
 func settingsHandler(res http.ResponseWriter, req *http.Request) {
-	if tv == nil {
-		var err error
-		tv, err = templates.t.New("test").Parse(string(tempTemplate))
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
+	// reload only in dev environments
+	ReloadTemplates()
+
+	tv := templates.t.Lookup(TemplatePath + "settings")
 	tv.Execute(res, struct{}{})
-
-	// templates
-	// t := template.Must(template.ParseFiles("tmpl/settings.html", "tmpl/partials/header.html"))
-
-	// t.ExecuteTemplate(os.Stdout, "settings", struct{}{})
-
-	// t, err := template.New("settings").ParseFiles("tmpl/settings.html", "tmpl/header.html")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// t.Execute(res, struct{}{})
 }
-
-var tempTemplate, _ = ioutil.ReadFile("tmpl/settings.html")
