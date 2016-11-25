@@ -10,21 +10,35 @@ import (
 var store = sessions.NewFilesystemStore("./sessions", []byte("something-very-secret"))
 var sessionName = "session-name"
 
-// responsible for setting information about the logged in user via github into the session
-func setSession(r *http.Request, w http.ResponseWriter, auth, userName, token string) {
-
+func getSession(w http.ResponseWriter, r *http.Request) *sessions.Session {
 	// Get a session. We're ignoring the error resulted from decoding an
 	// existing session: Get() always returns a session, even if empty.
 	session, err := store.Get(r, sessionName)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return nil
+	}
+	return session
+}
+
+type userInfoSession struct {
+	auth     string
+	userName string
+	token    string
+}
+
+// responsible for setting information about the logged in user via github into the session
+func setSession(w http.ResponseWriter, r *http.Request, userInfo *userInfoSession) {
+
+	session := getSession(w, r)
+	if session == nil {
 		return
 	}
 
 	// Set some session values.
-	session.Values["auth"] = auth
-	session.Values["user"] = userName
-	session.Values["token"] = token
+	session.Values["auth"] = userInfo.auth
+	session.Values["user"] = userInfo.userName
+	session.Values["token"] = userInfo.token
 
 	// Save it before we write to the response/return from the handler.
 	session.Save(r, w)

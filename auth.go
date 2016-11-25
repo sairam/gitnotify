@@ -67,14 +67,25 @@ func initAuth(p *mux.Router) {
 			fmt.Fprintln(res, err)
 			return
 		}
-		// TODO 1. Persist user information and session tokens
 		authType, _ := getProviderName(req)
-		setSession(req, res, authType, user.NickName, user.AccessToken)
-		t, _ := template.New("foo").Parse(userTemplate)
-		t.Execute(res, user)
+		userInfo := &userInfoSession{
+			auth:     authType,
+			userName: user.NickName,
+			token:    user.AccessToken,
+		}
+		setSession(res, req, userInfo)
+		http.Redirect(res, req, "/", 302)
+		// t, _ := template.New("foo").Parse(userTemplate)
+		// t.Execute(res, user)
 	}).Methods("GET")
 
-	p.HandleFunc("/{provider}", gothic.BeginAuthHandler).Methods("GET")
+	p.HandleFunc("/{provider}", func(res http.ResponseWriter, req *http.Request) {
+		if isUserLoggedIn(req) {
+			displayText(res, "User is already logged in")
+		} else {
+			gothic.BeginAuthHandler(res, req)
+		}
+	}).Methods("GET")
 
 	p.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
 		t, _ := template.New("foo").Parse(indexTemplate)

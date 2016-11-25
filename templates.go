@@ -44,6 +44,21 @@ func ReloadTemplates() {
 	loadPartials()
 }
 
+func displayText(res io.Writer, text string) {
+	ReloadTemplates()
+
+	tmpl := `
+  {{ partial "header" . }}
+  <h3>` + text + `</h3>
+  <a href="/logout">Logout</a>
+  {{ partial "footer" . }}`
+
+	t := templates.t.New("foo")
+	t.Parse(tmpl)
+	t.Execute(res, struct{}{})
+
+}
+
 // page path relative to 'tmpl', example "settings"
 func displayPage(res io.Writer, page string, data interface{}) {
 	// reload only in dev environments
