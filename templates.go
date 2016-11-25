@@ -44,6 +44,15 @@ func ReloadTemplates() {
 	loadPartials()
 }
 
+// page path relative to 'tmpl', example "settings"
+func displayPage(res io.Writer, page string, data interface{}) {
+	// reload only in dev environments
+	ReloadTemplates()
+
+	tv := templates.t.Lookup(TemplatePath + page)
+	tv.Execute(res, data)
+}
+
 func load() {
 	fis, err := ioutil.ReadDir(templates.prefix)
 	if err != nil {

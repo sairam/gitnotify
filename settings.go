@@ -71,8 +71,15 @@ func (c *Setting) save(settingFile string) error {
 	return nil
 }
 
-func settingsHandler(res http.ResponseWriter, req *http.Request) {
-	// reload only in dev environments
+// SettingsShowHandler is responsible for displaying the form
+func settingsShowHandler(res http.ResponseWriter, req *http.Request) {
+	displayPage(res, "settings", struct{}{})
+}
+
+// SettingsSaveHandler is responsible for persisting the information into the file
+// and displays any errors in case of failure. If success redirects to /
+func settingsSaveHandler(res http.ResponseWriter, req *http.Request) {
+
 	ReloadTemplates()
 
 	tv := templates.t.Lookup(TemplatePath + "settings")

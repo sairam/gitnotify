@@ -45,7 +45,7 @@ func init() {
 // load envconfig via https://github.com/kelseyhightower/envconfig
 func initAuth(p *mux.Router) {
 	goth.UseProviders(
-		github.New(os.Getenv("GITHUB_KEY"), os.Getenv("GITHUB_SECRET"), "http://localhost:3000/auth/github/callback"),
+		github.New(os.Getenv("GITHUB_KEY"), os.Getenv("GITHUB_SECRET"), serverProto+host+"/auth/github/callback"),
 	)
 
 	m := make(map[string]string)
@@ -68,6 +68,8 @@ func initAuth(p *mux.Router) {
 			return
 		}
 		// TODO 1. Persist user information and session tokens
+		authType, _ := getProviderName(req)
+		setSession(req, res, authType, user.NickName, user.AccessToken)
 		t, _ := template.New("foo").Parse(userTemplate)
 		t.Execute(res, user)
 	}).Methods("GET")

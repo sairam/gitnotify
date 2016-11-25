@@ -8,6 +8,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const (
+	serverProto = "http://"
+	host        = "localhost:3000"
+)
+
 // 1. Make a router to redirect user if not logged into website
 // 2. Redirect to /home
 // 3. Display /home page with content from tmpl/home.html
@@ -19,14 +24,21 @@ func main() {
 	// initSession()
 
 	r := mux.NewRouter()
-	r.HandleFunc("/", settingsHandler)
-	r.HandleFunc("/home", homeHandler)
+	r.HandleFunc("/", settingsShowHandler).Methods("GET")
+	r.HandleFunc("/", settingsSaveHandler).Methods("POST")
+	r.HandleFunc("/home", homeHandler).Methods("GET")
+
+	r.HandleFunc("/logout", func(res http.ResponseWriter, req *http.Request) {
+		clearSession(res, req)
+		// redirect to /home
+	}).Methods("GET")
+
 	auth := r.PathPrefix("/auth").Subrouter()
 	initAuth(auth)
 
 	srv := &http.Server{
 		Handler:      r,
-		Addr:         "127.0.0.1:3000",
+		Addr:         host,
 		WriteTimeout: 60 * time.Second,
 		ReadTimeout:  60 * time.Second,
 	}
