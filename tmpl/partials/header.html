@@ -25,7 +25,7 @@
             <div class="alert alert-warning" role="alert">You need to login to use the service</div>
           {{ else }}
             <a class="btn btn-danger" href="/logout" style="float:right">Logout</a>
-            <span style="float:right">Logged in as <strong>@{{.User.UserName}}({{.User.Auth}})</strong> &nbsp;&nbsp;</span>
+            <span style="float:right">Logged in as <strong>@{{.User.UserName}}({{.User.Provider}})</strong> &nbsp;&nbsp;</span>
             <h1 class="text-center">{{.PageTitle}}</h1>
           {{ end }}
         </nav>

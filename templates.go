@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"io"
 	"io/ioutil"
+	"log"
 	"strings"
 )
 
@@ -60,7 +60,7 @@ func loadPartials() {
 func loadFilesFromDir(dir, pathDir string) {
 	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 
@@ -75,7 +75,7 @@ func loadFilesFromDir(dir, pathDir string) {
 		_, err = templates.t.New(pathDir + tmplName).Parse(string(b))
 
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 	}
 }

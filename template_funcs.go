@@ -2,9 +2,9 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
 	"io"
+	"log"
 	"reflect"
 	"strconv"
 )
@@ -145,6 +145,6 @@ func partial(name string, contextList ...interface{}) template.HTML {
 func executeTemplate(context interface{}, w io.Writer, tmplName string) {
 	err := templates.t.ExecuteTemplate(w, tmplName, context)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 }

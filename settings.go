@@ -119,6 +119,8 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, parseForm bool) {
 	if redirected {
 		return
 	}
+	userInfo := hc.userLoggedinInfo()
+	configFile := userInfo.getConfigFile()
 
 	conf := new(Setting)
 	conf.load(configFile)
@@ -145,6 +147,8 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, parseForm bool) {
 		// TODO move method under repo/settings struct
 		replaceRepo(conf, repo)
 
+		userInfo := hc.userLoggedinInfo()
+		configFile := userInfo.getConfigFile()
 		if err := conf.save(configFile); err != nil {
 			hc.addFlash("Error saving configuration " + err.Error() + " for " + repo.Repo)
 		} else {

@@ -1,7 +1,9 @@
 package main
 
+// This file is used for testing
+
 import (
-	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -10,16 +12,11 @@ import (
 	githubApp "github.com/google/go-github/github"
 )
 
-var (
-	conf    *Setting
-	verbose bool
-)
-
-var accessTokenByUser = os.Getenv("GITHUB_USER_TOKEN") // this is temporary for validating responses
-
-const configFile = "data/github/sairam/settings.yml"
-
 func getData() {
+	var conf *Setting
+	var accessTokenByUser = os.Getenv("GITHUB_USER_TOKEN") // this is temporary for validating responses
+	var configFile = "data/github/sairam/settings.yml"
+
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: accessTokenByUser},
 	)
@@ -31,25 +28,24 @@ func getData() {
 	// repos, _, _ := client.Repositories.List("", nil)
 	//
 	// for _, repo := range repos {
-	// 	fmt.Println(*repo.Name, *repo.DefaultBranch, *repo.BranchesURL)
+	// 	log.Println(*repo.Name, *repo.DefaultBranch, *repo.BranchesURL)
 	// }
 
-	verbose = true
 	conf = new(Setting)
 	err := conf.load(configFile)
 	// out, err := yaml.Marshal(conf)
-	// fmt.Println("output is ")
-	// fmt.Printf("%s\n", out)
-	fmt.Println(err)
+	// log.Println("output is ")
+	// log.Printf("%s\n", out)
+	log.Println(err)
 	branchesURL := "https://api.github.com/repos/sairam/daata-portal/branches"
-	fmt.Println(conf)
+	log.Println(conf)
 
 	// client = githubApp.NewClient(tc)
 	v := new([]*BranchInfo)
 	req, _ := http.NewRequest("GET", branchesURL, nil)
 	client.Do(req, v)
-	fmt.Println(*v)
-	fmt.Println("Done")
+	log.Println(*v)
+	log.Println("Done")
 
 	// check data difference with previously saved one
 	// TODO

@@ -15,20 +15,23 @@ import (
 	"github.com/markbates/goth/providers/github"
 )
 
-// SessionInfo has a List of authentications
-// sessions have {provider=username, ...}
-type SessionInfo struct {
-	Authentications []Authentication
+// TODO rename to Authentication
+// data/$provider/$user/settings.yml
+type userInfoSession struct {
+	Provider string `yaml:"provider"` // github/gitlab
+	Name     string `yaml:"name"`     // name of the person addressing to
+	Email    string `yaml:"email"`    // email that we will send to
+	UserName string `yaml:"username"` // username for identification
+	Token    string `yaml:"token"`    // used to query the provider
 }
 
-// Authentication that was successfully made through OAuth
-// users/$provider/$username.yml
-type Authentication struct {
-	Provider  string `yaml:"provider"` // github/gitlab
-	Name      string `yaml:"name"`     // name of the person addressing to
-	Email     string `yaml:"email"`    // email that we will send to
-	Username  string `yaml:"username"` // username for identification
-	AuthToken string `yaml:"token"`    // used to query the provider
+type Authentication userInfoSession
+
+func (userInfo *userInfoSession) getConfigFile() string {
+	if userInfo.Provider == "" {
+		return ""
+	}
+	return fmt.Sprintf("data/%s/%s/settings.yml", userInfo.Provider, userInfo.UserName)
 }
 
 // ProviderIndex is used for setting up the providers
@@ -69,7 +72,7 @@ func initAuth(p *mux.Router) {
 		}
 		authType, _ := getProviderName(req)
 		userInfo := &userInfoSession{
-			Auth:     authType,
+			Provider: authType,
 			UserName: user.NickName,
 			Token:    user.AccessToken,
 		}

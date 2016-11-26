@@ -15,12 +15,6 @@ const (
 	homePageForLoggedIn    = "/"
 )
 
-type userInfoSession struct {
-	Auth     string
-	UserName string
-	Token    string
-}
-
 type httpContext struct {
 	w http.ResponseWriter
 	r *http.Request
@@ -29,7 +23,9 @@ type httpContext struct {
 var sv = make(map[string]string)
 
 func init() {
-	sv["authType"] = "auth"
+	sv["provider"] = "provider"
+	sv["name"] = "name"
+	sv["email"] = "email"
 	sv["user"] = "user"
 	sv["token"] = "token"
 }
@@ -107,11 +103,13 @@ func (hc *httpContext) setSession(userInfo *userInfoSession) {
 		return
 	}
 
-	session.Values[sv["authType"]] = userInfo.Auth
+	session.Values[sv["provider"]] = userInfo.Provider
+	session.Values[sv["name"]] = userInfo.Name
+	session.Values[sv["email"]] = userInfo.Email
 	session.Values[sv["user"]] = userInfo.UserName
 	session.Values[sv["token"]] = userInfo.Token
 	hc.clearFlashes()
-	session.AddFlash("Logged in via " + userInfo.Auth)
+	session.AddFlash("Logged in via " + userInfo.Provider)
 
 	hc.saveSession(session)
 }
@@ -124,21 +122,25 @@ func (hc *httpContext) userLoggedinInfo() *userInfoSession {
 		return userInfo
 	}
 
-	userInfo.Auth = reflect.ValueOf(session.Values[sv["authType"]]).String()
+	userInfo.Provider = reflect.ValueOf(session.Values[sv["provider"]]).String()
+	userInfo.Name = reflect.ValueOf(session.Values[sv["name"]]).String()
+	userInfo.Email = reflect.ValueOf(session.Values[sv["email"]]).String()
 	userInfo.UserName = reflect.ValueOf(session.Values[sv["user"]]).String()
 	userInfo.Token = reflect.ValueOf(session.Values[sv["token"]]).String()
 
 	return userInfo
 }
 
-// used for logout by authType
+// used for logout by provider
 func (hc *httpContext) clearSession() {
 	session := hc.getSession()
 	if session == nil {
 		return
 	}
 
-	session.Values[sv["authType"]] = nil
+	session.Values[sv["provider"]] = nil
+	session.Values[sv["name"]] = nil
+	session.Values[sv["email"]] = nil
 	session.Values[sv["user"]] = nil
 	session.Values[sv["token"]] = nil
 
@@ -147,5 +149,5 @@ func (hc *httpContext) clearSession() {
 
 func (hc *httpContext) isUserLoggedIn() bool {
 	session := hc.getSession()
-	return session.Values[sv["authType"]] != nil
+	return session.Values[sv["provider"]] != nil
 }

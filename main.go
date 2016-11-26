@@ -44,11 +44,9 @@ func newPage(hc *httpContext, title string, pageTitle string, conf interface{}) 
 // 2. Redirect to /home
 // 3. Display /home page with content from tmpl/home.html
 // 4. Users once logged in user goes /
-// 5. Display partial to add new repository to track and information via AJAX to auto fill branch names separated with ','
+// 5. Display partial to add new repository to track
+// 6. Allow to autofill branch names from remote URL
 func main() {
-
-	// Session handler is created?
-	// initSession()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", settingsShowHandler).Methods("GET")
@@ -59,8 +57,7 @@ func main() {
 		hc := &httpContext{w: res, r: req}
 		hc.clearSession()
 
-		// redirect to /home
-		http.Redirect(res, req, "/home", 302)
+		http.Redirect(res, req, homePageForNonLoggedIn, 302)
 	}).Methods("GET")
 
 	auth := r.PathPrefix("/auth").Subrouter()
