@@ -41,7 +41,7 @@ func (hc *httpContext) redirectUnlessLoggedIn() bool {
 		if session == nil {
 			return true
 		}
-		session.AddFlash("You need to be logged in to configure")
+		session.AddFlash("Login to customize settings")
 		hc.saveSession(session)
 
 		http.Redirect(hc.w, hc.r, homePageForNonLoggedIn, 302)
@@ -86,6 +86,17 @@ func (hc *httpContext) getFlashes() []string {
 		return fs
 	}
 	return nil
+}
+
+func (hc *httpContext) addFlash(flash string) {
+
+	session := hc.getSession()
+	if session == nil {
+		return
+	}
+
+	session.AddFlash(flash)
+	hc.saveSession(session)
 }
 
 // responsible for setting information about the logged in user via github into the session

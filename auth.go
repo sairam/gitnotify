@@ -81,7 +81,8 @@ func initAuth(p *mux.Router) {
 	p.HandleFunc("/{provider}", func(res http.ResponseWriter, req *http.Request) {
 		hc := &httpContext{res, req}
 		if hc.isUserLoggedIn() {
-			displayText(res, "User is already logged in")
+			text := "User is already logged in"
+			displayText(hc, res, text)
 		} else {
 			gothic.BeginAuthHandler(res, req)
 		}

@@ -21,6 +21,23 @@ type Page struct {
 	Context interface{}
 }
 
+func newPage(hc *httpContext, title string, conf interface{}) *Page {
+	var userInfo *userInfoSession
+	if hc.isUserLoggedIn() {
+		userInfo = hc.userLoggedinInfo()
+	} else {
+		userInfo = &userInfoSession{}
+	}
+
+	page := &Page{
+		Title:   title,
+		User:    userInfo,
+		Flashes: hc.getFlashes(),
+		Context: conf,
+	}
+	return page
+}
+
 // 1. Make a router to redirect user if not logged into website
 // 2. Redirect to /home
 // 3. Display /home page with content from tmpl/home.html

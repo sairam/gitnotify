@@ -1,0 +1,7 @@
+<div>
+  {{ if eq .User.UserName "" }}
+  <a class="btn btn-lg btn-success" href="/auth/github">Login via Github</a>
+  {{ else }}
+  <a class="btn btn-lg btn-info" href="/">Manage Your Settings</a>
+  {{ end }}
+</div>

@@ -1,33 +1,17 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"html/template"
 	"io"
 	"io/ioutil"
-	"reflect"
-	"strconv"
 	"strings"
 )
 
-var (
-	templateMap = template.FuncMap{
-		// "Upper": func(s string) string {
-		// 	return strings.ToUpper(s)
-		// },
-		"partial": partial,
-		"eq":      eq,
-		"ge":      ge,
-		"gt":      gt,
-		"le":      le,
-		"lt":      lt,
-	}
-)
+const pathPartialTemplate = "tmpl/partials/"
+const pathTemplate = "tmpl/"
 
-const PartialTemplatePath = "tmpl/partials/"
-const TemplatePath = "tmpl/"
-
+// SimpleTemplate ...
 type SimpleTemplate struct {
 	prefix      string
 	partialsDir string
@@ -37,10 +21,10 @@ type SimpleTemplate struct {
 var templates *SimpleTemplate
 
 func init() {
-	ReloadTemplates()
+	reloadTemplates()
 }
 
-func ReloadTemplates() {
+func reloadTemplates() {
 	// Templates with functions available to them
 	templates = &SimpleTemplate{
 		"tmpl/",
@@ -51,57 +35,30 @@ func ReloadTemplates() {
 	loadPartials()
 }
 
-func displayText(res io.Writer, text string) {
-	ReloadTemplates()
-
-	tmpl := `
-  {{ partial "header" . }}
-  <h3>` + text + `</h3>
-  <a href="/logout">Logout</a>
-  {{ partial "footer" . }}`
-
-	t := templates.t.New("foo")
-	t.Parse(tmpl)
-	t.Execute(res, struct{}{})
-
+func displayText(hc *httpContext, w io.Writer, text string) {
+	page := newPage(hc, text, text)
+	displayPage(w, "text", page)
 }
 
 // page path relative to 'tmpl', example "settings"
-func displayPage(res io.Writer, page string, data interface{}) {
+func displayPage(w io.Writer, page string, data interface{}) {
 	// reload only in dev environments
-	ReloadTemplates()
+	reloadTemplates()
 
-	tv := templates.t.Lookup(TemplatePath + page)
-	tv.Execute(res, data)
+	tv := templates.t.Lookup(pathTemplate + page)
+	tv.Execute(w, data)
 }
 
 func load() {
-	fis, err := ioutil.ReadDir(templates.prefix)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	for _, fi := range fis {
-		if fi.IsDir() {
-			continue
-		}
-		name := templates.prefix + fi.Name()
-		tmplName := strings.Replace(fi.Name(), ".html", "", 1)
-
-		b, err := ioutil.ReadFile(name)
-		_, err = templates.t.New(TemplatePath + tmplName).Parse(string(b))
-
-		if err != nil {
-			fmt.Println(err)
-		}
-
-	}
+	loadFilesFromDir(templates.prefix, pathTemplate)
 }
 
-// Duplicated from above. DRY
 func loadPartials() {
-	fis, err := ioutil.ReadDir(templates.partialsDir)
+	loadFilesFromDir(templates.partialsDir, pathPartialTemplate)
+}
+
+func loadFilesFromDir(dir, pathDir string) {
+	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -111,138 +68,14 @@ func loadPartials() {
 		if fi.IsDir() {
 			continue
 		}
-		name := templates.partialsDir + fi.Name()
+		name := dir + fi.Name()
 		tmplName := strings.Replace(fi.Name(), ".html", "", 1)
 
 		b, err := ioutil.ReadFile(name)
-		_, err = templates.t.New(PartialTemplatePath + tmplName).Parse(string(b))
+		_, err = templates.t.New(pathDir + tmplName).Parse(string(b))
 
 		if err != nil {
 			fmt.Println(err)
 		}
-	}
-}
-
-// eq returns the boolean truth of arg1 == arg2.
-func eq(x, y interface{}) bool {
-	normalize := func(v interface{}) interface{} {
-		vv := reflect.ValueOf(v)
-		switch vv.Kind() {
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			return vv.Int()
-		case reflect.Float32, reflect.Float64:
-			return vv.Float()
-		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			return vv.Uint()
-		default:
-			return v
-		}
-	}
-	x = normalize(x)
-	y = normalize(y)
-	return reflect.DeepEqual(x, y)
-}
-
-// ne returns the boolean truth of arg1 != arg2.
-func ne(x, y interface{}) bool {
-	return !eq(x, y)
-}
-
-// ge returns the boolean truth of arg1 >= arg2.
-func ge(a, b interface{}) bool {
-	left, right := compareGetFloat(a, b)
-	return left >= right
-}
-
-// gt returns the boolean truth of arg1 > arg2.
-func gt(a, b interface{}) bool {
-	left, right := compareGetFloat(a, b)
-	return left > right
-}
-
-// le returns the boolean truth of arg1 <= arg2.
-func le(a, b interface{}) bool {
-	left, right := compareGetFloat(a, b)
-	return left <= right
-}
-
-// lt returns the boolean truth of arg1 < arg2.
-func lt(a, b interface{}) bool {
-	left, right := compareGetFloat(a, b)
-	return left < right
-}
-
-func compareGetFloat(a interface{}, b interface{}) (float64, float64) {
-	var left, right float64
-	var leftStr, rightStr *string
-	av := reflect.ValueOf(a)
-
-	switch av.Kind() {
-	case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice:
-		left = float64(av.Len())
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		left = float64(av.Int())
-	case reflect.Float32, reflect.Float64:
-		left = av.Float()
-	case reflect.String:
-		var err error
-		left, err = strconv.ParseFloat(av.String(), 64)
-		if err != nil {
-			str := av.String()
-			leftStr = &str
-		}
-	}
-
-	bv := reflect.ValueOf(b)
-
-	switch bv.Kind() {
-	case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice:
-		right = float64(bv.Len())
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		right = float64(bv.Int())
-	case reflect.Float32, reflect.Float64:
-		right = bv.Float()
-	case reflect.String:
-		var err error
-		right, err = strconv.ParseFloat(bv.String(), 64)
-		if err != nil {
-			str := bv.String()
-			rightStr = &str
-		}
-	}
-
-	switch {
-	case leftStr == nil || rightStr == nil:
-	case *leftStr < *rightStr:
-		return 0, 1
-	case *leftStr > *rightStr:
-		return 1, 0
-	default:
-		return 0, 0
-	}
-
-	return left, right
-}
-
-// ==============================================================
-// https://github.com/spf13/hugo/blob/master/tpl/template_funcs.go
-// https://github.com/spf13/hugo/blob/master/tpl/template.go
-func partial(name string, contextList ...interface{}) template.HTML {
-	var context interface{}
-
-	if len(contextList) == 0 {
-		context = nil
-	} else {
-		context = contextList[0]
-	}
-	b := &bytes.Buffer{}
-	executeTemplate(context, b, PartialTemplatePath+name)
-	return template.HTML(b.String())
-}
-
-func executeTemplate(context interface{}, w io.Writer, tmplName string) {
-	err := templates.t.ExecuteTemplate(w, tmplName, context)
-	if err != nil {
-		fmt.Println(err)
 	}
 }

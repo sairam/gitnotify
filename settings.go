@@ -68,36 +68,11 @@ func (c *Setting) load(settingFile string) error {
 
 // persists setting into file
 func (c *Setting) save(settingFile string) error {
-	return nil
-}
-
-// SettingsShowHandler is responsible for displaying the form
-func settingsShowHandler(w http.ResponseWriter, r *http.Request) {
-	hc := &httpContext{w, r}
-
-	// Redirect user if not logged in
-	redirected := hc.redirectUnlessLoggedIn()
-	if redirected {
-		return
+	out, err := yaml.Marshal(c)
+	if err != nil {
+		return err
 	}
-
-	conf := new(Setting)
-	conf.load(configFile)
-	conf.Repos = append(conf.Repos, &Repo{})
-
-	var userInfo *userInfoSession
-	if hc.isUserLoggedIn() {
-		userInfo = hc.userLoggedinInfo()
-	}
-
-	page := &Page{
-		Title:   "Settings for User",
-		User:    userInfo,
-		Flashes: hc.getFlashes(),
-		Context: conf,
-	}
-	displayPage(w, "settings", page)
-
+	return ioutil.WriteFile(settingFile, out, 0600)
 }
 
 func contains(s []string, e string) bool {
@@ -126,10 +101,18 @@ func replaceRepo(conf *Setting, newRepo *Repo) {
 	conf.Repos = repos
 }
 
+// SettingsShowHandler is responsible for displaying the form
+func settingsShowHandler(w http.ResponseWriter, r *http.Request) {
+	settingsHandler(w, r, false)
+}
+
 // SettingsSaveHandler is responsible for persisting the information into the file
 // and displays any errors in case of failure. If success redirects to /
 func settingsSaveHandler(w http.ResponseWriter, r *http.Request) {
+	settingsHandler(w, r, true)
+}
 
+func settingsHandler(w http.ResponseWriter, r *http.Request, parseForm bool) {
 	// Redirect user if not logged in
 	hc := &httpContext{w, r}
 	redirected := hc.redirectUnlessLoggedIn()
@@ -137,48 +120,40 @@ func settingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.ParseForm()
-	var references []reference
-	for _, t := range strings.Split(r.Form["references"][0], ",") {
-		// TODO - add validation on name of references
-		str := strings.TrimSpace(t)
-		if str == "" {
-			continue
-		}
-		references = append(references, reference(str))
-	}
-
-	repo := &Repo{
-		r.Form["repo"][0],
-		references,
-		contains(r.Form["branches"], "true"),
-		contains(r.Form["tags"], "true"),
-	}
-
 	conf := new(Setting)
 	conf.load(configFile)
-	replaceRepo(conf, repo)
-	// persist
-	out, err := yaml.Marshal(conf)
-	if err == nil {
-		ioutil.WriteFile(configFile, out, 0600)
-	} else {
-		fmt.Println(err)
+
+	if parseForm == true {
+		r.ParseForm()
+		var references []reference
+		for _, t := range strings.Split(r.Form["references"][0], ",") {
+			// TODO - add validation on name of references
+			str := strings.TrimSpace(t)
+			if str == "" {
+				continue
+			}
+			references = append(references, reference(str))
+		}
+
+		repo := &Repo{
+			r.Form["repo"][0],
+			references,
+			contains(r.Form["branches"], "true"),
+			contains(r.Form["tags"], "true"),
+		}
+
+		// TODO move method under repo/settings struct
+		replaceRepo(conf, repo)
+
+		if err := conf.save(configFile); err != nil {
+			hc.addFlash("Error saving configuration " + err.Error() + " for " + repo.Repo)
+		} else {
+			hc.addFlash("Updated config for " + repo.Repo)
+		}
 	}
 
 	conf.Repos = append(conf.Repos, &Repo{})
 
-	var userInfo *userInfoSession
-	if hc.isUserLoggedIn() {
-		userInfo = hc.userLoggedinInfo()
-	}
-
-	page := &Page{
-		Title:   "Settings for user",
-		User:    userInfo,
-		Flashes: hc.getFlashes(),
-		Context: conf,
-	}
-
+	page := newPage(hc, "Settings for User", conf)
 	displayPage(w, "settings", page)
 }
