@@ -69,15 +69,13 @@ func initAuth(p *mux.Router) {
 		}
 		authType, _ := getProviderName(req)
 		userInfo := &userInfoSession{
-			auth:     authType,
-			userName: user.NickName,
-			token:    user.AccessToken,
+			Auth:     authType,
+			UserName: user.NickName,
+			Token:    user.AccessToken,
 		}
 		hc := &httpContext{res, req}
 		hc.setSession(userInfo)
-		http.Redirect(res, req, "/", 302)
-		// t, _ := template.New("foo").Parse(userTemplate)
-		// t.Execute(res, user)
+		http.Redirect(res, req, homePageForLoggedIn, 302)
 	}).Methods("GET")
 
 	p.HandleFunc("/{provider}", func(res http.ResponseWriter, req *http.Request) {

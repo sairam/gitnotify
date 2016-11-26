@@ -11,13 +11,24 @@
 
     body {
       font-family: Roboto, Helvetica, Arial, sans-serif;
-      font-size: medium;
       margin: 0px auto;
       z-index: 1;
     }
     </style>
-    <title>Title</title>
+    <title>{{.Title}}</title>
   </head>
   <body>
     <div class="row text-center">
       <div class="col-xs-12 col-sm-12 col-md-offset-3 col-md-6 col-lg-offset-3 col-lg-6">
+        <nav>
+          {{ if eq .User.UserName "" }}
+            <div class="alert alert-warning" role="alert">You need to login to use the service</div>
+          {{ else }}
+            <a class="btn btn-danger" href="/logout" style="float:right">Logout</a>
+            <span style="float:right">Logged in as <strong>@{{.User.UserName}}({{.User.Auth}})</strong> &nbsp;&nbsp;</span>
+            <h1 class="text-center">Settings</h1>
+          {{ end }}
+        </nav>
+        {{ range $x := .Flashes }}
+        <div class="alert alert-info" role="alert">{{ $x }}</div>
+        {{ end }}

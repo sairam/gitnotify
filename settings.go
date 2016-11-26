@@ -18,6 +18,7 @@ type Setting struct {
 	Authentication `yaml:"auth"`
 }
 
+// Version of the structure
 type Version string
 
 // Repo is a repository that is being tracked
@@ -72,16 +73,31 @@ func (c *Setting) save(settingFile string) error {
 
 // SettingsShowHandler is responsible for displaying the form
 func settingsShowHandler(w http.ResponseWriter, r *http.Request) {
+	hc := &httpContext{w, r}
+
+	// Redirect user if not logged in
+	redirected := hc.redirectUnlessLoggedIn()
+	if redirected {
+		return
+	}
 
 	conf := new(Setting)
 	conf.load(configFile)
-	// out, err := yaml.Marshal(conf)
 	conf.Repos = append(conf.Repos, &Repo{})
-	// fmt.Printf("%s", out)
-	// fmt.Printf("%s", err)
-	// fmt.Println(conf)
 
-	displayPage(w, "settings", conf)
+	var userInfo *userInfoSession
+	if hc.isUserLoggedIn() {
+		userInfo = hc.userLoggedinInfo()
+	}
+
+	page := &Page{
+		Title:   "Settings for User",
+		User:    userInfo,
+		Flashes: hc.getFlashes(),
+		Context: conf,
+	}
+	displayPage(w, "settings", page)
+
 }
 
 func contains(s []string, e string) bool {
@@ -114,6 +130,13 @@ func replaceRepo(conf *Setting, newRepo *Repo) {
 // and displays any errors in case of failure. If success redirects to /
 func settingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 
+	// Redirect user if not logged in
+	hc := &httpContext{w, r}
+	redirected := hc.redirectUnlessLoggedIn()
+	if redirected {
+		return
+	}
+
 	r.ParseForm()
 	var references []reference
 	for _, t := range strings.Split(r.Form["references"][0], ",") {
@@ -145,5 +168,17 @@ func settingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 	conf.Repos = append(conf.Repos, &Repo{})
 
-	displayPage(w, "settings", conf)
+	var userInfo *userInfoSession
+	if hc.isUserLoggedIn() {
+		userInfo = hc.userLoggedinInfo()
+	}
+
+	page := &Page{
+		Title:   "Settings for user",
+		User:    userInfo,
+		Flashes: hc.getFlashes(),
+		Context: conf,
+	}
+
+	displayPage(w, "settings", page)
 }

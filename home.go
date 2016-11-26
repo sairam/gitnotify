@@ -6,8 +6,19 @@ import "net/http"
 func homeHandler(res http.ResponseWriter, req *http.Request) {
 
 	hc := &httpContext{w: res, r: req}
+	var userInfo *userInfoSession
 	if hc.isUserLoggedIn() {
-		hc.userLoggedinInfo()
+		userInfo = hc.userLoggedinInfo()
+	} else {
+		userInfo = &userInfoSession{}
 	}
-	displayPage(res, "home", struct{}{})
+
+	page := &Page{
+		Title:   "Home Page",
+		User:    userInfo,
+		Flashes: hc.getFlashes(),
+		Context: nil,
+	}
+
+	displayPage(res, "home", page)
 }

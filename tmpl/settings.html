@@ -1,5 +1,7 @@
 
 {{ partial "header" . }}
+{{ with .Context }}
+
 <div class="row">
   <div class="col-md-10">
 
@@ -75,4 +77,6 @@
 
 </div>
 </div>
+
+{{ end }}
 {{ partial "footer" . }}

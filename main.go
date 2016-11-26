@@ -13,6 +13,14 @@ const (
 	host        = "localhost:3000"
 )
 
+//Page has all information about the page
+type Page struct {
+	Title   string
+	User    *userInfoSession
+	Flashes []string
+	Context interface{}
+}
+
 // 1. Make a router to redirect user if not logged into website
 // 2. Redirect to /home
 // 3. Display /home page with content from tmpl/home.html

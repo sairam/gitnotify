@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
+	"reflect"
 
 	"github.com/gorilla/sessions"
 )
@@ -10,10 +10,15 @@ import (
 var store = sessions.NewFilesystemStore("./sessions", []byte("something-very-secret"))
 var sessionName = "session-name"
 
+const (
+	homePageForNonLoggedIn = "/home"
+	homePageForLoggedIn    = "/"
+)
+
 type userInfoSession struct {
-	auth     string
-	userName string
-	token    string
+	Auth     string
+	UserName string
+	Token    string
 }
 
 type httpContext struct {
@@ -29,6 +34,22 @@ func init() {
 	sv["token"] = "token"
 }
 
+// returns true if redirected
+func (hc *httpContext) redirectUnlessLoggedIn() bool {
+	if !hc.isUserLoggedIn() {
+		session := hc.getSession()
+		if session == nil {
+			return true
+		}
+		session.AddFlash("You need to be logged in to configure")
+		hc.saveSession(session)
+
+		http.Redirect(hc.w, hc.r, homePageForNonLoggedIn, 302)
+		return true
+	}
+	return false
+}
+
 // Helper methods for the session handlers
 func (hc *httpContext) getSession() *sessions.Session {
 	// Get a session. We're ignoring the error resulted from decoding an
@@ -40,9 +61,31 @@ func (hc *httpContext) getSession() *sessions.Session {
 	}
 	return session
 }
+
 func (hc *httpContext) saveSession(session *sessions.Session) {
 	// Save it before we write to the response/return from the handler.
 	session.Save(hc.r, hc.w)
+}
+
+func (hc *httpContext) clearFlashes() {
+	session := hc.getSession()
+	if flashes := session.Flashes(); len(flashes) > 0 {
+		hc.saveSession(session)
+	}
+}
+
+// this actually flushes as well
+func (hc *httpContext) getFlashes() []string {
+	session := hc.getSession()
+	if flashes := session.Flashes(); len(flashes) > 0 {
+		fs := make([]string, len(flashes))
+		for i, f := range flashes {
+			fs[i] = string(reflect.ValueOf(f).String())
+		}
+		hc.saveSession(session)
+		return fs
+	}
+	return nil
 }
 
 // responsible for setting information about the logged in user via github into the session
@@ -53,22 +96,28 @@ func (hc *httpContext) setSession(userInfo *userInfoSession) {
 		return
 	}
 
-	session.Values[sv["authType"]] = userInfo.auth
-	session.Values[sv["user"]] = userInfo.userName
-	session.Values[sv["token"]] = userInfo.token
+	session.Values[sv["authType"]] = userInfo.Auth
+	session.Values[sv["user"]] = userInfo.UserName
+	session.Values[sv["token"]] = userInfo.Token
+	hc.clearFlashes()
+	session.AddFlash("Logged in via " + userInfo.Auth)
 
 	hc.saveSession(session)
 }
 
-func (hc *httpContext) userLoggedinInfo() {
+func (hc *httpContext) userLoggedinInfo() *userInfoSession {
+	userInfo := new(userInfoSession)
+
 	session := hc.getSession()
 	if session == nil {
-		return
+		return userInfo
 	}
 
-	fmt.Println(session.Values[sv["authType"]])
-	fmt.Println(session.Values[sv["user"]])
-	fmt.Println(session.Values[sv["token"]])
+	userInfo.Auth = reflect.ValueOf(session.Values[sv["authType"]]).String()
+	userInfo.UserName = reflect.ValueOf(session.Values[sv["user"]]).String()
+	userInfo.Token = reflect.ValueOf(session.Values[sv["token"]]).String()
+
+	return userInfo
 }
 
 // used for logout by authType
