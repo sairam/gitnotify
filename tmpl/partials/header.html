@@ -26,7 +26,7 @@
           {{ else }}
             <a class="btn btn-danger" href="/logout" style="float:right">Logout</a>
             <span style="float:right">Logged in as <strong>@{{.User.UserName}}({{.User.Auth}})</strong> &nbsp;&nbsp;</span>
-            <h1 class="text-center">Settings</h1>
+            <h1 class="text-center">{{.PageTitle}}</h1>
           {{ end }}
         </nav>
         {{ range $x := .Flashes }}

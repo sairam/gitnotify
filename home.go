@@ -7,6 +7,6 @@ func homeHandler(res http.ResponseWriter, req *http.Request) {
 
 	hc := &httpContext{w: res, r: req}
 
-	page := newPage(hc, "Home Page", nil)
+	page := newPage(hc, "Home Page", "Git Notify", nil)
 	displayPage(res, "home", page)
 }

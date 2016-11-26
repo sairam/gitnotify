@@ -15,13 +15,14 @@ const (
 
 //Page has all information about the page
 type Page struct {
-	Title   string
-	User    *userInfoSession
-	Flashes []string
-	Context interface{}
+	Title     string
+	PageTitle string
+	User      *userInfoSession
+	Flashes   []string
+	Context   interface{}
 }
 
-func newPage(hc *httpContext, title string, conf interface{}) *Page {
+func newPage(hc *httpContext, title string, pageTitle string, conf interface{}) *Page {
 	var userInfo *userInfoSession
 	if hc.isUserLoggedIn() {
 		userInfo = hc.userLoggedinInfo()
@@ -30,10 +31,11 @@ func newPage(hc *httpContext, title string, conf interface{}) *Page {
 	}
 
 	page := &Page{
-		Title:   title,
-		User:    userInfo,
-		Flashes: hc.getFlashes(),
-		Context: conf,
+		Title:     title,
+		PageTitle: pageTitle,
+		User:      userInfo,
+		Flashes:   hc.getFlashes(),
+		Context:   conf,
 	}
 	return page
 }

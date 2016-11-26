@@ -62,15 +62,13 @@
 
 <div class="form-group">
   <div class="col-sm-offset-4 col-sm-8">
-    <button type="submit" class="btn btn-success">Update</button>
+    <button type="submit" class="btn btn-success">{{ if eq .Repo "" }}Create{{else}}Update{{end}}</button>
   </div>
 </div>
 
 {{ end }}
 </form>
-
-<a style="position: relative;left: 10px;top: -50px;" href="" class="btn btn-danger" onclick="alert('yet to delete')">Remove</a>
-
+{{ if eq .Repo "" }}{{else}}<a style="position: relative;left: 10px;top: -50px;" href="" class="btn btn-danger" onclick="alert('yet to delete')">Remove</a>{{end}}
 
 <hr />
 {{ end }}

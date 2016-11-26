@@ -154,6 +154,6 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, parseForm bool) {
 
 	conf.Repos = append(conf.Repos, &Repo{})
 
-	page := newPage(hc, "Settings for User", conf)
+	page := newPage(hc, "Settings for User", "Settings", conf)
 	displayPage(w, "settings", page)
 }
