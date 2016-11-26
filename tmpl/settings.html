@@ -1,29 +1,78 @@
 
 {{ partial "header" . }}
+<div class="row">
+  <div class="col-md-10">
 
-{{ range $d:=.Repos }}
+{{ range $repo:=.Repos }}
 
-<form action="/" method="post">
-{{ with $d }}
-<input type="hidden" name="repo" value="{{ .Repo }}">
-<label for="">Repo Name</label><input type="text" value="{{ .Repo }}" readonly="readonly">
-<br />
-<label for="">Track Branches</label>
-<input type="hidden" name="branches" value="false" />
-<input type="checkbox" name="branches" value="true" {{if .Branches }}checked="checked"{{end}} />
-<br />
-<label for="">Track Tags</label><input type="checkbox" name="tags" {{if .Tags }}checked="checked"{{end}}>
-<br />
+<form action="/" method="post" class="form-horizontal text-left">
+{{ with $repo }}
 
-<label for="">Track Branches/Tags</label><input type="text" name="references" value="{{ range $i, $x := .NamedReferences }}{{ $x }},{{ end }}">
-<br />
+{{ if eq .Repo "" }}
+  <h2>Create new</h2>
+  <div class="form-group">
+    <label for="repo" class="col-sm-4 control-label">Repository Name</label>
+    <div class="col-sm-8">
+      <input type="text" class="form-control" id="repo" value="{{ .Repo }}" name="repo">
+      <p class="help-block">Add the name of the github repository to track</p>
+    </div>
+  </div>
+
+{{ else }}
+  <h2>Edit "{{ .Repo }}"</h2>
+  <div class="form-group">
+    <label for="repo" class="col-sm-4 control-label">Repository Name</label>
+    <div class="col-sm-8">
+      <input type="hidden" name="repo" value="{{ .Repo }}">
+      <input type="text" class="form-control" id="repo" value="{{ .Repo }}" readonly="readonly">
+    </div>
+  </div>
+{{ end }}
+
+<div class="form-group">
+  <div class="col-sm-offset-4 col-sm-8">
+    <div class="checkbox">
+      <label>
+        <input type="hidden" name="branches" value="false" />
+        <input type="checkbox" name="branches" value="true" {{if .Branches }}checked="checked"{{end}} > Track Branches
+      </label>
+    </div>
+  </div>
+</div>
+
+<div class="form-group">
+  <div class="col-sm-offset-4 col-sm-8">
+    <div class="checkbox">
+      <label>
+        <input type="hidden" name="tags" value="false" />
+        <input type="checkbox" name="tags" value="true" {{if .Tags }}checked="checked"{{end}} > Track Tags
+      </label>
+    </div>
+  </div>
+</div>
+
+<div class="form-group">
+  <label for="references" class="col-sm-4 control-label">Track Branches/Tags</label>
+  <div class="col-sm-8">
+    <input type="text" class="form-control" id="references" value="{{ range $i, $x := .NamedReferences }}{{ $x }},{{ end }}" name="references">
+  </div>
+</div>
+
+<div class="form-group">
+  <div class="col-sm-offset-4 col-sm-8">
+    <button type="submit" class="btn btn-success">Update</button>
+  </div>
+</div>
 
 {{ end }}
-<input type="submit" value="Delete me!">
-<input type="submit" value="Login">
 </form>
+
+<a style="position: relative;left: 10px;top: -50px;" href="" class="btn btn-danger" onclick="alert('yet to delete')">Remove</a>
+
+
 <hr />
 {{ end }}
 
-
+</div>
+</div>
 {{ partial "footer" . }}

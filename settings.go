@@ -13,16 +13,19 @@ import (
 // Setting is the data structure that has all the details
 //  data/$provider/$username/settings.yml
 type Setting struct {
+	Version        `yaml:"version"`
 	Repos          []*Repo `yaml:"repos"`
 	Authentication `yaml:"auth"`
 }
 
+type Version string
+
 // Repo is a repository that is being tracked
 type Repo struct {
-	Repo            string       `yaml:"repo"`
-	NamedReferences []*reference `yaml:"commits"`
-	Branches        bool         `yaml:"new_branches"`
-	Tags            bool         `yaml:"new_tags"`
+	Repo            string      `yaml:"repo"`
+	NamedReferences []reference `yaml:"commits"`
+	Branches        bool        `yaml:"new_branches"`
+	Tags            bool        `yaml:"new_tags"`
 }
 type reference string
 
@@ -72,12 +75,39 @@ func settingsShowHandler(w http.ResponseWriter, r *http.Request) {
 
 	conf := new(Setting)
 	conf.load(configFile)
-	out, err := yaml.Marshal(conf)
-	fmt.Printf("%s", out)
-	fmt.Printf("%s", err)
-	fmt.Println(conf)
+	// out, err := yaml.Marshal(conf)
+	conf.Repos = append(conf.Repos, &Repo{})
+	// fmt.Printf("%s", out)
+	// fmt.Printf("%s", err)
+	// fmt.Println(conf)
 
 	displayPage(w, "settings", conf)
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
+func replaceRepo(conf *Setting, newRepo *Repo) {
+	var repos []*Repo
+	isProcessed := false
+	for _, repo := range conf.Repos {
+		if repo.Repo == newRepo.Repo {
+			repos = append(repos, newRepo)
+			isProcessed = true
+		} else {
+			repos = append(repos, repo)
+		}
+	}
+	if isProcessed == false {
+		repos = append(repos, newRepo)
+	}
+	conf.Repos = repos
 }
 
 // SettingsSaveHandler is responsible for persisting the information into the file
@@ -85,8 +115,35 @@ func settingsShowHandler(w http.ResponseWriter, r *http.Request) {
 func settingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
-	fmt.Println("username:", r.Form["username"])
-	fmt.Println("password:", r.Form["password"])
+	var references []reference
+	for _, t := range strings.Split(r.Form["references"][0], ",") {
+		// TODO - add validation on name of references
+		str := strings.TrimSpace(t)
+		if str == "" {
+			continue
+		}
+		references = append(references, reference(str))
+	}
 
-	displayPage(w, "settings", struct{}{})
+	repo := &Repo{
+		r.Form["repo"][0],
+		references,
+		contains(r.Form["branches"], "true"),
+		contains(r.Form["tags"], "true"),
+	}
+
+	conf := new(Setting)
+	conf.load(configFile)
+	replaceRepo(conf, repo)
+	// persist
+	out, err := yaml.Marshal(conf)
+	if err == nil {
+		ioutil.WriteFile(configFile, out, 0600)
+	} else {
+		fmt.Println(err)
+	}
+
+	conf.Repos = append(conf.Repos, &Repo{})
+
+	displayPage(w, "settings", conf)
 }
