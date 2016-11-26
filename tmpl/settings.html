@@ -1,6 +1,29 @@
 
 {{ partial "header" . }}
 
-Hello dynamic world!
+{{ range $d:=.Repos }}
+
+<form action="/" method="post">
+{{ with $d }}
+<input type="hidden" name="repo" value="{{ .Repo }}">
+<label for="">Repo Name</label><input type="text" value="{{ .Repo }}" readonly="readonly">
+<br />
+<label for="">Track Branches</label>
+<input type="hidden" name="branches" value="false" />
+<input type="checkbox" name="branches" value="true" {{if .Branches }}checked="checked"{{end}} />
+<br />
+<label for="">Track Tags</label><input type="checkbox" name="tags" {{if .Tags }}checked="checked"{{end}}>
+<br />
+
+<label for="">Track Branches/Tags</label><input type="text" name="references" value="{{ range $i, $x := .NamedReferences }}{{ $x }},{{ end }}">
+<br />
+
+{{ end }}
+<input type="submit" value="Delete me!">
+<input type="submit" value="Login">
+</form>
+<hr />
+{{ end }}
+
 
 {{ partial "footer" . }}

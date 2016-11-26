@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"os"
 
-	yaml "gopkg.in/yaml.v2"
-
 	"golang.org/x/oauth2"
 
 	githubApp "github.com/google/go-github/github"
@@ -17,9 +15,9 @@ var (
 	verbose bool
 )
 
-const configFile = "data/github/sairam/settings.yml"
-
 var accessTokenByUser = os.Getenv("GITHUB_USER_TOKEN") // this is temporary for validating responses
+
+const configFile = "data/github/sairam/settings.yml"
 
 func getData() {
 	ts := oauth2.StaticTokenSource(
@@ -39,10 +37,11 @@ func getData() {
 	verbose = true
 	conf = new(Setting)
 	err := conf.load(configFile)
-	out, err := yaml.Marshal(conf)
-	fmt.Printf("%s", out)
-	branchesURL := "https://api.github.com/repos/sairam/daata-portal/branches"
+	// out, err := yaml.Marshal(conf)
+	// fmt.Println("output is ")
+	// fmt.Printf("%s\n", out)
 	fmt.Println(err)
+	branchesURL := "https://api.github.com/repos/sairam/daata-portal/branches"
 	fmt.Println(conf)
 
 	// client = githubApp.NewClient(tc)

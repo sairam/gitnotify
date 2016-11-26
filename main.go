@@ -29,8 +29,11 @@ func main() {
 	r.HandleFunc("/home", homeHandler).Methods("GET")
 
 	r.HandleFunc("/logout", func(res http.ResponseWriter, req *http.Request) {
-		clearSession(res, req)
+		hc := &httpContext{w: res, r: req}
+		hc.clearSession()
+
 		// redirect to /home
+		http.Redirect(res, req, "/home", 302)
 	}).Methods("GET")
 
 	auth := r.PathPrefix("/auth").Subrouter()

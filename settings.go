@@ -24,6 +24,7 @@ type Repo struct {
 	Branches        bool         `yaml:"new_branches"`
 	Tags            bool         `yaml:"new_tags"`
 }
+type reference string
 
 // var t = afero.Fs
 
@@ -39,9 +40,7 @@ func (r *Repo) String() string {
 	return fmt.Sprintf("repo: %s, references: %v, branches: %t, tags: %t", r.Repo, r.NamedReferences, r.Branches, r.Tags)
 }
 
-type reference string
-
-func (x reference) String() string { return fmt.Sprintf("<%s>", string(x)) }
+func (x reference) String() string { return fmt.Sprintf("%s", string(x)) }
 
 // read setting from file into memory
 func (c *Setting) load(settingFile string) error {
@@ -51,18 +50,15 @@ func (c *Setting) load(settingFile string) error {
 	}
 
 	data, err := ioutil.ReadFile(settingFile)
-
 	if os.IsNotExist(err) {
 		return nil
 	}
 
-	conf := &Setting{}
+	err = yaml.Unmarshal(data, c)
 
-	err = yaml.Unmarshal(data, conf)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -72,16 +68,25 @@ func (c *Setting) save(settingFile string) error {
 }
 
 // SettingsShowHandler is responsible for displaying the form
-func settingsShowHandler(res http.ResponseWriter, req *http.Request) {
-	displayPage(res, "settings", struct{}{})
+func settingsShowHandler(w http.ResponseWriter, r *http.Request) {
+
+	conf := new(Setting)
+	conf.load(configFile)
+	out, err := yaml.Marshal(conf)
+	fmt.Printf("%s", out)
+	fmt.Printf("%s", err)
+	fmt.Println(conf)
+
+	displayPage(w, "settings", conf)
 }
 
 // SettingsSaveHandler is responsible for persisting the information into the file
 // and displays any errors in case of failure. If success redirects to /
-func settingsSaveHandler(res http.ResponseWriter, req *http.Request) {
+func settingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 
-	ReloadTemplates()
+	r.ParseForm()
+	fmt.Println("username:", r.Form["username"])
+	fmt.Println("password:", r.Form["password"])
 
-	tv := templates.t.Lookup(TemplatePath + "settings")
-	tv.Execute(res, struct{}{})
+	displayPage(w, "settings", struct{}{})
 }

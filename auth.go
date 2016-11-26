@@ -73,14 +73,16 @@ func initAuth(p *mux.Router) {
 			userName: user.NickName,
 			token:    user.AccessToken,
 		}
-		setSession(res, req, userInfo)
+		hc := &httpContext{res, req}
+		hc.setSession(userInfo)
 		http.Redirect(res, req, "/", 302)
 		// t, _ := template.New("foo").Parse(userTemplate)
 		// t.Execute(res, user)
 	}).Methods("GET")
 
 	p.HandleFunc("/{provider}", func(res http.ResponseWriter, req *http.Request) {
-		if isUserLoggedIn(req) {
+		hc := &httpContext{res, req}
+		if hc.isUserLoggedIn() {
 			displayText(res, "User is already logged in")
 		} else {
 			gothic.BeginAuthHandler(res, req)
