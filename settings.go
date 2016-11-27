@@ -55,7 +55,7 @@ func (c *Setting) load(settingFile string) error {
 
 	data, err := ioutil.ReadFile(settingFile)
 	if os.IsNotExist(err) {
-		return nil
+		return err
 	}
 
 	err = yaml.Unmarshal(data, c)
@@ -84,21 +84,24 @@ func contains(s []string, e string) bool {
 	return false
 }
 
-func deleteRepo(conf *Setting, delRepo *Repo) bool {
+func deleteRepo(conf *Setting, delRepo *Repo) (bool, *Repo) {
 	var repos []*Repo
 	isProcessed := false
 	for _, repo := range conf.Repos {
 		if repo.Repo == delRepo.Repo {
+			delRepo = repo
 			isProcessed = true
 		} else {
 			repos = append(repos, repo)
 		}
 	}
 	conf.Repos = repos
-	return isProcessed
+	return isProcessed, delRepo
 }
 
-func replaceRepo(conf *Setting, newRepo *Repo) {
+// returns true if newly added row
+// returns false if update
+func upsertRepo(conf *Setting, newRepo *Repo) bool {
 	var repos []*Repo
 	isProcessed := false
 	for _, repo := range conf.Repos {
@@ -113,6 +116,7 @@ func replaceRepo(conf *Setting, newRepo *Repo) {
 		repos = append(repos, newRepo)
 	}
 	conf.Repos = repos
+	return !isProcessed
 }
 
 // SettingsShowHandler is responsible for displaying the form
@@ -146,6 +150,8 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 		}
 	}
 
+	var repo *Repo
+
 	switch formAction {
 	case "show":
 	case "update":
@@ -159,7 +165,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 			references = append(references, reference(str))
 		}
 
-		repo := &Repo{
+		repo = &Repo{
 			r.Form["repo"][0],
 			references,
 			contains(r.Form["branches"], "true"),
@@ -167,7 +173,10 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 		}
 
 		// TODO move method under repo/settings struct
-		replaceRepo(conf, repo)
+		info := upsertRepo(conf, repo)
+		if info {
+			formAction = "create"
+		}
 
 		userInfo := hc.userLoggedinInfo()
 		configFile := userInfo.getConfigFile()
@@ -177,11 +186,12 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 			hc.addFlash("Updated config for " + repo.Repo)
 		}
 	case "delete":
-		repo := &Repo{
+		repo = &Repo{
 			Repo: r.Form["repo"][0],
 		}
 		// TODO move method under repo/settings struct
-		success := deleteRepo(conf, repo)
+		var success bool
+		success, repo = deleteRepo(conf, repo)
 		if success == false {
 			hc.addFlash("Error deleting Repository " + repo.Repo)
 		} else {
@@ -193,6 +203,9 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 				hc.addFlash("Delete config for " + repo.Repo)
 			}
 		}
+
+		// on create or delete, send the email
+		// sendEmail(formAction, repo)
 
 	}
 
