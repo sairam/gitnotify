@@ -68,8 +68,13 @@
 
 {{ end }}
 </form>
-{{ if eq .Repo "" }}{{else}}<a style="position: relative;left: 10px;top: -50px;" href="" class="btn btn-danger" onclick="alert('yet to delete')">Remove</a>{{end}}
-
+{{ if eq .Repo "" }}{{else}}
+<form action="/" method="post">
+<input type="hidden" name="repo" value="{{ .Repo }}">
+<input type="hidden" name="_delete" value="true">
+<button type="submit" style="position: relative;left: 10px;top: -50px;" href="" class="btn btn-danger">Remove</button>
+</form>
+{{end}}
 <hr />
 {{ end }}
 

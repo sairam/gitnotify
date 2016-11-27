@@ -84,6 +84,20 @@ func contains(s []string, e string) bool {
 	return false
 }
 
+func deleteRepo(conf *Setting, delRepo *Repo) bool {
+	var repos []*Repo
+	isProcessed := false
+	for _, repo := range conf.Repos {
+		if repo.Repo == delRepo.Repo {
+			isProcessed = true
+		} else {
+			repos = append(repos, repo)
+		}
+	}
+	conf.Repos = repos
+	return isProcessed
+}
+
 func replaceRepo(conf *Setting, newRepo *Repo) {
 	var repos []*Repo
 	isProcessed := false
@@ -103,16 +117,16 @@ func replaceRepo(conf *Setting, newRepo *Repo) {
 
 // SettingsShowHandler is responsible for displaying the form
 func settingsShowHandler(w http.ResponseWriter, r *http.Request) {
-	settingsHandler(w, r, false)
+	settingsHandler(w, r, "show")
 }
 
 // SettingsSaveHandler is responsible for persisting the information into the file
 // and displays any errors in case of failure. If success redirects to /
 func settingsSaveHandler(w http.ResponseWriter, r *http.Request) {
-	settingsHandler(w, r, true)
+	settingsHandler(w, r, "update")
 }
 
-func settingsHandler(w http.ResponseWriter, r *http.Request, parseForm bool) {
+func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) {
 	// Redirect user if not logged in
 	hc := &httpContext{w, r}
 	redirected := hc.redirectUnlessLoggedIn()
@@ -125,8 +139,16 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, parseForm bool) {
 	conf := new(Setting)
 	conf.load(configFile)
 
-	if parseForm == true {
+	if formAction == "update" {
 		r.ParseForm()
+		if len(r.Form["_delete"]) > 0 && r.Form["_delete"][0] == "true" {
+			formAction = "delete"
+		}
+	}
+
+	switch formAction {
+	case "show":
+	case "update":
 		var references []reference
 		for _, t := range strings.Split(r.Form["references"][0], ",") {
 			// TODO - add validation on name of references
@@ -154,6 +176,24 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, parseForm bool) {
 		} else {
 			hc.addFlash("Updated config for " + repo.Repo)
 		}
+	case "delete":
+		repo := &Repo{
+			Repo: r.Form["repo"][0],
+		}
+		// TODO move method under repo/settings struct
+		success := deleteRepo(conf, repo)
+		if success == false {
+			hc.addFlash("Error deleting Repository " + repo.Repo)
+		} else {
+			userInfo := hc.userLoggedinInfo()
+			configFile := userInfo.getConfigFile()
+			if err := conf.save(configFile); err != nil {
+				hc.addFlash("Error saving configuration " + err.Error() + " for " + repo.Repo)
+			} else {
+				hc.addFlash("Delete config for " + repo.Repo)
+			}
+		}
+
 	}
 
 	conf.Repos = append(conf.Repos, &Repo{})

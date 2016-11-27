@@ -50,6 +50,7 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", settingsShowHandler).Methods("GET")
+	// POST is responsible for create, update and delete
 	r.HandleFunc("/", settingsSaveHandler).Methods("POST")
 	r.HandleFunc("/home", homeHandler).Methods("GET")
 
