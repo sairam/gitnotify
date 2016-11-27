@@ -18,73 +18,84 @@ import (
 )
 
 type branches struct {
-	branchList []string
-	repo       *Repo
+	repo    *Repo
+	auth    *Authentication
+	client  *githubApp.Client
+	option  string
+	oldList []string
+	newList []string
 }
 
 func getData() {
-	// var conf *Setting
-	// var configFile = "data/github/sairam/settings.yml"
-	var accessTokenByUser = os.Getenv("GITHUB_USER_TOKEN") // this is temporary for validating responses
+	// First get the authentication info
+	auth := &Authentication{
+		Provider: "github",
+		UserName: "sairam",
+		Token:    "",
+	}
 
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: accessTokenByUser},
-	)
+	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: auth.Token})
 	tc := oauth2.NewClient(oauth2.NoContext, ts)
-
 	client := githubApp.NewClient(tc)
-	branchesURL := "https://api.github.com/repos/sairam/gitnotify/branches"
+
+	// loop through repos and their branches
+	repo := &Repo{
+		Repo: "sairam/gitnotify",
+	}
+
+	branch := &branches{
+		repo:   repo,
+		client: client,
+		auth:   auth,
+	}
+
+	fmt.Println(updateNewBranches(branch, "branches"))
+	fmt.Println(updateNewBranches(branch, "tags"))
+
+	// sendEmail(diff)
+}
+
+func updateNewBranches(branch *branches, option string) []string {
+	branch.option = option
+	branchesURL := "https://api.github.com/repos/sairam/gitnotify/" + option
 	v := new([]*BranchInfo)
 	req, _ := http.NewRequest("GET", branchesURL, nil)
-	client.Do(req, v)
+	branch.client.Do(req, v)
 	newBranches := make([]string, len(*v))
 	for i, a := range *v {
 		newBranches[i] = a.Name
 	}
 
-	var repo *Repo
-	repo = &Repo{
-		Repo: "sairam/gitnotify",
-	}
-	new := &branches{
-		branchList: newBranches,
-		repo:       repo,
-	}
+	branch.newList = newBranches
+	branch.load()
+	diff := branch.diff()
+	branch.save()
+	return diff
+}
 
-	old := &branches{
-		repo: repo,
-	}
-	old.load()
-
-	// check data difference with previously saved one
-	diff := getNewStrings(old.branchList, new.branchList)
-	fmt.Println(diff)
-
-	new.save()
-
-	// TODO
-	// diff := diffData(v)
-	// sendEmail(diff)
-	// persistChanges(v)
+// check data difference with previously saved one
+func (b *branches) diff() []string {
+	return getNewStrings(b.oldList, b.newList)
 }
 
 func (b *branches) fileName() string {
 	repo := b.repo
 	fileName := strings.Replace(repo.Repo, "/", "__", 1)
-	dir := fmt.Sprintf("%s/repo", "data/github/sairam")
+	dir := fmt.Sprintf("data/%s/%s/repo", b.auth.Provider, b.auth.UserName)
 	if _, err := os.Stat(dir); err != nil {
 		os.Mkdir(dir, 0700)
 	}
-	return fmt.Sprintf("%s/%s.yml", dir, fileName)
+	return fmt.Sprintf("%s/%s-%s.yml", dir, fileName, b.option)
 }
 
+// load copies data into oldList
 func (b *branches) load() error {
 	data, err := ioutil.ReadFile(b.fileName())
 	if os.IsNotExist(err) {
 		return err
 	}
 
-	err = yaml.Unmarshal(data, &b.branchList)
+	err = yaml.Unmarshal(data, &b.oldList)
 	if err != nil {
 		return err
 	}
@@ -92,8 +103,9 @@ func (b *branches) load() error {
 	return nil
 }
 
+// save copies data from newList into file
 func (b *branches) save() error {
-	out, err := yaml.Marshal(b.branchList)
+	out, err := yaml.Marshal(b.newList)
 	if err != nil {
 		return err
 	}
@@ -110,6 +122,6 @@ func getNewStrings(old, new []string) []string {
 	return strs
 }
 
-// func init() {
-// 	getData()
-// }
+func init() {
+	getData()
+}
