@@ -1,5 +1,10 @@
 package main
 
+import (
+	"fmt"
+	"strings"
+)
+
 func (e *BranchInfo) String() string {
 	return Stringify(e)
 }
@@ -21,4 +26,75 @@ type BranchInfo struct {
 type CommitRef struct {
 	Sha string `json:"sha" yaml:"sha"`
 	URL string `json:"url" yaml:"url"`
+}
+
+type LocalDiff struct {
+	refs []*LocalRef
+}
+
+func (ld *LocalDiff) add(l *LocalRef) {
+	ld.refs = append(ld.refs, l)
+}
+
+func (ld *LocalDiff) toHTML() string {
+	s := make([]string, len(ld.refs))
+
+	for i, ref := range ld.refs {
+		s[i] = ref.toHTML()
+	}
+	return strings.Join(s, "<br /><hr/>")
+}
+
+func (ld *LocalDiff) toText() string {
+	s := make([]string, len(ld.refs))
+
+	for i, ref := range ld.refs {
+		s[i] = ref.toText()
+	}
+	delim := strings.Repeat("-", 80)
+	return strings.Join(s, "\n\n"+delim+"\n\n")
+}
+
+// LocalRef is used tracking Repo and Branch from the email
+type LocalRef struct {
+	Repo       string
+	Title      string
+	References []string
+}
+
+func (l *LocalRef) urlLink() string {
+	return fmt.Sprintf(githubURLEndPoint, l.Repo)
+}
+
+func (l *LocalRef) treeLink(ref string) string {
+	return fmt.Sprintf(githubTreeURLEndPoint, l.Repo, ref)
+}
+func (l *LocalRef) commitLink(ref string) string {
+	return fmt.Sprintf(githubCommitURLEndPoint, l.Repo, ref)
+}
+
+func (l *LocalRef) toHTML() string {
+	s := make([]string, len(l.References)+1)
+	if len(l.References) != 0 {
+		s[0] = fmt.Sprintf("Fetched <strong>%d</strong> recently created <strong>%s</strong> for <a href=\"%s\">%s</a>", len(l.References), l.Title, l.urlLink(), l.Repo)
+	} else {
+		s[0] = fmt.Sprintf("No new %s were found for <a href=\"%s\">%s</a>", l.Title, l.urlLink(), l.Repo)
+	}
+	for i, ref := range l.References {
+		s[i+1] = fmt.Sprintf("<a href=\"%s\">%s::%s</a> <a href=\"%s\">[commits]</a>", l.treeLink(ref), l.Repo, ref, l.commitLink(ref))
+	}
+	return strings.Join(s, "<br />")
+}
+
+func (l *LocalRef) toText() string {
+	s := make([]string, len(l.References)+1)
+	if len(l.References) != 0 {
+		s[0] = fmt.Sprintf("Fetched *%d recently created %s*: for %s(%s)", len(l.References), l.Title, l.Repo, l.urlLink())
+	} else {
+		s[0] = fmt.Sprintf("No new %s were found for %s(%s)", l.Title, l.urlLink(), l.Repo)
+	}
+	for i, ref := range l.References {
+		s[i+1] = fmt.Sprintf("%s - %s | Commits: %s", ref, l.treeLink(ref), l.commitLink(ref))
+	}
+	return strings.Join(s, "\n")
 }

@@ -68,39 +68,44 @@ func process(conf *Setting) {
 		auth:   conf.Auth,
 	}
 
-	diff := ""
+	var diff LocalDiff
 	// loop through repos and their branches
 	for _, repo := range conf.Repos {
 		branch.repo = repo
 
 		if repo.Branches {
 			branchesDiff := updateNewBranches(branch, "branches")
-			if len(branchesDiff) > 0 {
-				diff += "New branches for " + repo.Repo + "\n" + strings.Join(branchesDiff, "\n") + "\n"
-			} else {
-				diff += "No New branches created today for " + repo.Repo + "\n"
+			l := &LocalRef{
+				Title:      "Branches",
+				Repo:       repo.Repo,
+				References: branchesDiff,
 			}
+			diff.add(l)
 		}
 
 		if repo.Tags {
 			tagsDiff := updateNewBranches(branch, "tags")
-			if len(tagsDiff) > 0 {
-				diff += "New tags for " + repo.Repo + "\n" + strings.Join(tagsDiff, "\n") + "\n"
-			} else {
-				diff += "No New tags created today for " + repo.Repo + "\n"
+			l := &LocalRef{
+				Title:      "Tags",
+				Repo:       repo.Repo,
+				References: tagsDiff,
 			}
+			diff.add(l)
 		}
 	}
 
+	t := time.Now()
+	subject := "[GitNotify] New Stuff from your Repositories - " + t.Format("02 Jan 2006")
+
 	to := &recepient{
-		Name:    "Sairam",
-		Address: "sairam.kunala@gmail.com",
+		Name:    conf.Auth.Name,
+		Address: conf.Auth.Email,
 	}
 
-	t := time.Now()
 	ctx := &emailCtx{
-		Subject: "[GitNotify] Diff for Your Repositories - " + t.Format("02 Jan 2006"),
-		Body:    diff,
+		Subject:  subject,
+		TextBody: diff.toText(),
+		HTMLBody: diff.toHTML(),
 	}
 
 	sendEmail(to, ctx)
@@ -108,7 +113,7 @@ func process(conf *Setting) {
 
 func updateNewBranches(branch *branches, option string) []string {
 	branch.option = option
-	branchesURL := fmt.Sprintf("https://api.github.com/repos/%s/%s", branch.repo.Repo, branch.option)
+	branchesURL := fmt.Sprintf("%s%s/%s", githubAPIEndPoint, branch.repo.Repo, branch.option)
 	fmt.Println(branchesURL)
 	v := new([]*BranchInfo)
 	req, _ := http.NewRequest("GET", branchesURL, nil)

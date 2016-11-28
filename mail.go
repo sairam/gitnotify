@@ -2,7 +2,6 @@ package main
 
 // Mail helper methods
 import (
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -65,24 +64,25 @@ type recepient struct {
 	Address string
 }
 type emailCtx struct {
-	Subject string
-	Body    string
+	Subject  string
+	HTMLBody string
+	TextBody string
 }
 
 // TODO: modify from email address
 var from = &recepient{
-	Name:    "Git Notify",
-	Address: "sairam.kunala@gmail.com",
+	Name:    fromName,
+	Address: fromEmail,
 }
 
 func sendEmail(to *recepient, e *emailCtx) {
 
 	m := gomail.NewMessage()
-	m.SetHeader("From", fmt.Sprintf("%s <%s>", from.Name, from.Address))
+	m.SetHeader("From", m.FormatAddress(from.Address, from.Name))
 	m.SetAddressHeader("To", to.Address, to.Name)
 	m.SetHeader("Subject", e.Subject)
-	m.SetBody("text/plain", e.Body)
-	m.AddAlternative("text/html", "<pre>"+e.Body+"</pre>")
+	m.SetBody("text/plain", e.TextBody)
+	m.AddAlternative("text/html", "<pre style='font-size: 2em'>"+e.HTMLBody+"</pre>")
 
 	emailCh <- m
 }

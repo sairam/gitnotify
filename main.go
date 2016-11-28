@@ -9,10 +9,16 @@ import (
 )
 
 const (
-	serverProto  = "http://"
-	host         = "localhost:3000"
-	dataDir      = "./data"
-	settingsFile = "settings.yml"
+	serverProto             = "http://"
+	host                    = "localhost:3000"
+	dataDir                 = "./data"
+	settingsFile            = "settings.yml"
+	fromName                = "Git Notify"
+	fromEmail               = "sairam.kunala@gmail.com"
+	githubAPIEndPoint       = "https://api.github.com/repos/"
+	githubURLEndPoint       = "https://github.com/%s/"           // repo/abc
+	githubTreeURLEndPoint   = "https://github.com/%s/tree/%s"    // repo/abc , develop
+	githubCommitURLEndPoint = "https://github.com/%s/commits/%s" // repo/abc , develop
 )
 
 //Page has all information about the page
