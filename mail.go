@@ -18,48 +18,46 @@ var (
 	smtpPassword = os.Getenv("SMTP_PASS")
 )
 
-func daemon() {
-	go func() {
-		var s gomail.SendCloser
-		var err error
-		open := false
+func mailDaemon() {
+	var s gomail.SendCloser
+	var err error
+	open := false
 
-		d := gomail.NewDialer(smtpHost, 587, smtpUsername, smtpPassword)
-		d.LocalName = "localhost"
-		for {
-			select {
-			case m, ok := <-emailCh:
-				log.Println("starting to send an email!")
-				if !ok {
-					return
+	d := gomail.NewDialer(smtpHost, 587, smtpUsername, smtpPassword)
+	d.LocalName = "localhost"
+	for {
+		select {
+		case m, ok := <-emailCh:
+			log.Println("starting to send an email!")
+			if !ok {
+				return
+			}
+			if !open {
+				if s, err = d.Dial(); err != nil {
+					log.Println("going to panic")
+					panic(err)
 				}
-				if !open {
-					if s, err = d.Dial(); err != nil {
-						log.Println("going to panic")
-						panic(err)
-					}
-					open = true
+				open = true
+			}
+			if err := gomail.Send(s, m); err != nil {
+				log.Print(err)
+			}
+			log.Println("done with email")
+			// You should close the Amazon SES within 5 seconds of next request. else you it fails with 421.
+		case <-time.After(4 * time.Second):
+			if open {
+				if err := s.Close(); err != nil {
+					log.Println("going to panic. well. not really!")
+					// panic(err)
 				}
-				if err := gomail.Send(s, m); err != nil {
-					log.Print(err)
-				}
-				log.Println("done with email")
-				// You should close the Amazon SES within 5 seconds of next request. else you it fails with 421.
-			case <-time.After(4 * time.Second):
-				if open {
-					if err := s.Close(); err != nil {
-						log.Println("going to panic. well. not really!")
-						// panic(err)
-					}
-					open = false
-				}
+				open = false
 			}
 		}
-	}()
+	}
 }
 
 func init() {
-	daemon()
+	go mailDaemon()
 }
 
 type recepient struct {

@@ -13,9 +13,9 @@ import (
 // Setting is the data structure that has all the details
 //  data/$provider/$username/settings.yml
 type Setting struct {
-	Version        `yaml:"version"`
-	Repos          []*Repo `yaml:"repos"`
-	Authentication `yaml:"auth"`
+	Version `yaml:"version"`
+	Repos   []*Repo         `yaml:"repos"`
+	Auth    *Authentication `yaml:"auth"`
 }
 
 // Version of the structure

@@ -15,9 +15,8 @@ import (
 	"github.com/markbates/goth/providers/github"
 )
 
-// TODO rename to Authentication
 // data/$provider/$user/settings.yml
-type userInfoSession struct {
+type Authentication struct {
 	Provider string `yaml:"provider"` // github/gitlab
 	Name     string `yaml:"name"`     // name of the person addressing to
 	Email    string `yaml:"email"`    // email that we will send to
@@ -25,9 +24,16 @@ type userInfoSession struct {
 	Token    string `yaml:"token"`    // used to query the provider
 }
 
-type Authentication userInfoSession
+func (userInfo *Authentication) save() {
 
-func (userInfo *userInfoSession) getConfigFile() string {
+	conf := new(Setting)
+	conf.load(userInfo.getConfigFile())
+	conf.Auth = userInfo
+	conf.save(userInfo.getConfigFile())
+
+}
+
+func (userInfo *Authentication) getConfigFile() string {
 	if userInfo.Provider == "" {
 		return ""
 	}
@@ -71,13 +77,18 @@ func initAuth(p *mux.Router) {
 			return
 		}
 		authType, _ := getProviderName(req)
-		userInfo := &userInfoSession{
+		auth := &Authentication{
 			Provider: authType,
 			UserName: user.NickName,
+			Name:     user.Name,
+			Email:    user.Email,
 			Token:    user.AccessToken,
 		}
+		auth.save()
+
 		hc := &httpContext{res, req}
-		hc.setSession(userInfo)
+		hc.setSession(auth)
+
 		http.Redirect(res, req, homePageForLoggedIn, 302)
 	}).Methods("GET")
 

@@ -5,9 +5,11 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	yaml "gopkg.in/yaml.v2"
 
@@ -26,39 +28,79 @@ type branches struct {
 	newList []string
 }
 
-func getData() {
-	// First get the authentication info
-	auth := &Authentication{
-		Provider: "github",
-		UserName: "sairam",
-		Token:    "",
-	}
+func fetchFiles(provider string) []string {
 
-	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: auth.Token})
+	dir := fmt.Sprintf("%s/%s", dataDir, provider)
+	fis, err := ioutil.ReadDir(dir)
+	if err != nil {
+		log.Println(err)
+		return []string{}
+	}
+	files := make([]string, len(fis))
+	for i, fi := range fis {
+		if fi.IsDir() {
+			files[i] = dir + "/" + fi.Name() + "/" + settingsFile
+		}
+	}
+	return files
+}
+
+func getData(provider string) {
+	files := fetchFiles("github")
+	for i, filename := range files {
+		if filename == "" {
+			continue
+		}
+		conf := new(Setting)
+		log.Printf("Processing file %d - %s\n", i, filename)
+		conf.load(filename)
+		process(conf)
+	}
+}
+
+func process(conf *Setting) {
+	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: conf.Auth.Token})
 	tc := oauth2.NewClient(oauth2.NoContext, ts)
 	client := githubApp.NewClient(tc)
 
-	// loop through repos and their branches
-	repo := &Repo{
-		Repo: "sairam/gitnotify",
-	}
-
 	branch := &branches{
-		repo:   repo,
 		client: client,
-		auth:   auth,
+		auth:   conf.Auth,
 	}
 
-	branchesDiff := updateNewBranches(branch, "branches")
-	tagsDiff := updateNewBranches(branch, "tags")
+	diff := ""
+	// loop through repos and their branches
+	for _, repo := range conf.Repos {
+		branch.repo = repo
+
+		if repo.Branches {
+			branchesDiff := updateNewBranches(branch, "branches")
+			if len(branchesDiff) > 0 {
+				diff += "New branches for " + repo.Repo + "\n" + strings.Join(branchesDiff, "\n") + "\n"
+			} else {
+				diff += "No New branches created today for " + repo.Repo + "\n"
+			}
+		}
+
+		if repo.Tags {
+			tagsDiff := updateNewBranches(branch, "tags")
+			if len(tagsDiff) > 0 {
+				diff += "New tags for " + repo.Repo + "\n" + strings.Join(tagsDiff, "\n") + "\n"
+			} else {
+				diff += "No New tags created today for " + repo.Repo + "\n"
+			}
+		}
+	}
 
 	to := &recepient{
 		Name:    "Sairam",
 		Address: "sairam.kunala@gmail.com",
 	}
+
+	t := time.Now()
 	ctx := &emailCtx{
-		Subject: "[GitNotify] Diff for Repositories - 28th Nov 2016",
-		Body:    strings.Join(branchesDiff, "\n") + "\n\n-------------------------\n" + strings.Join(tagsDiff, "\n"),
+		Subject: "[GitNotify] Diff for Your Repositories - " + t.Format("02 Jan 2006"),
+		Body:    diff,
 	}
 
 	sendEmail(to, ctx)
@@ -66,7 +108,8 @@ func getData() {
 
 func updateNewBranches(branch *branches, option string) []string {
 	branch.option = option
-	branchesURL := "https://api.github.com/repos/sairam/gitnotify/" + option
+	branchesURL := fmt.Sprintf("https://api.github.com/repos/%s/%s", branch.repo.Repo, branch.option)
+	fmt.Println(branchesURL)
 	v := new([]*BranchInfo)
 	req, _ := http.NewRequest("GET", branchesURL, nil)
 	branch.client.Do(req, v)
@@ -131,6 +174,6 @@ func getNewStrings(old, new []string) []string {
 	return strs
 }
 
-// func init() {
-// 	getData()
-// }
+func init() {
+	getData("github")
+}

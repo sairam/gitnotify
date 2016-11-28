@@ -9,25 +9,27 @@ import (
 )
 
 const (
-	serverProto = "http://"
-	host        = "localhost:3000"
+	serverProto  = "http://"
+	host         = "localhost:3000"
+	dataDir      = "./data"
+	settingsFile = "settings.yml"
 )
 
 //Page has all information about the page
 type Page struct {
 	Title     string
 	PageTitle string
-	User      *userInfoSession
+	User      *Authentication
 	Flashes   []string
 	Context   interface{}
 }
 
 func newPage(hc *httpContext, title string, pageTitle string, conf interface{}) *Page {
-	var userInfo *userInfoSession
+	var userInfo *Authentication
 	if hc.isUserLoggedIn() {
 		userInfo = hc.userLoggedinInfo()
 	} else {
-		userInfo = &userInfoSession{}
+		userInfo = &Authentication{}
 	}
 
 	page := &Page{

@@ -96,7 +96,7 @@ func (hc *httpContext) addFlash(flash string) {
 }
 
 // responsible for setting information about the logged in user via github into the session
-func (hc *httpContext) setSession(userInfo *userInfoSession) {
+func (hc *httpContext) setSession(userInfo *Authentication) {
 
 	session := hc.getSession()
 	if session == nil {
@@ -114,8 +114,8 @@ func (hc *httpContext) setSession(userInfo *userInfoSession) {
 	hc.saveSession(session)
 }
 
-func (hc *httpContext) userLoggedinInfo() *userInfoSession {
-	userInfo := new(userInfoSession)
+func (hc *httpContext) userLoggedinInfo() *Authentication {
+	userInfo := new(Authentication)
 
 	session := hc.getSession()
 	if session == nil {
