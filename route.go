@@ -49,10 +49,19 @@ func getData() {
 		auth:   auth,
 	}
 
-	fmt.Println(updateNewBranches(branch, "branches"))
-	fmt.Println(updateNewBranches(branch, "tags"))
+	branchesDiff := updateNewBranches(branch, "branches")
+	tagsDiff := updateNewBranches(branch, "tags")
 
-	// sendEmail(diff)
+	to := &recepient{
+		Name:    "Sairam",
+		Address: "sairam.kunala@gmail.com",
+	}
+	ctx := &emailCtx{
+		Subject: "[GitNotify] Diff for Repositories - 28th Nov 2016",
+		Body:    strings.Join(branchesDiff, "\n") + "\n\n-------------------------\n" + strings.Join(tagsDiff, "\n"),
+	}
+
+	sendEmail(to, ctx)
 }
 
 func updateNewBranches(branch *branches, option string) []string {
@@ -122,6 +131,6 @@ func getNewStrings(old, new []string) []string {
 	return strs
 }
 
-func init() {
-	getData()
-}
+// func init() {
+// 	getData()
+// }
