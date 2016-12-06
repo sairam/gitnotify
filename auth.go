@@ -15,6 +15,18 @@ import (
 	"github.com/markbates/goth/providers/github"
 )
 
+// https://github.com/markbates/goth/blob/master/providers/github/github.go
+//	github.AuthURL = "https://github.acme.com/login/oauth/authorize
+//	github.TokenURL = "https://github.acme.com/login/oauth/access_token
+//	github.ProfileURL = "https://github.acme.com/api/v3/user
+
+// Customizing Auth/Token/Profile URL unavailable for Gitlab.
+// TODO send PR
+// https://github.com/markbates/goth/blob/master/providers/gitlab/gitlab.go
+
+// https://developer.github.com/v3/oauth/#scopes
+// for github, add scope: "repo:status" to access private repositories
+
 // data/$provider/$user/settings.yml
 type Authentication struct {
 	Provider string `yaml:"provider"` // github/gitlab
@@ -55,10 +67,13 @@ func init() {
 func initAuth(p *mux.Router) {
 	goth.UseProviders(
 		github.New(os.Getenv("GITHUB_KEY"), os.Getenv("GITHUB_SECRET"), serverProto+host+"/auth/github/callback"),
+		// gitlab.New(os.Getenv("GITLAB_KEY"), os.Getenv("GITLAB_SECRET"), serverProto+host+"/auth/github/callback"),
 	)
 
-	m := make(map[string]string)
-	m["github"] = "Github"
+	m := map[string]string{
+		"github": "Github",
+		// "gitlab": "GitLab",
+	}
 
 	var keys []string
 	for k := range m {

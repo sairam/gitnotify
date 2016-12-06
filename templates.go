@@ -11,14 +11,13 @@ import (
 const pathPartialTemplate = "tmpl/partials/"
 const pathTemplate = "tmpl/"
 
-// SimpleTemplate ...
-type SimpleTemplate struct {
+type simpleTemplate struct {
 	prefix      string
 	partialsDir string
 	t           *template.Template
 }
 
-var templates *SimpleTemplate
+var templates *simpleTemplate
 
 func init() {
 	reloadTemplates()
@@ -26,7 +25,7 @@ func init() {
 
 func reloadTemplates() {
 	// Templates with functions available to them
-	templates = &SimpleTemplate{
+	templates = &simpleTemplate{
 		"tmpl/",
 		"tmpl/partials/",
 		template.New("").Funcs(templateMap),

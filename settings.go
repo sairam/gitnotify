@@ -14,9 +14,28 @@ import (
 //  data/$provider/$username/settings.yml
 type Setting struct {
 	Version `yaml:"version"`
-	Repos   []*Repo         `yaml:"repos"`
-	Auth    *Authentication `yaml:"auth"`
+	Repos   []*Repo                 `yaml:"repos"`
+	Auth    *Authentication         `yaml:"auth"`
+	Info    map[string]*Information `yaml:"fetched_info"`
 }
+
+// Information is all the information fetched from remote location, updated and saved
+type Information struct {
+	Tags     []string       `yaml:"tags"`
+	Branches []string       `yaml:"branches"`
+	Commits  LocalCommitRef `yaml:"commits"`
+}
+
+func newInformation() *Information {
+	i := &Information{}
+	i.Commits = make(LocalCommitRef)
+	return i
+}
+
+// type RepoName string
+
+// map[BranchName] = "1234567890abcdef"
+type LocalCommitRef map[string]string
 
 // Version of the structure
 type Version string
@@ -62,6 +81,9 @@ func (c *Setting) load(settingFile string) error {
 
 	if err != nil {
 		return err
+	}
+	if c.Info == nil {
+		c.Info = make(map[string]*Information)
 	}
 	return nil
 }

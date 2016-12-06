@@ -5,6 +5,16 @@ import (
 	"strings"
 )
 
+/*
+Example:
+  [{
+    "name": "1-2-stable",
+    "commit": {
+      "sha": "5b3f7563ae1b4a7160fda7fe34240d40c5777dcd",
+      "url": "https://api.github.com/repos/rails/rails/commits/5b3f7563ae1b4a7160fda7fe34240d40c5777dcd"
+    }
+  }]
+*/
 // TagInfo .
 // In `Tag` ignore zipball_url, tarball_url
 type TagInfo struct {
@@ -26,11 +36,18 @@ func (e *CommitRef) String() string {
 	return Stringify(e)
 }
 
-type LocalDiff struct {
-	refs []*LocalRef
+// DifferView is implemented by LocalRef and BranchDiff
+type DifferView interface {
+	toText() string
+	toHTML() string
 }
 
-func (ld *LocalDiff) add(l *LocalRef) {
+// LocalDiff has multiple references to DifferView interface
+type LocalDiff struct {
+	refs []DifferView
+}
+
+func (ld *LocalDiff) add(l DifferView) {
 	ld.refs = append(ld.refs, l)
 }
 
@@ -51,6 +68,19 @@ func (ld *LocalDiff) toText() string {
 	}
 	delim := strings.Repeat("-", 80)
 	return strings.Join(s, "\n\n"+delim+"\n\n")
+}
+
+type BranchDiff struct {
+	Repo       string
+	Title      string
+	References []string // old and new
+}
+
+func (b *BranchDiff) toText() string {
+	return "text"
+}
+func (b *BranchDiff) toHTML() string {
+	return "html"
 }
 
 // LocalRef is used tracking Repo and Branch from the email

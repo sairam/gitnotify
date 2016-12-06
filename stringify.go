@@ -1,5 +1,7 @@
 package main
 
+// Source: https://github.com/google/go-github/blob/master/github/strings.go
+
 import (
 	"bytes"
 	"fmt"
@@ -7,18 +9,19 @@ import (
 	"reflect"
 )
 
-// Stringify attempts to create a reasonable string representation of types in
-// the GitHub library.  It does things like resolve pointers to their values
-// and omits struct fields with nil values.
-func Stringify(message interface{}) string {
+// Stringify attempts to create a reasonable string representation of types.
+// It does things like resolve pointers to their values and omits struct fields with nil values.
+// This is taken from Stringify method of go-github.
+// License can be found at https://github.com/google/go-github/blob/master/LICENSE
+func Stringify(anyStruct interface{}) string {
 	var buf bytes.Buffer
-	v := reflect.ValueOf(message)
+	v := reflect.ValueOf(anyStruct)
 	stringifyValue(&buf, v)
 	return buf.String()
 }
 
 // stringifyValue was heavily inspired by the goprotobuf library.
-
+// see https://github.com/golang/protobuf
 func stringifyValue(w io.Writer, val reflect.Value) {
 	if val.Kind() == reflect.Ptr && val.IsNil() {
 		w.Write([]byte("<nil>"))

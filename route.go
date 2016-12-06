@@ -7,17 +7,19 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
-	"strings"
 	"time"
-
-	yaml "gopkg.in/yaml.v2"
 
 	"github.com/aryann/difflib"
 	"golang.org/x/oauth2"
 
 	githubApp "github.com/google/go-github/github"
+	yaml "gopkg.in/yaml.v2"
 )
+
+// TODO - abstract client response to an interface
+// type remoteClient interface {
+// 	Do(req *http.Request, v interface{}) interface{}
+// }
 
 type branches struct {
 	repo    *Repo
@@ -65,6 +67,7 @@ func getData(provider string) {
 		log.Printf("Processing file %d - %s\n", i, filename)
 		conf.load(filename)
 		process(conf)
+		conf.save(filename)
 	}
 }
 
@@ -84,7 +87,7 @@ func process(conf *Setting) {
 		branch.repo = repo
 
 		if repo.Branches || len(repo.NamedReferences) > 0 {
-			v := getNewInfo(branch, "branches")
+			newBranches := getNewInfo(branch, "branches")
 			// commitRefs - TODO load from file
 			if len(repo.NamedReferences) > 0 {
 				r := &repoBranchCommit{}
@@ -92,7 +95,7 @@ func process(conf *Setting) {
 				data, _ := ioutil.ReadFile("sample.yml")
 				yaml.Unmarshal(data, &r.data)
 				commitDiff := r.branches(repo.Repo)
-				diffWithOldCommits(v, branch, commitDiff)
+				diffWithOldCommits(newBranches, branch, commitDiff)
 				// save to file
 				for i, t := range commitDiff.data {
 					fmt.Printf("%s,%s,%s\n", i, t.oldCommit, t.newCommit)
@@ -107,7 +110,7 @@ func process(conf *Setting) {
 			}
 
 			if repo.Branches {
-				branchesDiff := diffWithOldBranches(v, branch)
+				branchesDiff := diffWithOldBranches(newBranches, branch, "branches", conf.Info)
 				l := &LocalRef{
 					Title:      "Branches",
 					Repo:       repo.Repo,
@@ -118,8 +121,8 @@ func process(conf *Setting) {
 		}
 
 		if repo.Tags {
-			v := getNewInfo(branch, "tags")
-			tagsDiff := diffWithOldBranches(v, branch)
+			newTags := getNewInfo(branch, "tags")
+			tagsDiff := diffWithOldBranches(newTags, branch, "tags", conf.Info)
 			l := &LocalRef{
 				Title:      "Tags",
 				Repo:       repo.Repo,
@@ -156,56 +159,31 @@ func getNewInfo(branch *branches, option string) []*TagInfo {
 	return *v
 }
 
-func diffWithOldBranches(v []*TagInfo, branch *branches) []string {
+func diffWithOldBranches(v []*TagInfo, branch *branches, option string, info map[string]*Information) []string {
 	newBranches := make([]string, len(v))
 	for i, a := range v {
 		newBranches[i] = a.Name
 	}
 
 	branch.newList = newBranches
-	branch.load()
-	diff := branch.diff()
-	branch.save()
+	t := info[branch.repo.Repo]
+	if option == "tags" && t != nil {
+		branch.oldList = t.Tags
+	} else if option == "branches" && t != nil {
+		branch.oldList = t.Branches
+	}
+	diff := getNewStrings(branch.oldList, branch.newList)
+	if t == nil {
+		info[branch.repo.Repo] = newInformation()
+		t = info[branch.repo.Repo]
+	}
+	if option == "tags" {
+		t.Tags = branch.newList
+	} else if option == "branches" {
+		t.Branches = branch.newList
+	}
+
 	return diff
-}
-
-// check data difference with previously saved one
-func (b *branches) diff() []string {
-	return getNewStrings(b.oldList, b.newList)
-}
-
-func (b *branches) fileName() string {
-	repo := b.repo
-	fileName := strings.Replace(repo.Repo, "/", "__", 1)
-	dir := fmt.Sprintf("data/%s/%s/repo", b.auth.Provider, b.auth.UserName)
-	if _, err := os.Stat(dir); err != nil {
-		os.Mkdir(dir, 0700)
-	}
-	return fmt.Sprintf("%s/%s-%s.yml", dir, fileName, b.option)
-}
-
-// load copies data into oldList
-func (b *branches) load() error {
-	data, err := ioutil.ReadFile(b.fileName())
-	if os.IsNotExist(err) {
-		return err
-	}
-
-	err = yaml.Unmarshal(data, &b.oldList)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// save copies data from newList into file
-func (b *branches) save() error {
-	out, err := yaml.Marshal(b.newList)
-	if err != nil {
-		return err
-	}
-	return ioutil.WriteFile(b.fileName(), out, 0600)
 }
 
 func getNewStrings(old, new []string) []string {
