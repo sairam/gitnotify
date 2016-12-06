@@ -71,16 +71,39 @@ func (ld *LocalDiff) toText() string {
 }
 
 type BranchDiff struct {
-	Repo       string
-	Title      string
-	References []string // old and new
+	Repo string
+	*branchCommits
 }
 
 func (b *BranchDiff) toText() string {
-	return "text"
+	data := make([]string, 0, len(b.data)+1)
+	data = append(data, fmt.Sprintf("Fetched *commit changes for repo %s*:", b.Repo))
+	for branchName, bdiff := range b.data {
+		if bdiff.newCommit == NoneString {
+			data = append(data, fmt.Sprintf("*%s* branch is not present in repository", branchName))
+		} else if bdiff.newCommit == bdiff.oldCommit {
+		} else {
+			data = append(data, fmt.Sprintf("Branch Diff for %s is %s", branchName, bdiff.urlLink(b.Repo)))
+		}
+	}
+	return strings.Join(data, "\n")
+}
+func (b *branchCommit) urlLink(repoName string) string {
+	return fmt.Sprintf(githubCompareURLEndPoint, repoName, b.oldCommit, b.newCommit)
 }
 func (b *BranchDiff) toHTML() string {
-	return "html"
+	data := make([]string, 0, len(b.data)+1)
+	data = append(data, fmt.Sprintf("Fetched <strong>commit changes for repo %s</strong>:", b.Repo))
+	for branchName, bdiff := range b.data {
+		if bdiff.newCommit == NoneString {
+			data = append(data, fmt.Sprintf("<strong>%s</strong> branch is not present in repository", branchName))
+		} else if bdiff.newCommit == bdiff.oldCommit {
+			data = append(data, fmt.Sprintf("No new changes for branch <strong>%s</strong>", branchName))
+		} else {
+			data = append(data, fmt.Sprintf("Branch Diff for <a href=\"%s\">%s</a> present", bdiff.urlLink(b.Repo), branchName))
+		}
+	}
+	return strings.Join(data, "<br />")
 }
 
 // LocalRef is used tracking Repo and Branch from the email

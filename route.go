@@ -13,13 +13,14 @@ import (
 	"golang.org/x/oauth2"
 
 	githubApp "github.com/google/go-github/github"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // TODO - abstract client response to an interface
 // type remoteClient interface {
 // 	Do(req *http.Request, v interface{}) interface{}
 // }
+
+const NoneString = "<none>"
 
 type branches struct {
 	repo    *Repo
@@ -90,23 +91,38 @@ func process(conf *Setting) {
 			newBranches := getNewInfo(branch, "branches")
 			// commitRefs - TODO load from file
 			if len(repo.NamedReferences) > 0 {
-				r := &repoBranchCommit{}
-				// load file based on repo args into r.data
-				data, _ := ioutil.ReadFile("sample.yml")
-				yaml.Unmarshal(data, &r.data)
-				commitDiff := r.branches(repo.Repo)
-				diffWithOldCommits(newBranches, branch, commitDiff)
-				// save to file
-				for i, t := range commitDiff.data {
-					fmt.Printf("%s,%s,%s\n", i, t.oldCommit, t.newCommit)
+
+				// 1. take all commits from conf.Info .Commits
+				commitDiff := new(branchCommits)
+				commitDiff.data = make(map[string]*branchCommit)
+				b := conf.Info[repo.Repo]
+				// TODO set newInformation as part of the config loader
+				// TODO bug - if we are no longer tracking a branch, we need to remove it from the new list
+				if b == nil {
+					conf.Info[branch.repo.Repo] = newInformation()
+					b = conf.Info[branch.repo.Repo]
+				}
+				for branch, commitID := range b.Commits {
+					commitDiff.data[branch] = &branchCommit{
+						oldCommit: commitID,
+					}
 				}
 
-				// l := &LocalRef{
-				// 	Title:      "Commit",
-				// 	Repo:       repo.Repo,
-				// 	References: commitDiff,
-				// }
-				// diff.add(l)
+				diffWithOldCommits(newBranches, branch, commitDiff)
+
+				for i, t := range commitDiff.data {
+					// save new data from commitDiff.data
+					if t.newCommit != NoneString {
+						b.Commits[i] = t.newCommit
+					}
+					// fmt.Printf("%s,%s,%s\n", i, t.oldCommit, t.newCommit)
+				}
+
+				l := &BranchDiff{
+					Repo:          repo.Repo,
+					branchCommits: commitDiff,
+				}
+				diff.add(l)
 			}
 
 			if repo.Branches {
@@ -196,29 +212,6 @@ func getNewStrings(old, new []string) []string {
 	return strs
 }
 
-type repoBranchCommit struct {
-	data map[string]map[string]string
-}
-
-func (r *repoBranchCommit) repos() []string {
-	keys := make([]string, 0, len(r.data))
-	for k := range r.data {
-		keys = append(keys, k)
-	}
-	return keys
-}
-
-func (r *repoBranchCommit) branches(key string) *branchCommits {
-	abc := new(branchCommits)
-	abc.data = make(map[string]*branchCommit)
-	for a, b := range r.data[key] {
-		abc.data[a] = &branchCommit{
-			oldCommit: b,
-		}
-	}
-	return abc
-}
-
 // in the branches we are tracking,
 // newcommit is "" // means that we are no longer tracking the branch/ref
 // newcommit is <none> if branch is not found/deleted in remote
@@ -240,7 +233,7 @@ func findBranchCommit(v []*TagInfo, branch string) string {
 			return a.Commit.Sha
 		}
 	}
-	return "<none>"
+	return NoneString
 }
 
 func init() {
