@@ -19,6 +19,7 @@ const (
 	githubURLEndPoint       = "https://github.com/%s/"           // repo/abc
 	githubTreeURLEndPoint   = "https://github.com/%s/tree/%s"    // repo/abc , develop
 	githubCommitURLEndPoint = "https://github.com/%s/commits/%s" // repo/abc , develop
+	// compare endpoint - https://github.com/%s/compare/%s...%s // repo/abc, base, target commit ref
 )
 
 //Page has all information about the page
