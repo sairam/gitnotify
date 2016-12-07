@@ -56,6 +56,12 @@ func mailDaemon() {
 }
 
 func init() {
+	if smtpUsername == "" {
+		panic("Missing Configuration: SMTP username is not set!")
+	}
+	if smtpPassword == "" {
+		panic("Missing Configuration: SMTP password is not set!")
+	}
 	go mailDaemon()
 }
 

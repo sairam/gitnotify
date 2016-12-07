@@ -2,6 +2,15 @@
 {{ partial "header" . }}
 {{ with .Context }}
 
+<div style="float:right">
+<form action="/run" method="post" style="float:left">
+  <button type="submit" class="btn btn-info">Check For Updates</button>
+</form>
+<form action="/run?save=false" method="post" style="float:left">
+  <button type="submit" class="btn btn-danger">Without Saving</button>
+</form>
+</div>
+
 <div class="row">
   <div class="col-md-10">
 
@@ -15,7 +24,7 @@
   <div class="form-group">
     <label for="repo" class="col-sm-4 control-label">Repository Name</label>
     <div class="col-sm-8">
-      <input type="text" class="form-control" id="repo" value="{{ .Repo }}" name="repo">
+      <input type="text" class="form-control" id="repoNew" value="{{ .Repo }}" name="repo">
       <p class="help-block">Add the name of the github repository to track</p>
     </div>
   </div>
@@ -65,6 +74,29 @@
     <button type="submit" class="btn btn-success">{{ if eq .Repo "" }}Create{{else}}Update{{end}}</button>
   </div>
 </div>
+
+{{ if eq .Repo "" }}
+<script>
+var repoNames = new Bloodhound({
+  datumTokenizer: Bloodhound.tokenizers.whitespace,
+  queryTokenizer: Bloodhound.tokenizers.whitespace,
+  remote: {
+    url: '/typeahead/repo?repo=%QUERY',
+    wildcard: '%QUERY'
+  }
+});
+
+$('input#repoNew').typeahead(null, {
+  name: 'repo',
+  limit: 20,
+  hint: true,
+  highlight: true,
+  minLength: 1,
+  source: repoNames
+});
+
+</script>
+{{ end }}
 
 {{ end }}
 </form>

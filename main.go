@@ -15,7 +15,7 @@ const (
 	settingsFile             = "settings.yml"
 	fromName                 = "Git Notify"
 	fromEmail                = "hub@gitnotify.com"
-	githubAPIEndPoint        = "https://api.github.com/repos/"
+	githubAPIEndPoint        = "https://api.github.com/"
 	githubURLEndPoint        = "https://github.com/%s/"                // repo/abc
 	githubTreeURLEndPoint    = "https://github.com/%s/tree/%s"         // repo/abc , develop
 	githubCommitURLEndPoint  = "https://github.com/%s/commits/%s"      // repo/abc , develop
@@ -61,6 +61,10 @@ func main() {
 	r.HandleFunc("/", settingsShowHandler).Methods("GET")
 	// POST is responsible for create, update and delete
 	r.HandleFunc("/", settingsSaveHandler).Methods("POST")
+	r.HandleFunc("/run", forceRunHandler).Methods("POST")
+	r.HandleFunc("/typeahead/repo", repoTypeAheadHandler).Methods("GET")
+	r.HandleFunc("/typeahead/branch", branchTypeAheadHandler).Methods("GET")
+
 	r.HandleFunc("/home", homeHandler).Methods("GET")
 
 	r.HandleFunc("/logout", func(res http.ResponseWriter, req *http.Request) {

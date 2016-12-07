@@ -7,10 +7,10 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/aryann/difflib"
-	"golang.org/x/oauth2"
 
 	githubApp "github.com/google/go-github/github"
 )
@@ -39,6 +39,39 @@ type branchCommit struct {
 	// branch    string
 	oldCommit string
 	newCommit string
+}
+
+func forceRunHandler(w http.ResponseWriter, r *http.Request) {
+
+	// Redirect user if not logged in
+	hc := &httpContext{w, r}
+	redirected := hc.redirectUnlessLoggedIn()
+	if redirected {
+		return
+	}
+	userInfo := hc.userLoggedinInfo()
+	configFile := userInfo.getConfigFile()
+
+	conf := new(Setting)
+	conf.load(configFile)
+	process(conf)
+	isSaveFalse := isSaveSetToFalse(r.URL.Query())
+	if !isSaveFalse {
+		conf.save(configFile)
+	}
+	hc.addFlash("Check email to see current updates")
+
+	http.Redirect(w, r, homePageForLoggedIn, 302)
+}
+
+func isSaveSetToFalse(q url.Values) bool {
+	if len(q["save"]) == 0 {
+		return false
+	}
+	if q["save"][0] == "false" {
+		return true
+	}
+	return false
 }
 
 func fetchFiles(provider string) []string {
@@ -73,10 +106,7 @@ func getData(provider string) {
 }
 
 func process(conf *Setting) {
-	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: conf.Auth.Token})
-	tc := oauth2.NewClient(oauth2.NoContext, ts)
-	client := githubApp.NewClient(tc)
-
+	client := newGithubClient(conf.Auth.Token)
 	branch := &branches{
 		client: client,
 		auth:   conf.Auth,
@@ -89,7 +119,6 @@ func process(conf *Setting) {
 
 		if repo.Branches || len(repo.NamedReferences) > 0 {
 			newBranches := getNewInfo(branch, "branches")
-			// commitRefs - TODO load from file
 			if len(repo.NamedReferences) > 0 {
 
 				// 1. take all commits from conf.Info .Commits
@@ -167,8 +196,8 @@ func process(conf *Setting) {
 
 func getNewInfo(branch *branches, option string) []*TagInfo {
 	branch.option = option
-	branchesURL := fmt.Sprintf("%s%s/%s", githubAPIEndPoint, branch.repo.Repo, branch.option)
-	fmt.Println(branchesURL)
+	branchesURL := fmt.Sprintf("%srepos/%s/%s", githubAPIEndPoint, branch.repo.Repo, branch.option)
+	// fmt.Println(branchesURL)
 	v := new([]*TagInfo)
 	req, _ := http.NewRequest("GET", branchesURL, nil)
 	branch.client.Do(req, v)
@@ -236,33 +265,7 @@ func findBranchCommit(v []*TagInfo, branch string) string {
 	return NoneString
 }
 
-func init() {
+// run cron to go through each file and run based on the time selected
+func croned() {
 	getData("github")
 }
-
-// 	r := &repoBranchCommit{}
-// 	data, _ := ioutil.ReadFile("sample.yml")
-// 	yaml.Unmarshal(data, &r.data)
-// 	// r
-// 	conf := new(Setting)
-// 	conf.load("data/github/sairam/settings.yml")
-//
-// 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: conf.Auth.Token})
-// 	tc := oauth2.NewClient(oauth2.NoContext, ts)
-// 	client := githubApp.NewClient(tc)
-//
-// 	branch := &branches{
-// 		client: client,
-// 		auth:   conf.Auth,
-// 	}
-// 	repo := conf.Repos[0]
-// 	branch.repo = repo
-//
-// 	v := getNewInfo(branch, "branches")
-// 	x := r.branches(repo.Repo)
-// 	diffWithOldCommits(v, branch, x)
-// 	for i, t := range x {
-// 		fmt.Printf("%s,%s,%s\n", i, t.oldCommit, t.newCommit)
-// 	}
-//
-// }

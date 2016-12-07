@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 	"strings"
+
+	githubApp "github.com/google/go-github/github"
+	"golang.org/x/oauth2"
 )
 
 /*
@@ -150,4 +153,11 @@ func (l *LocalRef) toText() string {
 		s[i+1] = fmt.Sprintf("%s - %s | Commits: %s", ref, l.treeLink(ref), l.commitLink(ref))
 	}
 	return strings.Join(s, "\n")
+}
+
+// Helper method to create github client
+func newGithubClient(token string) *githubApp.Client {
+	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
+	tc := oauth2.NewClient(oauth2.NoContext, ts)
+	return githubApp.NewClient(tc)
 }

@@ -59,6 +59,9 @@ type ProviderIndex struct {
 }
 
 func init() {
+	if os.Getenv("GITHUB_KEY") == "" || os.Getenv("GITHUB_SECRET") == "" {
+		panic("Missing Configuration: Github Authentication is not set!")
+	}
 	gothic.Store = sessions.NewFilesystemStore(os.TempDir(), []byte("goth-example"))
 	gothic.GetProviderName = getProviderName
 }
