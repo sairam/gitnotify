@@ -122,8 +122,6 @@ func (c *Setting) load(settingFile string) error {
 
 	if c.User == nil {
 		c.User = new(UserNotification)
-		// conf.User.Email = conf.usersEmail()
-		// conf.User.Name = conf.usersName()
 	}
 
 	return nil
@@ -138,6 +136,7 @@ func (c *Setting) save(settingFile string) error {
 	return ioutil.WriteFile(settingFile, out, 0600)
 }
 
+// TODO: move to helper file
 func contains(s []string, e string) bool {
 	for _, a := range s {
 		if a == e {

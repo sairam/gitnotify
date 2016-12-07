@@ -47,9 +47,9 @@
   <!-- TZ management without Daylight Savings. Contribute if you can so that we can include dropdown of TZs -->
   <div class="form-group">
   <label for="tz">TimeZone Offset</label>
-  <input type="number" step="0.5" max="14" min="-12" name="tz" id="tz" class="form-control input-lg" placeholder="GMT Offset: 0 | 1 | +5.5 | -7" value="">
+  <input type="text" name="tz" id="tz" maxlength="5" minlength="5" class="form-control input-lg" placeholder="GMT Offset: 0000 | +0100 | +0530 | -0700" value="{{.TimeZone}}">
   <p class="help-block"><a href="javascript:loadFromSystem(true)">Load from System Time</a><br/>
-  TimeZone Offset is calculated from the browser. Extremes are -12 &amp; +14. <br />
+  TimeZone Offset is calculated from the browser. Extremes are -1200 &amp; +1400 <br />
   <strong>NOTE:</strong> Currently we are ignoring Daylight Savings</p>
   </div>
 
@@ -58,11 +58,22 @@
 </form>
 
 <script>
+function pad(number, length){
+  var str = "" + number
+  while (str.length < length) {
+      str = '0'+str
+  }
+  return str
+}
 function loadFromSystem(force) {
-var hrs = -(new Date().getTimezoneOffset() / 60)
+
+var offset = new Date().getTimezoneOffset()
+offset = ((offset<0? '+':'-')+ // Note the reversed sign!
+          pad(parseInt(Math.abs(offset/60)), 2)+
+          pad(Math.abs(offset%60), 2))
 var tz = $("input[name=tz]");
-if(force) {tz.val(hrs);}
-if(tz.val() === "") {tz.val(hrs);}
+if(force) {tz.val(offset);}
+if(tz.val() === "") {tz.val(offset);}
 return false
 }
 loadFromSystem(false)
