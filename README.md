@@ -33,3 +33,7 @@
 * Copy `.env.example` to `.env`
 * Fill in data into `.env`
 * environment variables required to be loaded for the server to run
+
+## Setup
+mkdir sessions
+

@@ -39,17 +39,25 @@ type Authentication struct {
 func (userInfo *Authentication) save() {
 
 	conf := new(Setting)
+	os.MkdirAll(userInfo.getConfigDir(), 0700)
 	conf.load(userInfo.getConfigFile())
 	conf.Auth = userInfo
 	conf.save(userInfo.getConfigFile())
 
 }
 
+func (userInfo *Authentication) getConfigDir() string {
+	if userInfo.Provider == "" {
+		return ""
+	}
+	return fmt.Sprintf("data/%s/%s", userInfo.Provider, userInfo.UserName)
+}
+
 func (userInfo *Authentication) getConfigFile() string {
 	if userInfo.Provider == "" {
 		return ""
 	}
-	return fmt.Sprintf("data/%s/%s/settings.yml", userInfo.Provider, userInfo.UserName)
+	return fmt.Sprintf("%s/%s", userInfo.getConfigDir(), settingsFile)
 }
 
 // ProviderIndex is used for setting up the providers

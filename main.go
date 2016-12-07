@@ -10,7 +10,8 @@ import (
 
 const (
 	serverProto              = "http://"
-	host                     = "localhost:3000"
+	host                     = "gitnotify.com"
+	localHost                = "localhost:3000"
 	dataDir                  = "./data"
 	settingsFile             = "settings.yml"
 	fromName                 = "Git Notify"
@@ -79,7 +80,7 @@ func main() {
 
 	srv := &http.Server{
 		Handler:      r,
-		Addr:         host,
+		Addr:         localHost,
 		WriteTimeout: 60 * time.Second,
 		ReadTimeout:  60 * time.Second,
 	}
