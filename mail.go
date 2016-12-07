@@ -3,7 +3,6 @@ package main
 // Mail helper methods
 import (
 	"log"
-	"os"
 	"time"
 
 	"gopkg.in/gomail.v2"
@@ -11,10 +10,7 @@ import (
 
 // TODO load host smtp host information from config
 var (
-	emailCh      = make(chan *gomail.Message)
-	smtpHost     = "email-smtp.us-east-1.amazonaws.com"
-	smtpUsername = os.Getenv("SMTP_USER")
-	smtpPassword = os.Getenv("SMTP_PASS")
+	emailCh = make(chan *gomail.Message)
 )
 
 func mailDaemon() {
@@ -22,7 +18,7 @@ func mailDaemon() {
 	var err error
 	open := false
 
-	d := gomail.NewDialer(smtpHost, 587, smtpUsername, smtpPassword)
+	d := gomail.NewDialer(config.SMTPHost, 587, config.SMTPUser, config.SMTPPass)
 	d.LocalName = "localhost"
 	for {
 		select {
@@ -55,16 +51,6 @@ func mailDaemon() {
 	}
 }
 
-func init() {
-	if smtpUsername == "" {
-		panic("Missing Configuration: SMTP username is not set!")
-	}
-	if smtpPassword == "" {
-		panic("Missing Configuration: SMTP password is not set!")
-	}
-	go mailDaemon()
-}
-
 type recepient struct {
 	Name    string
 	Address string
@@ -75,13 +61,11 @@ type emailCtx struct {
 	TextBody string
 }
 
-// TODO: modify from email address
-var from = &recepient{
-	Name:    fromName,
-	Address: fromEmail,
-}
-
 func sendEmail(to *recepient, e *emailCtx) {
+	var from = &recepient{
+		Name:    config.FromName,
+		Address: config.FromEmail,
+	}
 
 	m := gomail.NewMessage()
 	m.SetHeader("From", m.FormatAddress(from.Address, from.Name))

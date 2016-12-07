@@ -1,27 +1,37 @@
 package main
 
 import (
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gorilla/mux"
+
+	yaml "gopkg.in/yaml.v2"
 )
 
-const (
-	serverProto              = "http://"
-	host                     = "gitnotify.com"
-	localHost                = "localhost:3000"
-	dataDir                  = "./data"
-	settingsFile             = "settings.yml"
-	fromName                 = "Git Notify"
-	fromEmail                = "hub@gitnotify.com"
-	githubAPIEndPoint        = "https://api.github.com/"
-	githubURLEndPoint        = "https://github.com/%s/"                // repo/abc
-	githubTreeURLEndPoint    = "https://github.com/%s/tree/%s"         // repo/abc , develop
-	githubCommitURLEndPoint  = "https://github.com/%s/commits/%s"      // repo/abc , develop
-	githubCompareURLEndPoint = "https://github.com/%s/compare/%s...%s" // repo/abc, base, target commit ref
-)
+// AppConfig is
+type AppConfig struct {
+	ServerProto       string `yaml:"serverProto"`       // can be http:// or https://
+	ServerHost        string `yaml:"serverHost"`        // domain.com with port . Used at redirection for OAuth
+	LocalHost         string `yaml:"localHost"`         // host:port combination used for starting the server
+	DataDir           string `yaml:"dataDir"`           // relative path from server to write the data
+	SettingsFile      string `yaml:"settingsFile"`      // name of file to be looked up/saved to for data
+	FromName          string `yaml:"fromName"`          // name of from email user
+	FromEmail         string `yaml:"fromEmail"`         // email address of from email address
+	GithubAPIEndPoint string `yaml:"githubAPIEndPoint"` // server endpoint with protocol for https://api.github.com
+	GithubURLEndPoint string `yaml:"githubURLEndPoint"` // website end point https://github.com
+	SMTPHost          string `yaml:"smtpHost"`
+
+	SMTPUser string // environment variable
+	SMTPPass string // environment variable
+}
+
+var config = new(AppConfig)
+
+const configFile = "config.yml"
 
 //Page has all information about the page
 type Page struct {
@@ -48,6 +58,52 @@ func newPage(hc *httpContext, title string, pageTitle string, conf interface{}) 
 		Context:   conf,
 	}
 	return page
+}
+
+func init() {
+	loadConfig()
+	// initAuthConfig()
+	// go mailDaemon()
+}
+
+var (
+	githubRepoEndPoint       string
+	githubTreeURLEndPoint    string
+	githubCommitURLEndPoint  string
+	githubCompareURLEndPoint string
+)
+
+func loadConfig() {
+	if _, err := os.Stat(configFile); os.IsNotExist(err) {
+		panic(err)
+	}
+
+	data, err := ioutil.ReadFile(configFile)
+	if os.IsNotExist(err) {
+		panic(err)
+	}
+
+	err = yaml.Unmarshal(data, config)
+	if err != nil {
+		panic(err)
+	}
+
+	// load constants
+	config.SMTPUser = os.Getenv("SMTP_USER")
+	config.SMTPPass = os.Getenv("SMTP_PASS")
+
+	if config.SMTPUser == "" {
+		panic("Missing Configuration: SMTP username is not set!")
+	}
+	if config.SMTPPass == "" {
+		panic("Missing Configuration: SMTP password is not set!")
+	}
+
+	githubRepoEndPoint = config.GithubURLEndPoint + "%s/"                      // repo/abc
+	githubTreeURLEndPoint = config.GithubURLEndPoint + "%s/tree/%s"            // repo/abc , develop
+	githubCommitURLEndPoint = config.GithubURLEndPoint + "%s/commits/%s"       // repo/abc , develop
+	githubCompareURLEndPoint = config.GithubURLEndPoint + "%s/compare/%s...%s" // repo/abc, base, target commit ref
+
 }
 
 // 1. Make a router to redirect user if not logged into website
@@ -80,7 +136,7 @@ func main() {
 
 	srv := &http.Server{
 		Handler:      r,
-		Addr:         localHost,
+		Addr:         config.LocalHost,
 		WriteTimeout: 60 * time.Second,
 		ReadTimeout:  60 * time.Second,
 	}

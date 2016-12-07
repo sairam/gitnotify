@@ -27,7 +27,7 @@ import (
 // https://developer.github.com/v3/oauth/#scopes
 // for github, add scope: "repo:status" to access private repositories
 
-// data/$provider/$user/settings.yml
+// Authentication data/$provider/$user/$settingsFile
 type Authentication struct {
 	Provider string `yaml:"provider"` // github/gitlab
 	Name     string `yaml:"name"`     // name of the person addressing to
@@ -57,7 +57,7 @@ func (userInfo *Authentication) getConfigFile() string {
 	if userInfo.Provider == "" {
 		return ""
 	}
-	return fmt.Sprintf("%s/%s", userInfo.getConfigDir(), settingsFile)
+	return fmt.Sprintf("%s/%s", userInfo.getConfigDir(), config.SettingsFile)
 }
 
 // ProviderIndex is used for setting up the providers
@@ -70,6 +70,7 @@ func init() {
 	if os.Getenv("GITHUB_KEY") == "" || os.Getenv("GITHUB_SECRET") == "" {
 		panic("Missing Configuration: Github Authentication is not set!")
 	}
+	// TODO - move gothic store to better location
 	gothic.Store = sessions.NewFilesystemStore(os.TempDir(), []byte("goth-example"))
 	gothic.GetProviderName = getProviderName
 }
@@ -77,7 +78,7 @@ func init() {
 // load envconfig via https://github.com/kelseyhightower/envconfig
 func initAuth(p *mux.Router) {
 	goth.UseProviders(
-		github.New(os.Getenv("GITHUB_KEY"), os.Getenv("GITHUB_SECRET"), serverProto+host+"/auth/github/callback"),
+		github.New(os.Getenv("GITHUB_KEY"), os.Getenv("GITHUB_SECRET"), config.ServerProto+config.ServerHost+"/auth/github/callback"),
 		// gitlab.New(os.Getenv("GITLAB_KEY"), os.Getenv("GITLAB_SECRET"), serverProto+host+"/auth/github/callback"),
 	)
 

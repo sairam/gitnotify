@@ -18,6 +18,7 @@ Example:
     }
   }]
 */
+
 // TagInfo .
 // In `Tag` ignore zipball_url, tarball_url
 type TagInfo struct {
@@ -29,7 +30,7 @@ func (e *TagInfo) String() string {
 	return Stringify(e)
 }
 
-// CommitRef
+// CommitRef is
 type CommitRef struct {
 	Sha string `json:"sha" yaml:"sha"`
 	URL string `json:"url" yaml:"url"`
@@ -73,6 +74,7 @@ func (ld *LocalDiff) toText() string {
 	return strings.Join(s, "\n\n"+delim+"\n\n")
 }
 
+// BranchDiff is
 type BranchDiff struct {
 	Repo string
 	*branchCommits
@@ -84,7 +86,7 @@ func (b *BranchDiff) toText() string {
 	for branchName, bdiff := range b.data {
 		if bdiff.oldCommit == "" {
 			data = append(data, fmt.Sprintf("Started tracking *%s* branch", branchName))
-		} else if bdiff.newCommit == NoneString {
+		} else if bdiff.newCommit == noneString {
 			data = append(data, fmt.Sprintf("*%s* branch is not present in repository", branchName))
 		} else if bdiff.newCommit == bdiff.oldCommit {
 			data = append(data, fmt.Sprintf("No changes for *%s* branch ", branchName))
@@ -105,7 +107,7 @@ func (b *BranchDiff) toHTML() string {
 	for branchName, bdiff := range b.data {
 		if bdiff.oldCommit == "" {
 			data = append(data, fmt.Sprintf("Started tracking <strong>%s</strong> branch", branchName))
-		} else if bdiff.newCommit == NoneString {
+		} else if bdiff.newCommit == noneString {
 			data = append(data, fmt.Sprintf("<strong>%s</strong> branch is not present in repository", branchName))
 		} else if bdiff.newCommit == bdiff.oldCommit {
 			data = append(data, fmt.Sprintf("No changes in branch <strong>%s</strong>", branchName))
@@ -124,7 +126,7 @@ type LocalRef struct {
 }
 
 func (l *LocalRef) urlLink() string {
-	return fmt.Sprintf(githubURLEndPoint, l.Repo)
+	return fmt.Sprintf(githubRepoEndPoint, l.Repo)
 }
 
 func (l *LocalRef) treeLink(ref string) string {

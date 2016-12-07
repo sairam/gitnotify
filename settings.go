@@ -34,7 +34,7 @@ func newInformation() *Information {
 
 // type RepoName string
 
-// map[BranchName] = "1234567890abcdef"
+// LocalCommitRef is of the form map[BranchName] = "1234567890abcdef"
 type LocalCommitRef map[string]string
 
 // Version of the structure

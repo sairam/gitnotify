@@ -9,7 +9,7 @@ import (
 )
 
 var store = sessions.NewFilesystemStore("./sessions", []byte(os.Getenv("SESSION_FS_STORE")))
-var sessionName = "session-name"
+var sessionName = "session-name" // can be seen in the cookies list
 
 const (
 	homePageForNonLoggedIn = "/home"
@@ -21,14 +21,12 @@ type httpContext struct {
 	r *http.Request
 }
 
-var sv = make(map[string]string)
-
-func init() {
-	sv["provider"] = "provider"
-	sv["name"] = "name"
-	sv["email"] = "email"
-	sv["user"] = "user"
-	sv["token"] = "token"
+var sv = map[string]string{
+	"provider": "provider",
+	"name":     "name",
+	"email":    "email",
+	"user":     "user",
+	"token":    "token",
 }
 
 // returns true if redirected

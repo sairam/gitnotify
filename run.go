@@ -20,7 +20,7 @@ import (
 // 	Do(req *http.Request, v interface{}) interface{}
 // }
 
-const NoneString = "<none>"
+const noneString = "<none>"
 
 type branches struct {
 	repo    *Repo
@@ -76,7 +76,7 @@ func isSaveSetToFalse(q url.Values) bool {
 
 func fetchFiles(provider string) []string {
 
-	dir := fmt.Sprintf("%s/%s", dataDir, provider)
+	dir := fmt.Sprintf("%s/%s", config.DataDir, provider)
 	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
 		log.Println(err)
@@ -85,7 +85,8 @@ func fetchFiles(provider string) []string {
 	files := make([]string, len(fis))
 	for i, fi := range fis {
 		if fi.IsDir() {
-			files[i] = dir + "/" + fi.Name() + "/" + settingsFile
+			// TODO - merge by os.sep
+			files[i] = dir + "/" + fi.Name() + "/" + config.SettingsFile
 		}
 	}
 	return files
@@ -141,7 +142,7 @@ func process(conf *Setting) {
 
 				for i, t := range commitDiff.data {
 					// save new data from commitDiff.data
-					if t.newCommit != NoneString {
+					if t.newCommit != noneString {
 						b.Commits[i] = t.newCommit
 					}
 					// fmt.Printf("%s,%s,%s\n", i, t.oldCommit, t.newCommit)
@@ -196,7 +197,7 @@ func process(conf *Setting) {
 
 func getNewInfo(branch *branches, option string) []*TagInfo {
 	branch.option = option
-	branchesURL := fmt.Sprintf("%srepos/%s/%s", githubAPIEndPoint, branch.repo.Repo, branch.option)
+	branchesURL := fmt.Sprintf("%srepos/%s/%s", config.GithubAPIEndPoint, branch.repo.Repo, branch.option)
 	// fmt.Println(branchesURL)
 	v := new([]*TagInfo)
 	req, _ := http.NewRequest("GET", branchesURL, nil)
@@ -262,7 +263,7 @@ func findBranchCommit(v []*TagInfo, branch string) string {
 			return a.Commit.Sha
 		}
 	}
-	return NoneString
+	return noneString
 }
 
 // run cron to go through each file and run based on the time selected

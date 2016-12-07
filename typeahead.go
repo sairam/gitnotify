@@ -28,7 +28,7 @@ func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 	client := newGithubClient(userInfo.Token)
 	search := getRepoName(r.URL.Query())
 
-	searchRepositoryURL := fmt.Sprintf("%ssearch/repositories?page=%d&q=%s", githubAPIEndPoint, 1, search)
+	searchRepositoryURL := fmt.Sprintf("%ssearch/repositories?page=%d&q=%s", config.GithubAPIEndPoint, 1, search)
 	fmt.Println(searchRepositoryURL)
 	req, _ := http.NewRequest("GET", searchRepositoryURL, nil)
 	v := new(searchRepo)
