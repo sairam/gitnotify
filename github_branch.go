@@ -82,9 +82,12 @@ func (b *BranchDiff) toText() string {
 	data := make([]string, 0, len(b.data)+1)
 	data = append(data, fmt.Sprintf("Fetched *commit changes* for repo *%s*:", b.Repo))
 	for branchName, bdiff := range b.data {
-		if bdiff.newCommit == NoneString {
+		if bdiff.oldCommit == "" {
+			data = append(data, fmt.Sprintf("Started tracking *%s* branch", branchName))
+		} else if bdiff.newCommit == NoneString {
 			data = append(data, fmt.Sprintf("*%s* branch is not present in repository", branchName))
 		} else if bdiff.newCommit == bdiff.oldCommit {
+			data = append(data, fmt.Sprintf("No changes for *%s* branch ", branchName))
 		} else {
 			data = append(data, fmt.Sprintf("Look at the *NEW diff* for %s at %s", branchName, bdiff.urlLink(b.Repo)))
 		}
@@ -100,10 +103,12 @@ func (b *BranchDiff) toHTML() string {
 	data := make([]string, 0, len(b.data)+1)
 	data = append(data, fmt.Sprintf("Fetched <strong>commit changes</strong> for repo <strong>%s</strong>:", b.Repo))
 	for branchName, bdiff := range b.data {
-		if bdiff.newCommit == NoneString {
+		if bdiff.oldCommit == "" {
+			data = append(data, fmt.Sprintf("Started tracking <strong>%s</strong> branch", branchName))
+		} else if bdiff.newCommit == NoneString {
 			data = append(data, fmt.Sprintf("<strong>%s</strong> branch is not present in repository", branchName))
 		} else if bdiff.newCommit == bdiff.oldCommit {
-			data = append(data, fmt.Sprintf("No new changes for branch <strong>%s</strong>", branchName))
+			data = append(data, fmt.Sprintf("No changes in branch <strong>%s</strong>", branchName))
 		} else {
 			data = append(data, fmt.Sprintf("<a href=\"%s\">Look at the *NEW Diff* for %s</a> ", bdiff.urlLink(b.Repo), branchName))
 		}

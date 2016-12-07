@@ -31,7 +31,6 @@ func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 	searchRepositoryURL := fmt.Sprintf("%ssearch/repositories?page=%d&q=%s", githubAPIEndPoint, 1, search)
 	fmt.Println(searchRepositoryURL)
 	req, _ := http.NewRequest("GET", searchRepositoryURL, nil)
-	// take items >full_name
 	v := new(searchRepo)
 	client.Do(req, v)
 	fmt.Println(*v)

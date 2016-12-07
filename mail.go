@@ -27,7 +27,7 @@ func mailDaemon() {
 	for {
 		select {
 		case m, ok := <-emailCh:
-			log.Println("starting to send an email!")
+			log.Println("attempting to send the email!")
 			if !ok {
 				return
 			}
@@ -41,7 +41,7 @@ func mailDaemon() {
 			if err := gomail.Send(s, m); err != nil {
 				log.Print(err)
 			}
-			log.Println("done with email")
+			log.Println("done sending the email")
 			// You should close the Amazon SES within 5 seconds of next request. else you it fails with 421.
 		case <-time.After(4 * time.Second):
 			if open {

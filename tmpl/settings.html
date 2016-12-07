@@ -89,8 +89,8 @@ var repoNames = new Bloodhound({
 $('input#repoNew').typeahead(null, {
   name: 'repo',
   limit: 20,
-  hint: true,
-  highlight: true,
+  hint: false,
+  highlight: false,
   minLength: 1,
   source: repoNames
 });
