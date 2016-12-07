@@ -2,12 +2,13 @@ package main
 
 import (
 	"net/http"
+	"os"
 	"reflect"
 
 	"github.com/gorilla/sessions"
 )
 
-var store = sessions.NewFilesystemStore("./sessions", []byte("something-very-secret"))
+var store = sessions.NewFilesystemStore("./sessions", []byte(os.Getenv("SESSION_FS_STORE")))
 var sessionName = "session-name"
 
 const (
