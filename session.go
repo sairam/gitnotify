@@ -9,7 +9,7 @@ import (
 )
 
 var store = sessions.NewFilesystemStore("./sessions", []byte(os.Getenv("SESSION_FS_STORE")))
-var sessionName = "session-name" // can be seen in the cookies list
+var sessionName = "_git_notify" // can be seen in the cookies list
 
 const (
 	homePageForNonLoggedIn = "/home"

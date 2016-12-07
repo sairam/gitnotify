@@ -119,6 +119,10 @@ func main() {
 	// POST is responsible for create, update and delete
 	r.HandleFunc("/", settingsSaveHandler).Methods("POST")
 	r.HandleFunc("/run", forceRunHandler).Methods("POST")
+
+	// r.HandleFunc("/settings", userSettingsShowHandler).Methods("GET")
+	// r.HandleFunc("/settings", userSettingsSaveHandler).Methods("POST")
+
 	r.HandleFunc("/typeahead/repo", repoTypeAheadHandler).Methods("GET")
 	r.HandleFunc("/typeahead/branch", branchTypeAheadHandler).Methods("GET")
 

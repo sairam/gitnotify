@@ -54,12 +54,16 @@ func forceRunHandler(w http.ResponseWriter, r *http.Request) {
 
 	conf := new(Setting)
 	conf.load(configFile)
-	process(conf)
+	err := process(conf)
 	isSaveFalse := isSaveSetToFalse(r.URL.Query())
 	if !isSaveFalse {
 		conf.save(configFile)
 	}
-	hc.addFlash("Check email to see current updates")
+	if err == nil {
+		hc.addFlash("Check email to see current updates")
+	} else {
+		hc.addFlash(err.Error())
+	}
 
 	http.Redirect(w, r, homePageForLoggedIn, 302)
 }
@@ -106,7 +110,16 @@ func getData(provider string) {
 	}
 }
 
-func process(conf *Setting) {
+type userNotFound struct{}
+
+func (userNotFound) Error() string {
+	return fmt.Sprintf("No email address found for account. Visit <a href=\"/settings\">/settings</a>")
+}
+func process(conf *Setting) error {
+	if conf.Auth.Email == "" {
+		log.Printf("No email address for %s\n", conf.Auth.UserName)
+		return &userNotFound{}
+	}
 	client := newGithubClient(conf.Auth.Token)
 	branch := &branches{
 		client: client,
@@ -193,6 +206,7 @@ func process(conf *Setting) {
 	}
 
 	sendEmail(to, ctx)
+	return nil
 }
 
 func getNewInfo(branch *branches, option string) []*TagInfo {

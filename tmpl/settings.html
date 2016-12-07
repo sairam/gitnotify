@@ -1,117 +1,27 @@
-
 {{ partial "header" . }}
 {{ with .Context }}
 
-<div style="float:right">
-<form action="/run" method="post" style="float:left">
-  <button type="submit" class="btn btn-info">Check For Updates</button>
+<form action="/user" method="post" class="form-horizontal">
+  allow to update name and email
+  {.email}
 </form>
-<form action="/run?save=false" method="post" style="float:left">
-  <button type="submit" class="btn btn-danger">Without Saving</button>
+
+<form action="/settings" method="post" class="pull-left row">
+  <div class="form-group col-md-3">
+  <select name="freq" class="form-control input-sm">
+    <option value="daily">daily</option>
+  </select>
+  </div>
+  <div class="form-group  col-md-4">
+  <select name="attr" class="form-control input-sm" multiple="multiple">
+    {{ $hours := (slice "00" "01" "02" "03" "04" "05" "06" "07" "08" "09" "10" "11" "12" "13" "14" "15" "16" "17" "18" "19" "20" "21" "22" "23") }}
+    {{ range $hour := $hours }}<option value="{{$hour}}">{{$hour}} hrs</option>{{ end }}
+  </select>
+  </div>
+  <div class="form-group col-md-3">
+  <input type="text" class="form-control input-sm" name="offset" placeholder="GMT Offset 0 | 5.5 | -7">
+  </div>
 </form>
-</div>
-
-<div class="row">
-  <div class="col-md-10">
-
-{{ range $repo:=.Repos }}
-
-<form action="/" method="post" class="form-horizontal text-left">
-{{ with $repo }}
-
-{{ if eq .Repo "" }}
-  <h2>Create new</h2>
-  <div class="form-group">
-    <label for="repo" class="col-sm-4 control-label">Repository Name</label>
-    <div class="col-sm-8">
-      <input type="text" class="form-control" id="repoNew" value="{{ .Repo }}" name="repo">
-      <p class="help-block">Add the name of the github repository to track</p>
-    </div>
-  </div>
-
-{{ else }}
-  <h2>Edit "{{ .Repo }}"</h2>
-  <div class="form-group">
-    <label for="repo" class="col-sm-4 control-label">Repository Name</label>
-    <div class="col-sm-8">
-      <input type="hidden" name="repo" value="{{ .Repo }}">
-      <input type="text" class="form-control" id="repo" value="{{ .Repo }}" readonly="readonly">
-    </div>
-  </div>
-{{ end }}
-
-<div class="form-group">
-  <div class="col-sm-offset-4 col-sm-8">
-    <div class="checkbox">
-      <label>
-        <input type="hidden" name="branches" value="false" />
-        <input type="checkbox" name="branches" value="true" {{if .Branches }}checked="checked"{{end}} > Track Branches
-      </label>
-    </div>
-  </div>
-</div>
-
-<div class="form-group">
-  <div class="col-sm-offset-4 col-sm-8">
-    <div class="checkbox">
-      <label>
-        <input type="hidden" name="tags" value="false" />
-        <input type="checkbox" name="tags" value="true" {{if .Tags }}checked="checked"{{end}} > Track Tags
-      </label>
-    </div>
-  </div>
-</div>
-
-<div class="form-group">
-  <label for="references" class="col-sm-4 control-label">Track Branches/Tags</label>
-  <div class="col-sm-8">
-    <input type="text" class="form-control" id="references" value="{{ range $i, $x := .NamedReferences }}{{ $x }},{{ end }}" name="references">
-  </div>
-</div>
-
-<div class="form-group">
-  <div class="col-sm-offset-4 col-sm-8">
-    <button type="submit" class="btn btn-success">{{ if eq .Repo "" }}Create{{else}}Update{{end}}</button>
-  </div>
-</div>
-
-{{ if eq .Repo "" }}
-<script>
-var repoNames = new Bloodhound({
-  datumTokenizer: Bloodhound.tokenizers.whitespace,
-  queryTokenizer: Bloodhound.tokenizers.whitespace,
-  remote: {
-    url: '/typeahead/repo?repo=%QUERY',
-    wildcard: '%QUERY'
-  }
-});
-
-$('input#repoNew').typeahead(null, {
-  name: 'repo',
-  limit: 20,
-  hint: false,
-  highlight: false,
-  minLength: 1,
-  source: repoNames
-});
-
-</script>
-{{ end }}
-
-{{ end }}
-</form>
-{{ if eq .Repo "" }}{{else}}
-<form action="/" method="post">
-<input type="hidden" name="repo" value="{{ .Repo }}">
-<input type="hidden" name="_delete" value="true">
-<button type="submit" style="position: relative;left: 10px;top: -50px;" href="" class="btn btn-danger">Remove</button>
-</form>
-{{end}}
-<hr />
-{{ end }}
-
-</div>
-</div>
 
 {{ end }}
 {{ partial "footer" . }}

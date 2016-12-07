@@ -2,6 +2,7 @@ package main
 
 // Mail helper methods
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -71,8 +72,8 @@ func sendEmail(to *recepient, e *emailCtx) {
 	m.SetHeader("From", m.FormatAddress(from.Address, from.Name))
 	m.SetAddressHeader("To", to.Address, to.Name)
 	m.SetHeader("Subject", e.Subject)
-	m.SetBody("text/plain", e.TextBody)
-	m.AddAlternative("text/html", "<pre style='font-size: 2em'>"+e.HTMLBody+"</pre>")
+	m.SetBody("text/plain", fmt.Sprintf("Hi %s\n\n%s", to.Name, e.TextBody))
+	m.AddAlternative("text/html", fmt.Sprintf("<pre style='font-size: 2em'>Hi %s<br/><br/>%s</pre>", to.Name, e.HTMLBody))
 
 	emailCh <- m
 }

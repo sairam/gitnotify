@@ -9,7 +9,6 @@ import (
 	"sort"
 
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/github"
@@ -70,8 +69,7 @@ func init() {
 	if os.Getenv("GITHUB_KEY") == "" || os.Getenv("GITHUB_SECRET") == "" {
 		panic("Missing Configuration: Github Authentication is not set!")
 	}
-	// TODO - move gothic store to better location
-	gothic.Store = sessions.NewFilesystemStore(os.TempDir(), []byte("goth-example"))
+	gothic.Store = store
 	gothic.GetProviderName = getProviderName
 }
 

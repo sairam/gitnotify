@@ -11,6 +11,8 @@ import (
 	"log"
 	"reflect"
 	"strconv"
+
+	"github.com/spf13/cast"
 )
 
 var (
@@ -18,12 +20,14 @@ var (
 		// "Upper": func(s string) string {
 		// 	return strings.ToUpper(s)
 		// },
-		"partial": partial,
-		"eq":      eq,
-		"ge":      ge,
-		"gt":      gt,
-		"le":      le,
-		"lt":      lt,
+		"partial":  partial,
+		"eq":       eq,
+		"ge":       ge,
+		"gt":       gt,
+		"le":       le,
+		"lt":       lt,
+		"slice":    slice,
+		"safeHTML": safeHTML,
 	}
 )
 
@@ -74,6 +78,17 @@ func le(a, b interface{}) bool {
 func lt(a, b interface{}) bool {
 	left, right := compareGetFloat(a, b)
 	return left < right
+}
+
+// slice returns a slice of all passed arguments
+func slice(args ...interface{}) []interface{} {
+	return args
+}
+
+// safeHTML returns a given string as html/template HTML content.
+func safeHTML(a interface{}) (template.HTML, error) {
+	s, err := cast.ToStringE(a)
+	return template.HTML(s), err
 }
 
 func compareGetFloat(a interface{}, b interface{}) (float64, float64) {
