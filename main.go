@@ -14,7 +14,7 @@ const (
 	dataDir                  = "./data"
 	settingsFile             = "settings.yml"
 	fromName                 = "Git Notify"
-	fromEmail                = "sairam.kunala@gmail.com"
+	fromEmail                = "hub@gitnotify.com"
 	githubAPIEndPoint        = "https://api.github.com/repos/"
 	githubURLEndPoint        = "https://github.com/%s/"                // repo/abc
 	githubTreeURLEndPoint    = "https://github.com/%s/tree/%s"         // repo/abc , develop
