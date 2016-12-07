@@ -62,8 +62,7 @@ func newPage(hc *httpContext, title string, pageTitle string, conf interface{}) 
 
 func init() {
 	loadConfig()
-	// initAuthConfig()
-	// go mailDaemon()
+	go mailDaemon()
 }
 
 var (

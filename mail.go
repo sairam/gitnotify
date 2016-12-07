@@ -56,6 +56,7 @@ type recepient struct {
 	Name    string
 	Address string
 }
+
 type emailCtx struct {
 	Subject  string
 	HTMLBody string
@@ -72,8 +73,8 @@ func sendEmail(to *recepient, e *emailCtx) {
 	m.SetHeader("From", m.FormatAddress(from.Address, from.Name))
 	m.SetAddressHeader("To", to.Address, to.Name)
 	m.SetHeader("Subject", e.Subject)
-	m.SetBody("text/plain", fmt.Sprintf("Hi %s\n\n%s", to.Name, e.TextBody))
-	m.AddAlternative("text/html", fmt.Sprintf("<pre style='font-size: 2em'>Hi %s<br/><br/>%s</pre>", to.Name, e.HTMLBody))
+	m.SetBody("text/plain", fmt.Sprintf("Hi %s,\n\n%s", to.Name, e.TextBody))
+	m.AddAlternative("text/html", fmt.Sprintf("<pre style='font-size: 2em'>Hi %s,<br/><br/>%s</pre>", EscapeString(to.Name), e.HTMLBody))
 
 	emailCh <- m
 }
