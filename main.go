@@ -24,6 +24,7 @@ type AppConfig struct {
 	GithubAPIEndPoint string `yaml:"githubAPIEndPoint"` // server endpoint with protocol for https://api.github.com
 	GithubURLEndPoint string `yaml:"githubURLEndPoint"` // website end point https://github.com
 	SMTPHost          string `yaml:"smtpHost"`
+	SMTPPort          int    `yaml:"smtpPort"`
 
 	SMTPUser string // environment variable
 	SMTPPass string // environment variable
@@ -119,8 +120,8 @@ func main() {
 	r.HandleFunc("/", settingsSaveHandler).Methods("POST")
 	r.HandleFunc("/run", forceRunHandler).Methods("POST")
 
-	// r.HandleFunc("/settings", userSettingsShowHandler).Methods("GET")
-	// r.HandleFunc("/settings", userSettingsSaveHandler).Methods("POST")
+	r.HandleFunc("/user", userSettingsShowHandler).Methods("GET")
+	r.HandleFunc("/user", userSettingsSaveHandler).Methods("POST")
 
 	r.HandleFunc("/typeahead/repo", repoTypeAheadHandler).Methods("GET")
 	r.HandleFunc("/typeahead/branch", branchTypeAheadHandler).Methods("GET")

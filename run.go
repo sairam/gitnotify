@@ -113,10 +113,10 @@ func getData(provider string) {
 type userNotFound struct{}
 
 func (userNotFound) Error() string {
-	return fmt.Sprintf("No email address found for account. Visit <a href=\"/settings\">/settings</a>")
+	return fmt.Sprintf("No email address found for account. Visit <a href=\"/user\">/user</a>")
 }
 func process(conf *Setting) error {
-	if conf.Auth.Email == "" {
+	if conf.usersEmail() == "" {
 		log.Printf("No email address for %s\n", conf.Auth.UserName)
 		return &userNotFound{}
 	}
@@ -192,11 +192,11 @@ func process(conf *Setting) error {
 	}
 
 	t := time.Now()
-	subject := "[GitNotify] New Stuff from your Repositories - " + t.Format("02 Jan 2006")
+	subject := "[GitNotify] New Updates from your Repositories - " + t.Format("02 Jan 2006 | 15 Hrs")
 
 	to := &recepient{
-		Name:    conf.Auth.Name,
-		Address: conf.Auth.Email,
+		Name:    conf.usersName(),
+		Address: conf.usersEmail(),
 	}
 
 	ctx := &emailCtx{

@@ -16,7 +16,41 @@ type Setting struct {
 	Version `yaml:"version"`
 	Repos   []*Repo                 `yaml:"repos"`
 	Auth    *Authentication         `yaml:"auth"`
+	User    *UserNotification       `yaml:"user_notification"`
 	Info    map[string]*Information `yaml:"fetched_info"`
+}
+
+func (c *Setting) usersEmail() string {
+	if c.User.Email == "" {
+		return c.Auth.Email
+	}
+	return c.User.Email
+}
+
+func (c *Setting) usersName() string {
+	if c.User.Name == "" {
+		return c.Auth.Name
+	}
+	return c.User.Name
+}
+
+// UserNotification is the customization/scheduling is provided for user
+// We are only going to send emails.
+type UserNotification struct {
+	Email     string `yaml:"email"`
+	Name      string `yaml:"name"`
+	Frequency `yaml:",inline"`
+}
+
+// Frequency is the cron format along with a TimeZone to process
+// Minute, Monthday and Month cannot be controlled. Consider them to be '*'
+type Frequency struct {
+	TimeZone string `yaml:"tz"`
+	// Minute string // 0-59 allowed
+	Hour string `yaml:"hour"` // Hour - 0-23 allowed
+	// MonthDay string // 1-31 allowed. Ignore if you want to use weekday vs weekend
+	// Month - cannot be set
+	WeekDay string `yaml:"weekday"` // 0-6 to point SUN-SAT
 }
 
 // Information is all the information fetched from remote location, updated and saved
@@ -85,6 +119,13 @@ func (c *Setting) load(settingFile string) error {
 	if c.Info == nil {
 		c.Info = make(map[string]*Information)
 	}
+
+	if c.User == nil {
+		c.User = new(UserNotification)
+		// conf.User.Email = conf.usersEmail()
+		// conf.User.Name = conf.usersName()
+	}
+
 	return nil
 }
 
@@ -233,6 +274,6 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 
 	conf.Repos = append(conf.Repos, &Repo{})
 
-	page := newPage(hc, "Settings for User", "Settings", conf)
+	page := newPage(hc, "Edit/Add Repos to Track", "Edit/Add Repos to Track", conf)
 	displayPage(w, "repos", page)
 }

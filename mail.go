@@ -3,13 +3,13 @@ package main
 // Mail helper methods
 import (
 	"fmt"
+	"html"
 	"log"
 	"time"
 
 	"gopkg.in/gomail.v2"
 )
 
-// TODO load host smtp host information from config
 var (
 	emailCh = make(chan *gomail.Message)
 )
@@ -19,7 +19,7 @@ func mailDaemon() {
 	var err error
 	open := false
 
-	d := gomail.NewDialer(config.SMTPHost, 587, config.SMTPUser, config.SMTPPass)
+	d := gomail.NewDialer(config.SMTPHost, config.SMTPPort, config.SMTPUser, config.SMTPPass)
 	d.LocalName = "localhost"
 	for {
 		select {
@@ -74,7 +74,7 @@ func sendEmail(to *recepient, e *emailCtx) {
 	m.SetAddressHeader("To", to.Address, to.Name)
 	m.SetHeader("Subject", e.Subject)
 	m.SetBody("text/plain", fmt.Sprintf("Hi %s,\n\n%s", to.Name, e.TextBody))
-	m.AddAlternative("text/html", fmt.Sprintf("<pre style='font-size: 2em'>Hi %s,<br/><br/>%s</pre>", EscapeString(to.Name), e.HTMLBody))
+	m.AddAlternative("text/html", fmt.Sprintf("<pre style='font-size: 2em'>Hi %s,<br/><br/>%s</pre>", html.EscapeString(to.Name), e.HTMLBody))
 
 	emailCh <- m
 }
