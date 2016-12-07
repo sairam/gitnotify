@@ -57,7 +57,7 @@ func userSettingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			conf.User.Email = e.Address
 		} else {
-			hc.addFlash("address provided is invalid format")
+			hc.addFlash("email address provided is invalid format")
 		}
 
 		// TODO A bad name can spoil the email address "to" field when sending email

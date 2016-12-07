@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 
 	yaml "gopkg.in/yaml.v2"
@@ -227,8 +228,14 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 			references = append(references, reference(str))
 		}
 
+		repoName := validateRepoName(r.Form["repo"][0])
+		if repoName == "" {
+			hc.addFlash("Invalid Repo Name Provided")
+			break
+		}
+
 		repo = &Repo{
-			r.Form["repo"][0],
+			repoName,
 			references,
 			contains(r.Form["branches"], "true"),
 			contains(r.Form["tags"], "true"),
@@ -248,8 +255,14 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 			hc.addFlash("Updated config for " + repo.Repo)
 		}
 	case "delete":
+		repoName := validateRepoName(r.Form["repo"][0])
+		if repoName == "" {
+			hc.addFlash("Invalid Repo Name Provided")
+			break
+		}
+
 		repo = &Repo{
-			Repo: r.Form["repo"][0],
+			Repo: repoName,
 		}
 		// TODO move method under repo/settings struct
 		var success bool
@@ -266,7 +279,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 			}
 		}
 
-		// on create or delete, send the email
+		// TODO - not going to send an email on Create/Delete
 		// sendEmail(formAction, repo)
 
 	}
@@ -275,4 +288,16 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 
 	page := newPage(hc, "Edit/Add Repos to Track", "Edit/Add Repos to Track", conf)
 	displayPage(w, "repos", page)
+}
+
+func validateRepoName(repo string) string {
+
+	// verify if Repository is of the name ^abc/def$
+	words := regexp.MustCompile("^[\\p{L}\\d_]+/[\\p{L}\\d_]+$")
+	data := words.FindAllString(repo, -1)
+	if len(data) == 1 {
+		return data[0]
+	}
+	return ""
+
 }
