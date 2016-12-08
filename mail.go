@@ -74,7 +74,8 @@ func sendEmail(to *recepient, e *emailCtx) {
 	m.SetAddressHeader("To", to.Address, to.Name)
 	m.SetHeader("Subject", e.Subject)
 	m.SetBody("text/plain", fmt.Sprintf("Hi %s,\n\n%s", to.Name, e.TextBody))
-	m.AddAlternative("text/html", fmt.Sprintf("<pre style='font-size: 2em'>Hi %s,<br/><br/>%s</pre>", html.EscapeString(to.Name), e.HTMLBody))
+	unsubscribeLink := fmt.Sprintf(`<a href="%s%s">Unsubscribe</a>`, config.ServerProto, config.ServerHost)
+	m.AddAlternative("text/html", fmt.Sprintf("<pre style='font-size: 2em'>Hi %s,<br/><br/>%s<br/><br/>%s</pre>", html.EscapeString(to.Name), e.HTMLBody, unsubscribeLink))
 
 	emailCh <- m
 }
