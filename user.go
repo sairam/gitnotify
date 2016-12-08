@@ -6,6 +6,8 @@ import (
 	"net/mail"
 	"strconv"
 	"strings"
+
+	"github.com/sairam/timezone"
 )
 
 func userSettingsShowHandler(w http.ResponseWriter, r *http.Request) {
@@ -66,6 +68,13 @@ func userSettingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 		conf.User.TimeZone = cleanTz(r.Form["tz"][0])
 
+		err = cleanTzName(r.Form["tzName"][0])
+		if err == nil {
+			conf.User.TimeZoneName = r.Form["tzName"][0]
+		} else {
+			hc.addFlash(err.Error())
+		}
+
 		// validate hour
 		conf.User.Hour = cleanHour(r.Form["hour"])
 
@@ -76,6 +85,21 @@ func userSettingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 	}
 	http.Redirect(w, r, "/user", 302)
+
+}
+
+type invalidTimezone struct{}
+
+func (invalidTimezone) Error() string {
+	return fmt.Sprintf("Invalid TimeZone selected")
+}
+
+func cleanTzName(tzName string) error {
+
+	if !timezone.ValidLocation(tzName) {
+		return &invalidTimezone{}
+	}
+	return nil
 
 }
 

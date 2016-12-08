@@ -125,6 +125,7 @@ func main() {
 
 	r.HandleFunc("/typeahead/repo", repoTypeAheadHandler).Methods("GET")
 	r.HandleFunc("/typeahead/branch", branchTypeAheadHandler).Methods("GET")
+	r.HandleFunc("/typeahead/tz", timezoneTypeAheadHandler).Methods("GET")
 
 	r.HandleFunc("/home", homeHandler).Methods("GET")
 

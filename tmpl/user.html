@@ -47,10 +47,17 @@
   <!-- TZ management without Daylight Savings. Contribute if you can so that we can include dropdown of TZs -->
   <div class="form-group">
   <label for="tz">TimeZone Offset</label>
-  <input type="text" name="tz" id="tz" maxlength="5" minlength="5" class="form-control input-lg" placeholder="GMT Offset: 0000 | +0100 | +0530 | -0700" value="{{.TimeZone}}">
-  <p class="help-block"><a href="javascript:loadFromSystem(true)">Load from System Time</a><br/>
-  TimeZone Offset is calculated from the browser. Extremes are -1200 &amp; +1400 <br />
-  <strong>NOTE:</strong> Currently we are ignoring Daylight Savings</p>
+  <input type="text" name="tz" id="tz" maxlength="5" minlength="5" class="form-control input-lg" placeholder="GMT Offset: 0000 | +0100 | +0530 | -0700" value="{{.TimeZone}}" onchange="displayTzOptions(false)">
+  <p class="help-block"><a href="javascript:loadFromSystem(true)">Load from System Time</a>. TimeZone Offset is calculated from the browser. Extremes are -1200 &amp; +1400 <br />
+  <strong>NOTE:</strong> Use TimeZone name to consider Daylight Savings. Only valid TimeZone Names get displayed on change</p>
+  </div>
+
+  <div class="form-group">
+  <label for="tzName">TimeZone Name</label>
+  <select name="tzName" id="tzName" maxlength="5" minlength="5" class="form-control input-lg">
+    <option selected="selected" value="{{.TimeZoneName}}">{{.TimeZoneName}}</option>
+  </select>
+  <p class="help-block"><a href="javascript:displayTzOptions(true)">Load All TimeZones</a> | <a href="javascript:displayTzOptions(false)">Reload Names from Offset</a><br/>TimeZone name is used to schedule the email</p>
   </div>
 
   <button type="submit" class="btn btn-info btn-lg">Save My Preferences</button>
@@ -65,14 +72,51 @@ function pad(number, length){
   }
   return str
 }
-function loadFromSystem(force) {
 
-var offset = new Date().getTimezoneOffset()
-offset = ((offset<0? '+':'-')+ // Note the reversed sign!
-          pad(parseInt(Math.abs(offset/60)), 2)+
-          pad(Math.abs(offset%60), 2))
+function displayTzOptions(all) {
+  var tz = $("input[name=tz]").val();
+  var url;
+  if (tz == "" || all == true) {
+    url = "/typeahead/tz";
+  } else {
+    url = "/typeahead/tz?offset="+convertOffsetToInteger(tz);
+  }
+  $.ajax({
+    url: url,
+    cache: true,
+    success: setTimezones
+  });
+
+}
+
+function setTimezones(json) {
+  $("#tzName").empty()
+  for (i =0 ; i < json.length ; i++ ) {
+    o = json[i];
+    var option = $('<option></option>').attr("value", o).text(o);
+    $("#tzName").append(option);
+  }
+}
+
+function convertOffsetToInteger(offset) {
+  var mult = 1;
+  if (offset[0] == "-") {
+    mult = -1;
+  }
+  return mult * (parseInt(offset[1]+offset[2]) + parseInt(offset[3]+offset[4])/60)
+}
+
+function getTZOffset() {
+  var offset = new Date().getTimezoneOffset();
+  offset = ((offset<0? '+':'-')+ // Note the reversed sign!
+            pad(parseInt(Math.abs(offset/60)), 2)+
+            pad(Math.abs(offset%60), 2));
+  return offset;
+}
+function loadFromSystem(force) {
+var offset = getTZOffset();
 var tz = $("input[name=tz]");
-if(force) {tz.val(offset);}
+if(force) {tz.val(offset); displayTzOptions(false)}
 if(tz.val() === "") {tz.val(offset);}
 return false
 }

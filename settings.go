@@ -46,7 +46,8 @@ type UserNotification struct {
 // Frequency is the cron format along with a TimeZone to process
 // Minute, Monthday and Month cannot be controlled. Consider them to be '*'
 type Frequency struct {
-	TimeZone string `yaml:"tz"`
+	TimeZone     string `yaml:"tz"`
+	TimeZoneName string `yaml:"tzname"`
 	// Minute string // 0-59 allowed
 	Hour string `yaml:"hour"` // Hour - 0-23 allowed
 	// MonthDay string // 1-31 allowed. Ignore if you want to use weekday vs weekend
