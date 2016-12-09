@@ -1,3 +1,4 @@
 .env
 data/
 sessions/
+config.prod.yml

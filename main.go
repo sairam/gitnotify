@@ -26,6 +26,7 @@ type AppConfig struct {
 	SMTPHost          string `yaml:"smtpHost"`
 	SMTPPort          int    `yaml:"smtpPort"`
 	SMTPSesConfSet    string `yaml:"sesConfigurationSet"` // ses configuration set used as a custom header while sending email
+	GoogleAnalytics   string `yaml:"googleAnalytics"`
 	SMTPUser          string // environment variable
 	SMTPPass          string // environment variable
 }
@@ -36,12 +37,13 @@ const configFile = "config.yml"
 
 //Page has all information about the page
 type Page struct {
-	Title     string
-	PageTitle string
-	User      *Authentication
-	Flashes   []string
-	Context   interface{}
-	Data      interface{}
+	Title        string
+	PageTitle    string
+	User         *Authentication
+	Flashes      []string
+	Context      interface{}
+	Data         interface{}
+	ClientConfig map[string]string
 }
 
 func newPage(hc *httpContext, title string, pageTitle string, conf interface{}, data interface{}) *Page {
@@ -60,6 +62,10 @@ func newPage(hc *httpContext, title string, pageTitle string, conf interface{}, 
 		Context:   conf,
 		Data:      data,
 	}
+
+	page.ClientConfig = make(map[string]string)
+	page.ClientConfig["GoogleAnalytics"] = config.GoogleAnalytics
+
 	return page
 }
 
