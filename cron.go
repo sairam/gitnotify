@@ -107,6 +107,7 @@ func stopCronIfAlreadyRunning(filename string) {
 
 type cronJob struct {
 	filename string
+	save     bool
 }
 
 func (t cronJob) Run() {
@@ -114,12 +115,14 @@ func (t cronJob) Run() {
 	conf := new(Setting)
 	log.Printf("Processing file through cron - %s", filename)
 	conf.load(filename)
-	process(conf)
-	conf.save(filename)
+	processForMail(conf)
+	if t.save {
+		conf.save(filename)
+	}
 }
 
 func startCronFor(cronEntry, filename string) {
-	id, _ := crons.AddJob(cronEntry, cronJob{filename})
+	id, _ := crons.AddJob(cronEntry, cronJob{filename, true})
 	runningCrons[filename] = id
 }
 

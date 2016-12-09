@@ -16,3 +16,20 @@ Example:
   }]
 */
 //
+
+// // Helpers
+// func gitlabRepoLink(repo string) string {
+// 	return fmt.Sprintf(gitlabRepoEndPoint, repo)
+// }
+//
+// func gitlabTreeLink(repo, ref string) string {
+// 	return fmt.Sprintf(gitlabTreeURLEndPoint, repo, ref)
+// }
+//
+// func gitlabCommitLink(repo, ref string) string {
+// 	return fmt.Sprintf(gitlabCommitURLEndPoint, repo, ref)
+// }
+//
+// func gitlabCompareLink(repo, oldCommit, newCommit string) string {
+// 	return fmt.Sprintf(gitlabCompareURLEndPoint, repo, oldCommit, newCommit)
+// }

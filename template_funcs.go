@@ -33,8 +33,32 @@ var (
 		"slice":    slice,
 		"split":    split,
 		"safeHTML": safeHTML,
+		"minus":    minus,
+		"div":      div,
+		"mod":      mod,
+
+		"githubRepoLink":    githubRepoLink,
+		"githubTreeLink":    githubTreeLink,
+		"githubCommitLink":  githubCommitLink,
+		"githubCompareLink": githubCompareLink,
+		"shortCommit":       shortCommit,
 	}
 )
+
+func minus(x int, y int) int {
+	return x - y
+}
+
+func div(x int, y int) int {
+	return x / y
+}
+
+func mod(x int, y int) int {
+	if y <= 0 {
+		return 0
+	}
+	return x % y
+}
 
 // from integer
 func str(x interface{}) string {

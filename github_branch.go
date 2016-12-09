@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 
 	githubApp "github.com/google/go-github/github"
 	"golang.org/x/oauth2"
@@ -40,126 +39,28 @@ func (e *CommitRef) String() string {
 	return Stringify(e)
 }
 
-// DifferView is implemented by LocalRef and BranchDiff
-type DifferView interface {
-	toText() string
-	toHTML() string
-}
-
-// LocalDiff has multiple references to DifferView interface
-type LocalDiff struct {
-	refs []DifferView
-}
-
-func (ld *LocalDiff) add(l DifferView) {
-	ld.refs = append(ld.refs, l)
-}
-
-func (ld *LocalDiff) toHTML() string {
-	s := make([]string, len(ld.refs))
-
-	for i, ref := range ld.refs {
-		s[i] = ref.toHTML()
+// Helpers
+func shortCommit(commit string) string {
+	if len(commit) > 6 {
+		return commit[0:6]
 	}
-	return strings.Join(s, "<br /><hr/>")
+	return commit
 }
 
-func (ld *LocalDiff) toText() string {
-	s := make([]string, len(ld.refs))
-
-	for i, ref := range ld.refs {
-		s[i] = ref.toText()
-	}
-	delim := strings.Repeat("-", 80)
-	return strings.Join(s, "\n\n"+delim+"\n\n")
+func githubRepoLink(repo string) string {
+	return fmt.Sprintf(githubRepoEndPoint, repo)
 }
 
-// BranchDiff is
-type BranchDiff struct {
-	Repo string
-	*branchCommits
+func githubTreeLink(repo, ref string) string {
+	return fmt.Sprintf(githubTreeURLEndPoint, repo, ref)
 }
 
-func (b *BranchDiff) toText() string {
-	data := make([]string, 0, len(b.data)+1)
-	data = append(data, fmt.Sprintf("Fetched *commit changes* for repo *%s*:", b.Repo))
-	for branchName, bdiff := range b.data {
-		if bdiff.oldCommit == "" {
-			data = append(data, fmt.Sprintf("Started tracking *%s* branch", branchName))
-		} else if bdiff.newCommit == noneString {
-			data = append(data, fmt.Sprintf("*%s* branch is not present in repository", branchName))
-		} else if bdiff.newCommit == bdiff.oldCommit {
-			data = append(data, fmt.Sprintf("No changes for *%s* branch ", branchName))
-		} else {
-			data = append(data, fmt.Sprintf("Look at the *NEW diff* for %s at %s", branchName, bdiff.urlLink(b.Repo)))
-		}
-	}
-	return strings.Join(data, "\n")
+func githubCommitLink(repo, ref string) string {
+	return fmt.Sprintf(githubCommitURLEndPoint, repo, ref)
 }
 
-func (b *branchCommit) urlLink(repoName string) string {
-	return fmt.Sprintf(githubCompareURLEndPoint, repoName, b.oldCommit, b.newCommit)
-}
-
-func (b *BranchDiff) toHTML() string {
-	data := make([]string, 0, len(b.data)+1)
-	data = append(data, fmt.Sprintf("Fetched <strong>commit changes</strong> for repo <strong>%s</strong>:", b.Repo))
-	for branchName, bdiff := range b.data {
-		if bdiff.oldCommit == "" {
-			data = append(data, fmt.Sprintf("Started tracking <strong>%s</strong> branch", branchName))
-		} else if bdiff.newCommit == noneString {
-			data = append(data, fmt.Sprintf("<strong>%s</strong> branch is not present in repository", branchName))
-		} else if bdiff.newCommit == bdiff.oldCommit {
-			data = append(data, fmt.Sprintf("No changes in branch <strong>%s</strong>", branchName))
-		} else {
-			data = append(data, fmt.Sprintf("<a href=\"%s\">Look at the *NEW Diff* for %s</a> ", bdiff.urlLink(b.Repo), branchName))
-		}
-	}
-	return strings.Join(data, "<br />")
-}
-
-// LocalRef is used tracking Repo and Branch from the email
-type LocalRef struct {
-	Repo       string
-	Title      string
-	References []string
-}
-
-func (l *LocalRef) urlLink() string {
-	return fmt.Sprintf(githubRepoEndPoint, l.Repo)
-}
-
-func (l *LocalRef) treeLink(ref string) string {
-	return fmt.Sprintf(githubTreeURLEndPoint, l.Repo, ref)
-}
-func (l *LocalRef) commitLink(ref string) string {
-	return fmt.Sprintf(githubCommitURLEndPoint, l.Repo, ref)
-}
-
-func (l *LocalRef) toHTML() string {
-	s := make([]string, len(l.References)+1)
-	if len(l.References) != 0 {
-		s[0] = fmt.Sprintf("Fetched <strong>%d</strong> recently created <strong>%s</strong> for <a href=\"%s\">%s</a>", len(l.References), l.Title, l.urlLink(), l.Repo)
-	} else {
-		s[0] = fmt.Sprintf("No new %s were found for <a href=\"%s\">%s</a>", l.Title, l.urlLink(), l.Repo)
-	}
-	for i, ref := range l.References {
-		s[i+1] = fmt.Sprintf("<a href=\"%s\">%s::%s</a> <a href=\"%s\">[commits]</a>", l.treeLink(ref), l.Repo, ref, l.commitLink(ref))
-	}
-	return strings.Join(s, "<br />")
-}
-
-func (l *LocalRef) toText() string {
-	s := make([]string, len(l.References)+1)
-	if len(l.References) != 0 {
-		s[0] = fmt.Sprintf("Fetched *%d recently created %s*: for %s(%s)", len(l.References), l.Title, l.Repo, l.urlLink())
-	} else {
-		s[0] = fmt.Sprintf("No new %s were found for %s(%s)", l.Title, l.urlLink(), l.Repo)
-	}
-	for i, ref := range l.References {
-		s[i+1] = fmt.Sprintf("%s - %s | Commits: %s", ref, l.treeLink(ref), l.commitLink(ref))
-	}
-	return strings.Join(s, "\n")
+func githubCompareLink(repo, oldCommit, newCommit string) string {
+	return fmt.Sprintf(githubCompareURLEndPoint, repo, oldCommit, newCommit)
 }
 
 // Helper method to create github client

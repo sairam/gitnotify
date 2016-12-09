@@ -1,8 +1,7 @@
 package main
 
-// This file is used for testing
-
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -15,11 +14,6 @@ import (
 	githubApp "github.com/google/go-github/github"
 )
 
-// TODO - abstract client response to an interface
-// type remoteClient interface {
-// 	Do(req *http.Request, v interface{}) interface{}
-// }
-
 const noneString = "<none>"
 
 type branches struct {
@@ -31,14 +25,47 @@ type branches struct {
 	newList []string
 }
 
-type branchCommits struct {
-	data map[string]*branchCommit
+func (e *branches) String() string {
+	return Stringify(e)
 }
 
-type branchCommit struct {
-	// branch    string
-	oldCommit string
-	newCommit string
+type BranchCommit struct {
+	OldCommit string
+	NewCommit string
+}
+
+func (e *BranchCommit) String() string {
+	return Stringify(e)
+}
+
+type LocalDiffs struct {
+	RepoName   string
+	Provider   string
+	References map[string]*BranchCommit
+	Others     []*LocalRef
+}
+
+func (e *LocalDiffs) String() string {
+	return Stringify(e)
+}
+
+var mailContent = &MailContent{}
+
+type MailContent struct {
+	WebsiteURL string
+	User       string // provider/username
+	Name       string
+	Data       []*LocalDiffs
+}
+
+// LocalRef is used tracking Repo and Branch from the email
+type LocalRef struct {
+	Title      string
+	References []string
+}
+
+func (e *LocalRef) String() string {
+	return Stringify(e)
 }
 
 func forceRunHandler(w http.ResponseWriter, r *http.Request) {
@@ -52,18 +79,12 @@ func forceRunHandler(w http.ResponseWriter, r *http.Request) {
 	userInfo := hc.userLoggedinInfo()
 	configFile := userInfo.getConfigFile()
 
-	conf := new(Setting)
-	conf.load(configFile)
-	err := process(conf)
+	// hidden feature: useful for testing. pass ?save=false in the POST url
 	isSaveFalse := isSaveSetToFalse(r.URL.Query())
-	if !isSaveFalse {
-		conf.save(configFile)
-	}
-	if err == nil {
-		hc.addFlash("Check email to see current updates")
-	} else {
-		hc.addFlash(err.Error())
-	}
+
+	cronJob{configFile, !isSaveFalse}.Run()
+
+	hc.addFlash("Check email to see latest information")
 
 	http.Redirect(w, r, homePageForLoggedIn, 302)
 }
@@ -78,6 +99,7 @@ func isSaveSetToFalse(q url.Values) bool {
 	return false
 }
 
+// Move to helper. statndard directory walk
 func fetchFiles(provider string) []string {
 	dir := fmt.Sprintf("%s/%s", config.DataDir, provider)
 	fis, err := ioutil.ReadDir(dir)
@@ -112,12 +134,14 @@ func getData(provider string) {
 type userNotFound struct{}
 
 func (userNotFound) Error() string {
-	return fmt.Sprintf("No email address found for account. Visit <a href=\"/user\">/user</a>")
+	return fmt.Sprintf("No email address found for account. Visit <a href=\"/user\">Settings Page</a>")
 }
-func process(conf *Setting) error {
+
+// process is called from the cron job
+func process(conf *Setting) ([]*LocalDiffs, error) {
 	if conf.usersEmail() == "" {
 		log.Printf("No email address for %s\n", conf.Auth.UserName)
-		return &userNotFound{}
+		return nil, &userNotFound{}
 	}
 	client := newGithubClient(conf.Auth.Token)
 	branch := &branches{
@@ -125,18 +149,24 @@ func process(conf *Setting) error {
 		auth:   conf.Auth,
 	}
 
-	var diff LocalDiff
+	var allLocalDiffs = make([]*LocalDiffs, 0, len(conf.Repos))
+
 	// loop through repos and their branches
 	for _, repo := range conf.Repos {
+		var localDiffs = &LocalDiffs{
+			RepoName: repo.Repo,
+			Provider: conf.Auth.Provider,
+		}
+		allLocalDiffs = append(allLocalDiffs, localDiffs)
+
+		// branch is reused here without creating new ones
 		branch.repo = repo
 
 		if repo.Branches || len(repo.NamedReferences) > 0 {
 			newBranches := getNewInfo(branch, "branches")
 			if len(repo.NamedReferences) > 0 {
 
-				// 1. take all commits from conf.Info .Commits
-				commitDiff := new(branchCommits)
-				commitDiff.data = make(map[string]*branchCommit)
+				data := make(map[string]*BranchCommit)
 				b := conf.Info[repo.Repo]
 				// TODO set newInformation as part of the config loader
 				// TODO bug - if we are no longer tracking a branch, we need to remove it from the new list
@@ -145,36 +175,30 @@ func process(conf *Setting) error {
 					b = conf.Info[branch.repo.Repo]
 				}
 				for branch, commitID := range b.Commits {
-					commitDiff.data[branch] = &branchCommit{
-						oldCommit: commitID,
+					data[branch] = &BranchCommit{
+						OldCommit: commitID,
 					}
 				}
 
-				diffWithOldCommits(newBranches, branch, commitDiff)
+				// check if data still keeps the data
+				diffWithOldCommits(newBranches, branch, data)
 
-				for i, t := range commitDiff.data {
+				for i, t := range data {
 					// save new data from commitDiff.data
-					if t.newCommit != noneString {
-						b.Commits[i] = t.newCommit
+					if t.NewCommit != noneString {
+						b.Commits[i] = t.NewCommit
 					}
-					// fmt.Printf("%s,%s,%s\n", i, t.oldCommit, t.newCommit)
 				}
-
-				l := &BranchDiff{
-					Repo:          repo.Repo,
-					branchCommits: commitDiff,
-				}
-				diff.add(l)
+				localDiffs.References = data
 			}
 
 			if repo.Branches {
 				branchesDiff := diffWithOldBranches(newBranches, branch, "branches", conf.Info)
 				l := &LocalRef{
 					Title:      "Branches",
-					Repo:       repo.Repo,
 					References: branchesDiff,
 				}
-				diff.add(l)
+				localDiffs.Others = append(localDiffs.Others, l)
 			}
 		}
 
@@ -183,20 +207,31 @@ func process(conf *Setting) error {
 			tagsDiff := diffWithOldBranches(newTags, branch, "tags", conf.Info)
 			l := &LocalRef{
 				Title:      "Tags",
-				Repo:       repo.Repo,
 				References: tagsDiff,
 			}
-			diff.add(l)
+			localDiffs.Others = append(localDiffs.Others, l)
 		}
 	}
+	return allLocalDiffs, nil
+}
+func processForMail(conf *Setting) error {
 
-	tz := conf.User.TimeZoneName
-	if tz == "" {
-		tz = "UTC"
+	diff, _ := process(conf)
+
+	mailContent = &MailContent{
+		WebsiteURL: config.ServerProto + config.ServerHost,
+		User:       fmt.Sprintf("%s/%s", conf.Auth.Provider, conf.Auth.UserName),
+		Name:       conf.usersName(),
 	}
-	t := time.Now()
-	loc, _ := time.LoadLocation(tz)
-	t = t.In(loc)
+	mailContent.Data = diff
+
+	htmlBuffer := &bytes.Buffer{}
+
+	displayPage(htmlBuffer, "changes_mail", mailContent)
+	html, _ := ioutil.ReadAll(htmlBuffer)
+
+	loc, _ := time.LoadLocation(conf.User.TimeZoneName)
+	t := time.Now().In(loc)
 
 	subject := "[GitNotify] New Updates from your Repositories - " + t.Format("02 Jan 2006 | 15 Hrs")
 
@@ -209,8 +244,8 @@ func process(conf *Setting) error {
 
 	ctx := &emailCtx{
 		Subject:  subject,
-		TextBody: diff.toText(),
-		HTMLBody: diff.toHTML(),
+		TextBody: "diff", // text
+		HTMLBody: string(html),
 	}
 
 	sendEmail(to, ctx)
@@ -255,7 +290,7 @@ func diffWithOldBranches(v []*TagInfo, branch *branches, option string, info map
 }
 
 func getNewStrings(old, new []string) []string {
-	var strs []string
+	strs := make([]string, 0, 1)
 	for _, s := range difflib.Diff(old, new) {
 		if s.Delta == difflib.RightOnly {
 			strs = append(strs, s.Payload)
@@ -267,15 +302,15 @@ func getNewStrings(old, new []string) []string {
 // in the branches we are tracking,
 // newcommit is "" // means that we are no longer tracking the branch/ref
 // newcommit is <none> if branch is not found/deleted in remote
-func diffWithOldCommits(v []*TagInfo, branch *branches, commitRef *branchCommits) {
+func diffWithOldCommits(v []*TagInfo, branch *branches, data map[string]*BranchCommit) {
 	for _, a := range branch.repo.NamedReferences {
 		s := string(a)
-		c := commitRef.data[s]
+		c := data[s]
 		if c == nil {
-			c = &branchCommit{}
-			commitRef.data[s] = c
+			c = &BranchCommit{}
+			data[s] = c
 		}
-		c.newCommit = findBranchCommit(v, s)
+		c.NewCommit = findBranchCommit(v, s)
 	}
 }
 

@@ -1,119 +1,94 @@
+
 <body align="center">
+  <font size="4">
 
-<h1>GitNotify | Keep an eye on any Github projects</h1>
-
+<p>
+{{ .Name }}, Thanks for using <a href="{{ .WebsiteURL }}">GitNotify</a> for periodic diffs from public Github repositories <br>
+Here is the latest diff that was composed
+</p>
+<!-- split into groups of 5 and add to the list  -->
 <table valign="center" border="1">
-  <tr><td style="padding: 1em;"><a href="#rails">rails/rails</a></td>
-  <td style="padding: 1em;">data/datum</td>
-  <td style="padding: 1em;">manga/test</td>
-  <td style="padding: 1em;">twitter/bootstrap</td>
-  <td style="padding: 1em;">repo/new</td></tr>
-  <tr><td style="padding: 1em;">rails/rails</td>
-  <td style="padding: 1em;">data/datum</td>
-  <td style="padding: 1em;">manga/test</td>
-  <td style="padding: 1em;"><a href="#bootstrap">twitter/bootstrap</a></td>
-  <td style="padding: 1em;"><a href="http://gitnotify.com/">Track New</a></td></tr>
-</table>
-
+  {{ $repoCount := len .Data }}
+  {{ $count := 5}}
+  {{ $lastTd := minus $count 1 }}
+  {{ $c := mod $repoCount $count }}
+  {{ $tdCount := minus $count $c }}
+  {{ range $i, $repo := .Data }}
+  {{ $c := mod $i $count }}
+  {{ if eq $c 0 }}<tr>{{ end }}
+  <td style="padding: 1em;"><a href="#{{$repo.RepoName}}">{{$repo.RepoName}}</a></td>
+  {{ $c := mod $i $count }}
+  {{ if eq $c $lastTd }}</tr>{{ end }}
+  {{ end }}
+  {{ if eq $tdCount $count }}<tr>{{ end }}
+  <td style="padding: 1em;" align="center" colspan="{{ $tdCount }}"><a href="{{ .WebsiteURL }}">Track a New Repo</a></td>
+</tr></table>
 <br>
-<table valign="center" border="1">
+<table width="800" valign="center" border="1">
+<!-- loop through repositories -->
+{{ range $repo := .Data }}
+{{ with $repo }}
   <tr>
-    <td align="center" style="padding: 1em;" colspan="2"><a>rails/rails</a><a name="rails"></a></td>
+    <td align="center" style="padding: 1em;" colspan="2"><a href="{{ githubRepoLink .RepoName }}">{{ .RepoName }}</a>
+      <a name="{{ .RepoName }}"></a></td>
   </tr>
 
-  <!-- multiple -->
+  <!-- loop through branches -->
+  {{ range $branch, $commit := .References }}
+  {{ if ne $commit.NewCommit "" }}
   <tr>
-    <td style="padding: 0.7em;">Changes in <a href="">master</a> branch</td>
+    <td style="padding: 0.7em;" align="right">Branch: <strong><a href="{{githubTreeLink $repo.RepoName $branch}}">{{$branch}}</a></strong></td>
     <td style="padding: 0.7em;">
-      <a href="">12345..abcde</a><br>
-      <a href="">spf13/hugo/compare/12345..abcde.diff</a><br>
-      <pre>Previous Commit: 12343746328483724372<br>Latest   Commit: 12343746328483724372</pre>
-    </td>
-  </tr>
-  <tr>
-    <td style="padding: 0.7em;">Changes in <a href="">develop</a> branch</td>
-    <td style="padding: 0.7em;">
-      <a href="">12345..abcde</a><br>
-      <a href="">spf13/hugo/compare/12345..abcde.diff</a><br>
-      <pre>Previous Commit: 12343746328483724372<br>Latest   Commit: 12343746328483724372</pre>
-    </td>
-  </tr>
-
-  <tr>
-    <td style="padding: 0.7em;">Changes in <a href="">awesome</a> branch</td>
-    <td style="padding: 0.7em;">
+    {{ if eq $commit.OldCommit "" }}
+      {{ if eq $commit.NewCommit "" }}
+      Branch Not Found
+      {{ else }}
       Next message will contain the diff.<br>
-      <pre>Previous Commit: Newly tracked branch<br>Latest   Commit: 12343746328483724372</pre>
+      <pre>Previous Commit: Newly Tracked Branch<br>Latest   Commit: {{ $commit.NewCommit }}</pre>
+      {{ end }}
+    {{ else if eq $commit.OldCommit $commit.NewCommit }}
+      No new Commits created recently
+    {{ else }}
+      Compare: <a href="{{ githubCompareLink $repo.RepoName $commit.OldCommit $commit.NewCommit }}">{{ $repo.RepoName }}/{{ shortCommit $commit.OldCommit}}..{{shortCommit $commit.NewCommit}}</a><br>
+      Diff: <a href="{{ githubCompareLink $repo.RepoName $commit.OldCommit $commit.NewCommit }}.diff">{{ $repo.RepoName }}/{{shortCommit  $commit.OldCommit}}..{{shortCommit $commit.NewCommit}}.diff</a><br>
+      <pre>Previous Commit: {{ $commit.OldCommit }}<br>Latest   Commit: {{ $commit.NewCommit}}</pre>
+    {{ end }}
     </td>
   </tr>
+  {{ end }}
+  {{ end }}
+  <!-- END loop through branches -->
 
+  {{ range $t := .Others }}
+  {{ with $t }}
   <tr>
-    <td style="padding: 0.7em;">New Tags</td>
-    <td style="padding: 0.7em;">None created recently</td>
+    <td style="padding: 0.7em;" align="right">New {{ .Title }}</td>
+    <td style="padding: 0.7em;">
+      {{ $len := len .References }}
+      {{ if eq $len 0 }}
+        No new {{.Title}} created recently
+      {{ else }}
+      <ul>
+        {{ range $ref := .References }}
+        <li><a href="{{ githubTreeLink $repo.RepoName $ref }}">{{ $ref }}</a></li>
+        {{ end }}
+      </ul>
+      {{ end }}
+    </td>
   </tr>
-
-  <tr>
-    <td style="padding: 0.7em;">New Branches</td>
-    <td style="padding: 0.7em;"><ul>
-    <li><a href="">tag 2</a></li>
-    <li><a href="">tag 3</a></li>
-    <li><a href="">tag 6</a></li>
-    <li><a href="">tag 10</a></li>
-    </ul></td>
-  </tr>
-
+  {{ end }}
+  {{ end }}
+<tr><td colspan="2"></td></tr>
+{{ end }}
+{{ end }}
+<!-- END loop through repositories -->
 </table>
-<br>
-<table valign="center" border="1">
-  <tr>
-    <td align="center" style="padding: 1em;" colspan="2"><a>rails/rails</a><a name="bootstrap"></a></td>
-  </tr>
-  <!-- multiple -->
-  <tr>
-    <td style="padding: 0.7em;">Changes in <a href="">master</a> branch</td>
-    <td style="padding: 0.7em;">
-      <a href="">12345..abcde</a><br>
-      <a href="">spf13/hugo/compare/12345..abcde.diff</a><br>
-      <pre>Previous Commit: 12343746328483724372<br>Latest   Commit: 12343746328483724372</pre>
-    </td>
-  </tr>
-  <tr>
-    <td style="padding: 0.7em;">Changes in <a href="">develop</a> branch</td>
-    <td style="padding: 0.7em;">
-      <a href="">12345..abcde</a><br>
-      <a href="">spf13/hugo/compare/12345..abcde.diff</a><br>
-      <pre>Previous Commit: 12343746328483724372<br>Latest   Commit: 12343746328483724372</pre>
-    </td>
-  </tr>
 
-  <tr>
-    <td style="padding: 0.7em;">Changes in <a href="">awesome</a> branch</td>
-    <td style="padding: 0.7em;">
-      Next message will contain the diff.<br>
-      <pre>Previous Commit: Newly tracked branch<br>Latest   Commit: 12343746328483724372</pre>
-    </td>
-  </tr>
-
-  <tr>
-    <td style="padding: 0.7em;">New Tags</td>
-    <td style="padding: 0.7em;">None created recently</td>
-  </tr>
-
-  <tr>
-    <td style="padding: 0.7em;">New Branches</td>
-    <td style="padding: 0.7em;"><ul>
-    <li><a href="https://example.com/">tag 2</a></li>
-    <li><a href="/abc/">tag 3</a></li>
-    <li><a href="">tag 6</a></li>
-    <li><a href="">tag 10</a></li>
-    </ul></td>
-  </tr>
-
-</table>
 <br><br>
+</font>
 <p>
 &copy; 2016 <a href="http://gitnotify.com/">GitNotify</a> <br>
-Sent To: (github/sairam) <a href="http://gitnotify.com/">Unsubscribe here</a>
+<strong>prepared for: {{ .User }}</strong><br>
+<a href="{{ .WebsiteURL }}">unsubscribe</a> if you do not want these messages on the website.
 </p>
-
 </body>
