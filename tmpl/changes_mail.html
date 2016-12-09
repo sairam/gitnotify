@@ -40,7 +40,7 @@ Here is the latest diff that was composed
     <td style="padding: 0.7em;" align="right">Branch: <strong><a href="{{githubTreeLink $repo.RepoName $branch}}">{{$branch}}</a></strong></td>
     <td style="padding: 0.7em;">
     {{ if eq $commit.OldCommit "" }}
-      {{ if eq $commit.NewCommit "" }}
+      {{ if eq $commit.NewCommit "<none>" }}
       Branch Not Found
       {{ else }}
       Next message will contain the diff.<br>

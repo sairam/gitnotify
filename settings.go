@@ -300,7 +300,7 @@ type SettingsPage struct {
 func validateRepoName(repo string) string {
 
 	// verify if Repository is of the name ^abc/def$
-	words := regexp.MustCompile("^[\\p{L}\\d_]+/[\\p{L}\\d_]+$")
+	words := regexp.MustCompile("^[\\p{L}\\d_-]+/[\\p{L}\\d_-]+$")
 	data := words.FindAllString(repo, -1)
 	if len(data) == 1 {
 		return data[0]
