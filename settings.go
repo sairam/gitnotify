@@ -248,8 +248,8 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 			formAction = "create"
 		}
 
-		userInfo := hc.userLoggedinInfo()
-		configFile := userInfo.getConfigFile()
+		// userInfo := hc.userLoggedinInfo()
+		// configFile := userInfo.getConfigFile()
 		if err := conf.save(configFile); err != nil {
 			hc.addFlash("Error saving configuration " + err.Error() + " for " + repo.Repo)
 		} else {
@@ -271,8 +271,8 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 		if success == false {
 			hc.addFlash("Error deleting Repository " + repo.Repo)
 		} else {
-			userInfo := hc.userLoggedinInfo()
-			configFile := userInfo.getConfigFile()
+			// userInfo := hc.userLoggedinInfo()
+			// configFile := userInfo.getConfigFile()
 			if err := conf.save(configFile); err != nil {
 				hc.addFlash("Error saving configuration " + err.Error() + " for " + repo.Repo)
 			} else {
@@ -287,8 +287,14 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 
 	conf.Repos = append(conf.Repos, &Repo{})
 
-	page := newPage(hc, "Edit/Add Repos to Track", "Edit/Add Repos to Track", conf, nil)
+	t := &SettingsPage{isCronPresentFor(configFile)}
+
+	page := newPage(hc, "Edit/Add Repos to Track", "Edit/Add Repos to Track", conf, t)
 	displayPage(w, "repos", page)
+}
+
+type SettingsPage struct {
+	CronRunning bool
 }
 
 func validateRepoName(repo string) string {

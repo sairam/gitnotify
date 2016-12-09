@@ -1,11 +1,13 @@
 
 {{ partial "header" . }}
-{{ with .Context }}
 
 <div class="pull-right">
   <div class="pull-left">
-  <!-- <a class="btn btn-default" href="/user#schedule">Daily @09,12,14,16,18 hrs</a>&nbsp;&nbsp; -->
-  <a class="btn btn-default" href="/user#schedule">Schedule daily email alerts</a>&nbsp;&nbsp;
+    {{ if .Data.CronRunning }}
+    Email Notifications are scheduled <a class="btn btn-info" href="/user">Modify Settings</a>&nbsp;&nbsp;
+    {{ else }}
+      <a class="btn btn-danger" href="/user">Configure Time to receive Email Notifications</a>&nbsp;&nbsp;
+    {{ end }}
   </div>
 
 <!-- Post to /run?save=false if you don't want to persist changes -->
@@ -15,6 +17,7 @@
 
 </div>
 
+{{ with .Context }}
 <div class="row">
   <div class="col-md-10">
 

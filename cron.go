@@ -20,6 +20,12 @@ import (
 var runningCrons = make(map[string]cron.EntryID)
 var crons *cron.Cron
 
+func isCronPresentFor(filename string) bool {
+	id := runningCrons[filename]
+	entry := crons.Entry(id)
+	return entry.Valid()
+}
+
 func checkCronEntries(filename string) (nextRunTimes []string) {
 	nextRunTimes = make([]string, 0, 15)
 	id := runningCrons[filename]
