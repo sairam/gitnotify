@@ -25,9 +25,9 @@ type AppConfig struct {
 	GithubURLEndPoint string `yaml:"githubURLEndPoint"` // website end point https://github.com
 	SMTPHost          string `yaml:"smtpHost"`
 	SMTPPort          int    `yaml:"smtpPort"`
-
-	SMTPUser string // environment variable
-	SMTPPass string // environment variable
+	SMTPSesConfSet    string `yaml:"sesConfigurationSet"` // ses configuration set used as a custom header while sending email
+	SMTPUser          string // environment variable
+	SMTPPass          string // environment variable
 }
 
 var config = new(AppConfig)

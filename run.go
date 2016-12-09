@@ -201,8 +201,10 @@ func process(conf *Setting) error {
 	subject := "[GitNotify] New Updates from your Repositories - " + t.Format("02 Jan 2006 | 15 Hrs")
 
 	to := &recepient{
-		Name:    conf.usersName(),
-		Address: conf.usersEmail(),
+		Name:     conf.usersName(),
+		Address:  conf.usersEmail(),
+		UserName: conf.Auth.UserName,
+		Provider: conf.Auth.Provider,
 	}
 
 	ctx := &emailCtx{

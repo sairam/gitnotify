@@ -53,8 +53,10 @@ func mailDaemon() {
 }
 
 type recepient struct {
-	Name    string
-	Address string
+	Name     string
+	Address  string
+	UserName string
+	Provider string
 }
 
 type emailCtx struct {
@@ -73,8 +75,13 @@ func sendEmail(to *recepient, e *emailCtx) {
 	m.SetHeader("From", m.FormatAddress(from.Address, from.Name))
 	m.SetAddressHeader("To", to.Address, to.Name)
 	m.SetHeader("Subject", e.Subject)
+	if config.SMTPSesConfSet != "" {
+		m.SetHeader("X-SES-CONFIGURATION-SET", config.SMTPSesConfSet)
+	}
+	m.SetHeader("X-SES-MESSAGE-TAGS", fmt.Sprintf("%s=%s", to.Provider, to.UserName))
+
 	m.SetBody("text/plain", fmt.Sprintf("Hi %s,\n\n%s", to.Name, e.TextBody))
-	unsubscribeLink := fmt.Sprintf(`<a href="%s%s">Unsubscribe</a>`, config.ServerProto, config.ServerHost)
+	unsubscribeLink := fmt.Sprintf(`<a href="%s%s">Unsubscribe (%s/%s)</a>`, config.ServerProto, config.ServerHost, to.Provider, to.UserName)
 	m.AddAlternative("text/html", fmt.Sprintf("<pre style='font-size: 2em'>Hi %s,<br/><br/>%s<br/><br/>%s</pre>", html.EscapeString(to.Name), e.HTMLBody, unsubscribeLink))
 
 	emailCh <- m
