@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	githubApp "github.com/google/go-github/github"
 	"golang.org/x/oauth2"
@@ -40,6 +41,10 @@ func (e *CommitRef) String() string {
 }
 
 // Helpers
+func cleanRepoName(repo string) string {
+	return strings.Replace(repo, "/", "__", 3)
+}
+
 func shortCommit(commit string) string {
 	if len(commit) > 6 {
 		return commit[0:6]

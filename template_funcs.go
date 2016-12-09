@@ -42,6 +42,7 @@ var (
 		"githubCommitLink":  githubCommitLink,
 		"githubCompareLink": githubCompareLink,
 		"shortCommit":       shortCommit,
+		"cleanRepoName":     cleanRepoName,
 	}
 )
 
