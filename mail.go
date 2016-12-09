@@ -3,7 +3,7 @@ package main
 // Mail helper methods
 import (
 	"fmt"
-	"html"
+	"io/ioutil"
 	"log"
 	"time"
 
@@ -65,6 +65,25 @@ type emailCtx struct {
 	TextBody string
 }
 
+func testEmail() {
+	to := &recepient{
+		Name:     "sairam",
+		Address:  "sairam.kunala@gmail.com",
+		UserName: "sairam",
+		Provider: "github",
+	}
+
+	htmlBody, _ := ioutil.ReadFile("tmpl/changes_mail.html")
+
+	ctx := &emailCtx{
+		Subject:  "Testing Email",
+		TextBody: "no text for you",
+		HTMLBody: string(htmlBody),
+	}
+
+	sendEmail(to, ctx)
+}
+
 func sendEmail(to *recepient, e *emailCtx) {
 	var from = &recepient{
 		Name:    config.FromName,
@@ -84,8 +103,9 @@ func sendEmail(to *recepient, e *emailCtx) {
 	m.SetHeader("List-Unsubscribe", fmt.Sprintf("<mailto:unsub+%s-%s@%s>, <%s>", to.Provider, to.UserName, config.ServerHost, config.ServerProto+config.ServerHost))
 
 	m.SetBody("text/plain", fmt.Sprintf("Hi %s,\n\n%s", to.Name, e.TextBody))
-	unsubscribeLink := fmt.Sprintf(`<a href="%s%s">Unsubscribe (%s/%s)</a>`, config.ServerProto, config.ServerHost, to.Provider, to.UserName)
-	m.AddAlternative("text/html", fmt.Sprintf("<pre style='font-size: 2em'>Hi %s,<br/><br/>%s<br/><br/>%s</pre>", html.EscapeString(to.Name), e.HTMLBody, unsubscribeLink))
+	// unsubscribeLink := fmt.Sprintf(`<a href="%s%s">Unsubscribe (%s/%s)</a>`, config.ServerProto, config.ServerHost, to.Provider, to.UserName)
+	// m.AddAlternative("text/html", fmt.Sprintf("<pre style='font-size: 2em'>Hi %s,<br/><br/>%s<br/><br/>%s</pre>", html.EscapeString(to.Name), e.HTMLBody, unsubscribeLink))
+	m.AddAlternative("text/html", e.HTMLBody)
 
 	emailCh <- m
 }
