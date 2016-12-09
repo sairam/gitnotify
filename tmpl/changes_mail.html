@@ -16,7 +16,7 @@ Here is the latest diff that was composed
   {{ range $i, $repo := .Data }}
   {{ $c := mod $i $count }}
   {{ if eq $c 0 }}<tr>{{ end }}
-  <td style="padding: 1em;"><a href="#{{$repo.RepoName}}">{{cleanRepoName $repo.RepoName}}</a></td>
+  <td style="padding: 1em;"><a href="#{{cleanRepoName $repo.RepoName}}">{{$repo.RepoName}}</a></td>
   {{ $c := mod $i $count }}
   {{ if eq $c $lastTd }}</tr>{{ end }}
   {{ end }}
@@ -29,8 +29,8 @@ Here is the latest diff that was composed
 {{ range $repo := .Data }}
 {{ with $repo }}
   <tr>
-    <td align="center" style="padding: 1em;" colspan="2"><a href="{{ githubRepoLink .RepoName }}">{{ cleanRepoName .RepoName }}</a>
-      <a name="{{ .RepoName }}"></a></td>
+    <td align="center" style="padding: 1em;" colspan="2"><a href="{{ githubRepoLink .RepoName }}">{{ .RepoName }}</a>
+      <a name="{{ cleanRepoName .RepoName }}"></a></td>
   </tr>
 
   <!-- loop through branches -->
