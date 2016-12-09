@@ -79,7 +79,6 @@ func isSaveSetToFalse(q url.Values) bool {
 }
 
 func fetchFiles(provider string) []string {
-
 	dir := fmt.Sprintf("%s/%s", config.DataDir, provider)
 	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
@@ -96,6 +95,7 @@ func fetchFiles(provider string) []string {
 	return files
 }
 
+// load all files and adds the cron entries
 func getData(provider string) {
 	files := fetchFiles("github")
 	for i, filename := range files {
@@ -105,8 +105,7 @@ func getData(provider string) {
 		conf := new(Setting)
 		log.Printf("Processing file %d - %s\n", i, filename)
 		conf.load(filename)
-		process(conf)
-		conf.save(filename)
+		upsertCronEntry(conf)
 	}
 }
 
@@ -191,7 +190,14 @@ func process(conf *Setting) error {
 		}
 	}
 
+	tz := conf.User.TimeZoneName
+	if tz == "" {
+		tz = "UTC"
+	}
 	t := time.Now()
+	loc, _ := time.LoadLocation(tz)
+	t = t.In(loc)
+
 	subject := "[GitNotify] New Updates from your Repositories - " + t.Format("02 Jan 2006 | 15 Hrs")
 
 	to := &recepient{
@@ -278,9 +284,4 @@ func findBranchCommit(v []*TagInfo, branch string) string {
 		}
 	}
 	return noneString
-}
-
-// run cron to go through each file and run based on the time selected
-func croned() {
-	getData("github")
 }

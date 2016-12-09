@@ -1,4 +1,14 @@
 {{ partial "header" . }}
+
+{{ $nextRunTimeLength := len .Data.NextRunTimes }}
+{{ if eq $nextRunTimeLength 0 }}
+<div class="alert alert-danger" role="alert">Select Hour/Day/TimeZone or Email to get recurring emails</div>
+{{ else }}
+
+<div class="pull-right">
+<a class="btn btn-info" href="#scheduled">Scheduled Time for Next {{ $nextRunTimeLength }} Runs</a>
+</div>
+{{ end }}
 {{ with .Context }}
 {{ with .User }}
 <div class="row">
@@ -47,7 +57,7 @@
   <!-- TZ management without Daylight Savings. Contribute if you can so that we can include dropdown of TZs -->
   <div class="form-group">
   <label for="tz">TimeZone Offset</label>
-  <input type="text" name="tz" id="tz" maxlength="5" minlength="5" class="form-control input-lg" placeholder="GMT Offset: 0000 | +0100 | +0530 | -0700" value="{{.TimeZone}}" onchange="displayTzOptions(false)">
+  <input type="text" name="tz" id="tz" maxlength="5" minlength="5" class="form-control input-lg" placeholder="GMT Offset: +0000 | +0100 | +0530 | -0700" value="{{.TimeZone}}" onchange="displayTzOptions(false)">
   <p class="help-block"><a href="javascript:loadFromSystem(true)">Load from System Time</a>. TimeZone Offset is calculated from the browser. Extremes are -1200 &amp; +1400 <br />
   <strong>NOTE:</strong> Use TimeZone name to consider Daylight Savings. Only valid TimeZone Names get displayed on change</p>
   </div>
@@ -63,6 +73,18 @@
   <button type="submit" class="btn btn-info btn-lg">Save My Preferences</button>
 
 </form>
+{{ end }}
+{{ end }}
+
+{{ if gt $nextRunTimeLength 0 }}
+<a name="scheduled"></a>
+<h3>Next Jobs will run at</h3>
+<ul class="list-group">
+{{ range $a := .Data.NextRunTimes }}
+<li class="list-group-item">{{$a}}</li>
+{{ end }}
+</ul>
+{{ end }}
 
 <script>
 function pad(number, length){
@@ -126,7 +148,5 @@ loadFromSystem(false)
 </div>
 </div>
 
-{{ end }}
-{{ end }}
 
 {{ partial "footer" . }}

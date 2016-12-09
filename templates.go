@@ -35,7 +35,7 @@ func reloadTemplates() {
 }
 
 func displayText(hc *httpContext, w io.Writer, text string) {
-	page := newPage(hc, text, "Action Required!", text)
+	page := newPage(hc, text, "Action Required!", text, nil)
 	displayPage(w, "text", page)
 }
 

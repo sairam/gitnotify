@@ -41,9 +41,10 @@ type Page struct {
 	User      *Authentication
 	Flashes   []string
 	Context   interface{}
+	Data      interface{}
 }
 
-func newPage(hc *httpContext, title string, pageTitle string, conf interface{}) *Page {
+func newPage(hc *httpContext, title string, pageTitle string, conf interface{}, data interface{}) *Page {
 	var userInfo *Authentication
 	if hc.isUserLoggedIn() {
 		userInfo = hc.userLoggedinInfo()
@@ -57,6 +58,7 @@ func newPage(hc *httpContext, title string, pageTitle string, conf interface{}) 
 		User:      userInfo,
 		Flashes:   hc.getFlashes(),
 		Context:   conf,
+		Data:      data,
 	}
 	return page
 }
@@ -64,6 +66,7 @@ func newPage(hc *httpContext, title string, pageTitle string, conf interface{}) 
 func init() {
 	loadConfig()
 	go mailDaemon()
+	initCron()
 }
 
 var (

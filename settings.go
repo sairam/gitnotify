@@ -287,7 +287,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 
 	conf.Repos = append(conf.Repos, &Repo{})
 
-	page := newPage(hc, "Edit/Add Repos to Track", "Edit/Add Repos to Track", conf)
+	page := newPage(hc, "Edit/Add Repos to Track", "Edit/Add Repos to Track", conf, nil)
 	displayPage(w, "repos", page)
 }
 

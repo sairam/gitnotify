@@ -10,6 +10,10 @@ import (
 	"github.com/sairam/timezone"
 )
 
+type UserPage struct {
+	NextRunTimes []string
+}
+
 func userSettingsShowHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Redirect user if not logged in
@@ -32,7 +36,12 @@ func userSettingsShowHandler(w http.ResponseWriter, r *http.Request) {
 		conf.User.Name = conf.usersName()
 	}
 
-	page := newPage(hc, "User Settings", "User Settings", conf)
+	// Display next cron entries if cron is valid
+	t := &UserPage{
+		NextRunTimes: checkCronEntries("data/github/sairam/settings.yml"),
+	}
+
+	page := newPage(hc, "User Settings", "User Settings", conf, t)
 	displayPage(w, "user", page)
 }
 
@@ -82,6 +91,7 @@ func userSettingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		conf.User.WeekDay = cleanWeekday(r.Form["weekday"])
 
 		conf.save(configFile)
+		upsertCronEntry(conf)
 
 	}
 	http.Redirect(w, r, "/user", 302)
