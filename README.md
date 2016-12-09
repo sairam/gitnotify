@@ -1,8 +1,65 @@
-## Git(hub|lab) Release/Branch Version watch
+# gitnotify
+## Github Release/Branch Version Watcher
 
-### Project Name
-* gitnotify
+## How to Setup
+### Fetch Dependencies
+```bash
+go get -u golang.org/x/oauth2
+go get -u gopkg.in/gomail.v2
+go get -u gopkg.in/robfig/cron.v2 # requires modification to file aka bugfix
+go get -u gopkg.in/yaml.v2
+go get -u github.com/gorilla/mux
+go get -u github.com/markbates/goth
+go get -u github.com/google/go-github/github
+go get -u github.com/gorilla/sessions
+go get -u github.com/sairam/timezone # added a method in the original code
+go get -u github.com/spf13/cast
+```
 
+### Modify package
+* `gopkg.in/robfig/cron.v2`
+* Edit line 102
+* Replace `t = t.Truncate(time.Hour)` with `t = time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), 0, 0, 0, s.Location)`
+
+### How to build for Linux
+* `env GOOS=linux GOARCH=amd64 go build`
+
+### Runtime Dependencies
+* `cp .env.sample .env.prod`
+* `edit config.yml`
+* `ls tmpl/`
+
+### Running on a Linux/Mac environment
+1. `mkdir sessions`
+1. Fill in the `.env.prod` file and modify config.yml
+1. Load the env variables from `.env.prod`
+1. Use the binary `gitnotify` and `tmpl/` directory
+1. Start with `./gitnotify` in a screen. All logs are currently written to stdout
+
+### Backup
+1. take a copy of the `config.yml` -> `dataDir` or `data/` directory
+1. take a copy of the `sessions/` directory
+1. The `.env.prod` file containing the environment variables
+1. The `config.yml` file containing the settings
+
+## TODO
+1. Add text output for email
+1. Host on separate instance (install Caddy w/ https and configure server)
+1. Validate repo name from server side and autofill default branch name
+1. Add LICENSE
+1. Log when adding a repository from the UI fails
+
+### Known Knowns
+1. Clean up fetched_info from `settings.yml` file when a repository is removed
+1. Fix manual editing of cron.v2 since it does not work on +0530 like TZs
+
+### Nice to Have
+1. JSON output to be used for sending information as webhooks to Zapier like services
+1. Allow autofill of branch names based on repo names
+1. Suggest names of popular repositories to ease adding first few repositories
+1. Add support for Gitlab
+
+## Flow of user
 ### Development Flow
 1. Users login via Github
 1. Users keep "an eye" on a project
@@ -33,7 +90,3 @@
 * Copy `.env.example` to `.env`
 * Fill in data into `.env`
 * environment variables required to be loaded for the server to run
-
-## Setup
-mkdir sessions
-

@@ -44,7 +44,7 @@
     <label for="repo" class="col-sm-4 control-label">Repository Name</label>
     <div class="col-sm-8">
       <input type="hidden" name="repo" value="{{ .Repo }}">
-      <p class="form-control-static">{{ .Repo }}</p>
+      <p class="form-control-static"><a target="_blank" rel="none" href="https://github.com/{{.Repo}}">{{ .Repo }}</a></p>
       <!-- <input type="text" class="form-control" id="repo" value="{{ .Repo }}" readonly="readonly"> -->
     </div>
   </div>
