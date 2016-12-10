@@ -103,6 +103,7 @@
 
 {{ if eq .Repo "" }}
 <script>
+
 $('#typeaheadUsage code').on('click', function() {
   var t = $(this).text();
   $('#repoNew').val(t).trigger("input").focus();
@@ -131,6 +132,18 @@ compileOutput = function(result) {
   output += "</p>"
   return output
 }
+
+$('input#repoNew').keypress(function(event){
+  var e = jQuery.Event("keydown");
+  e.keyCode = e.which = 9;
+  if ( event.which == 13 ) { // Enter key = keycode 13
+    $('input#repoNew').trigger(e);
+    return false;
+  } else if ( event.which == 9 ) {
+    var branchInput = $(this).parents('form').find('#references');
+    branchInput.focus();
+  }
+});
 
 $('input#repoNew').typeahead(null, {
   name: 'repo',

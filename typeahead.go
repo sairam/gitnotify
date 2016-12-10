@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -37,6 +38,14 @@ func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 
 	search := getRepoName(r.URL.Query())
 	search = strings.Replace(search, " ", "+", -1)
+	// Add support for regular searches
+	if strings.Contains(search, "/") {
+		var repoValidator = regexp.MustCompile("[\\p{L}\\d_-]+/[\\p{L}\\d_-]+")
+		data := repoValidator.FindAllString(search, -1)
+		d := strings.Split(data[0], "/")
+		rep := fmt.Sprintf("%s+user:%s", d[1], d[0])
+		search = strings.Replace(search, data[0], rep, 1)
+	}
 	client := newGithubClient(userInfo.Token)
 	result := githubSearchRepos(client, search)
 
