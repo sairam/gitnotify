@@ -41,8 +41,9 @@ func displayText(hc *httpContext, w io.Writer, text string) {
 
 // page path relative to 'tmpl', example "settings"
 func displayPage(w io.Writer, page string, data interface{}) {
-	// TODO reload only in dev environments
-	reloadTemplates()
+	if config.RunMode == "dev" {
+		reloadTemplates()
+	}
 
 	tv := templates.t.Lookup(pathTemplate + page)
 	tv.Execute(w, data)

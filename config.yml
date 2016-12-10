@@ -11,3 +11,4 @@ smtpHost:          "email-smtp.us-east-1.amazonaws.com"
 smtpPort:          587
 sesConfigurationSet: "gitnotify"
 googleAnalytics: ""
+runMode: "dev" # "prod"

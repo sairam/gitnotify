@@ -8,11 +8,11 @@ go get -u golang.org/x/oauth2
 go get -u gopkg.in/gomail.v2
 go get -u gopkg.in/robfig/cron.v2 # requires modification to file aka bugfix
 go get -u gopkg.in/yaml.v2
-go get -u github.com/gorilla/mux
-go get -u github.com/markbates/goth
 go get -u github.com/google/go-github/github
+go get -u github.com/gorilla/mux
 go get -u github.com/gorilla/sessions
-go get -u github.com/sairam/timezone # added a method in the original code
+go get -u github.com/markbates/goth
+go get -u github.com/sairam/timezone # forked and added a method
 go get -u github.com/spf13/cast
 ```
 
@@ -46,12 +46,14 @@ go get -u github.com/spf13/cast
 1. Add text output for email
 1. Host on separate instance (install Caddy w/ https and configure server)
 1. Validate repo name from server side and autofill default branch name
-1. Add LICENSE
+1. Add LICENSE to repository
 1. Log when adding a repository from the UI fails
 
 ### Known Knowns
 1. Clean up fetched_info from `settings.yml` file when a repository is removed
 1. Fix manual editing of cron.v2 since it does not work on +0530 like TZs
+1. Integration and Unit tests need to be added
+1. Fix `TODO` present in the code
 
 ### Nice to Have
 1. JSON output to be used for sending information as webhooks to Zapier like services

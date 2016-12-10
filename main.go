@@ -29,6 +29,7 @@ type AppConfig struct {
 	GoogleAnalytics   string `yaml:"googleAnalytics"`
 	SMTPUser          string // environment variable
 	SMTPPass          string // environment variable
+	RunMode           string `yaml:"runMode"` // when runMode is "dev", we use it to reload templates on every request. else they are loaded only once
 }
 
 var config = new(AppConfig)
