@@ -43,12 +43,10 @@ go get -u github.com/spf13/cast
 1. The `config.yml` file containing the settings
 
 ## TODO
+1. Host on separate instance (install Caddy w/ https and configure server)
+1. Log when adding a repository from the UI fails
 1. Use select2 instead of input box since typeahead.js does not allow multiple inputs
 1. Cache response of typeahead/branch list from Github to serve in Frontend
-1. Host on separate instance (install Caddy w/ https and configure server)
-1. Add Favicon
-1. Add LICENSE to repository
-1. Log when adding a repository from the UI fails
 
 ### Known Knowns
 1. Clean up fetched_info from `settings.yml` file when a repository is removed
@@ -62,6 +60,13 @@ go get -u github.com/spf13/cast
 1. Suggest names of popular repositories to ease adding first few repositories
 1. Add support for Gitlab
 1. An LRU Based Cache backed by disk in case memory exceeds limit. To Explore: hashicorp/golang-lru, boltdb/bolt, wunderlist/ttlcache, redis
+
+## FAQ
+### Can I run this inside my own organisation
+Only the Configuration needs to be setup properly.
+
+## Disclaimer
+I started learning Go (~Sep 2016) and this is my first project trying to "solve" a problem
 
 ## Flow of user
 ### Development Flow

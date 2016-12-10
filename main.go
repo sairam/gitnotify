@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -148,6 +149,13 @@ func main() {
 
 	auth := r.PathPrefix("/auth").Subrouter()
 	initAuth(auth)
+
+	r.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "favicon.ico")
+	})
+	r.HandleFunc("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeContent(w, r, "robots.txt", time.Now(), strings.NewReader("User-agent: *\n"))
+	})
 
 	srv := &http.Server{
 		Handler:      r,
