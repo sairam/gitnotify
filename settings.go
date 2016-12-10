@@ -11,6 +11,9 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// Repository is of the name ^ab-c/d_ef$
+var repoValidator = regexp.MustCompile("^[\\p{L}\\d_-]+/[\\p{L}\\d_-]+$")
+
 // Setting is the data structure that has all the details
 //  data/$provider/$username/settings.yml
 type Setting struct {
@@ -234,6 +237,11 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 			hc.addFlash("Invalid Repo Name Provided")
 			break
 		}
+		repoPresent := validateRemoteRepoName(conf, repoName, "github")
+		if !repoPresent {
+			hc.addFlash("Could not find Repo on Github")
+			break
+		}
 
 		repo = &Repo{
 			repoName,
@@ -297,11 +305,21 @@ type SettingsPage struct {
 	CronRunning bool
 }
 
+func validateRemoteRepoName(conf *Setting, repo string, provider string) bool {
+	if provider == "github" {
+		client := newGithubClient(conf.Auth.Token)
+		branch, err := githubDefaultBranch(client, repo)
+		if err != nil || branch == "" {
+			return false
+		}
+		return true
+	}
+	return false
+}
+
 func validateRepoName(repo string) string {
 
-	// verify if Repository is of the name ^abc/def$
-	words := regexp.MustCompile("^[\\p{L}\\d_-]+/[\\p{L}\\d_-]+$")
-	data := words.FindAllString(repo, -1)
+	data := repoValidator.FindAllString(repo, -1)
 	if len(data) == 1 {
 		return data[0]
 	}

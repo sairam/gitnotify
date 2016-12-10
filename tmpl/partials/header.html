@@ -5,7 +5,6 @@
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
 
     <link type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    <link type="text/css" href="//twitter.github.io/typeahead.js/css/examples.css" rel="stylesheet" crossorigin="anonymous">
     <link href="//fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
 
     <style type="text/css">
@@ -14,6 +13,88 @@
       font-family: Roboto, Helvetica, Arial, sans-serif;
       margin: 0px auto;
     }
+
+    /*typeahead*/
+    #typeaheadUsage code {
+      cursor: pointer;
+    }
+    /* reused from //twitter.github.io/typeahead.js/css/examples.css */
+.typeahead,
+.tt-query,
+.tt-hint {
+  width: 396px;
+  height: 30px;
+  padding: 8px 12px;
+  /*font-size: 24px;*/
+  line-height: 30px;
+  border: 2px solid #ccc;
+  -webkit-border-radius: 8px;
+     -moz-border-radius: 8px;
+          border-radius: 8px;
+  outline: none;
+}
+
+.tt-menu {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.typeahead {
+  background-color: #fff;
+}
+
+.typeahead:focus {
+  border: 2px solid #0097cf;
+}
+
+.tt-query {
+  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+     -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+          box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+}
+
+.tt-hint {
+  color: #999;
+  display: none !important;
+}
+
+.tt-menu {
+  width: 422px;
+  margin: 12px 0;
+  padding: 8px 0;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  -webkit-border-radius: 8px;
+     -moz-border-radius: 8px;
+          border-radius: 8px;
+  -webkit-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+     -moz-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+          box-shadow: 0 5px 10px rgba(0,0,0,.2);
+}
+
+.tt-suggestion {
+  padding: 3px 20px;
+  /*font-size: 18px;*/
+  line-height: 24px;
+}
+
+.tt-suggestion:hover {
+  cursor: pointer;
+  color: #fff;
+  background-color: #0097cf;
+}
+
+.tt-suggestion.tt-cursor {
+  color: #fff;
+  background-color: #0097cf;
+
+}
+
+.tt-suggestion p {
+  margin: 0;
+}
+
     </style>
     <title>{{.Title}} | GitNotify</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>

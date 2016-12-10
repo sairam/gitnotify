@@ -59,6 +59,7 @@ go get -u github.com/spf13/cast
 1. Allow autofill of branch names based on repo names
 1. Suggest names of popular repositories to ease adding first few repositories
 1. Add support for Gitlab
+1. An LRU Based Cache backed by disk in case memory exceeds limit. To Explore: hashicorp/golang-lru, boltdb/bolt, wunderlist/ttlcache, redis
 
 ## Flow of user
 ### Development Flow

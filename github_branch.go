@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	githubApp "github.com/google/go-github/github"
@@ -73,4 +75,50 @@ func newGithubClient(token string) *githubApp.Client {
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	tc := oauth2.NewClient(oauth2.NoContext, ts)
 	return githubApp.NewClient(tc)
+}
+
+// caches branch response
+func githubBranches(client *githubApp.Client, repoName string) []*TagInfo {
+	return getBranchTagInfo(client, repoName, "branches")
+}
+
+// caches branch response
+func githubTags(client *githubApp.Client, repoName string) []*TagInfo {
+	return getBranchTagInfo(client, repoName, "tags")
+}
+
+type defaultBranch struct {
+	DefaultBranch string `json:"default_branch"`
+}
+
+func githubDefaultBranch(client *githubApp.Client, repoName string) (string, error) {
+	v := &defaultBranch{}
+	repoURL := fmt.Sprintf("%srepos/%s", config.GithubAPIEndPoint, repoName)
+	fmt.Println(repoURL)
+	req, _ := http.NewRequest("GET", repoURL, nil)
+	gr, _ := client.Do(req, v)
+	fmt.Println(v)
+	fmt.Println(gr.StatusCode)
+	if gr.StatusCode == 404 {
+		return "", errors.New("repo not found")
+	}
+	fmt.Println(v.DefaultBranch, " is the default branch")
+	return v.DefaultBranch, nil
+}
+
+func getBranchTagInfo(client *githubApp.Client, repoName, option string) []*TagInfo {
+	v := new([]*TagInfo)
+	branchesURL := fmt.Sprintf("%srepos/%s/%s", config.GithubAPIEndPoint, repoName, option)
+	req, _ := http.NewRequest("GET", branchesURL, nil)
+	client.Do(req, v)
+	return *v
+}
+
+func githubSearchRepos(client *githubApp.Client, search string) *searchRepo {
+	searchRepositoryURL := fmt.Sprintf("%ssearch/repositories?page=%d&q=%s", config.GithubAPIEndPoint, 1, search)
+	fmt.Println("Search Request:", search)
+	req, _ := http.NewRequest("GET", searchRepositoryURL, nil)
+	v := new(searchRepo)
+	client.Do(req, v)
+	return v
 }

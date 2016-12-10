@@ -27,8 +27,25 @@
 {{ with $repo }}
 
 {{ if eq .Repo "" }}
-  <a name="new"></a>
-  <h2>Create new</h2>
+
+<a name="new"></a>
+<h2>Create new</h2>
+
+<a href="https://developer.github.com/v3/search/#search-repositories" target="_blank">Search Repositories API</a> is used for the typeahead<br>
+Try one of these options
+<ul id="typeaheadUsage">
+<li><code>docker</code> <code>rails</code> <code>react</code> <code>awesome-go</code> <code>caddy</code> </li>
+<li><code>rea user:facebook</code> - Finds all repos from "facebook" org having "rea" </li>
+<li><code>user:defunkt forks:>100</code> - List all repos from "defunkt" user with more than "100" forks </li>
+<li><code>fork:true</code> - to include forked repos (by default only non-forked repostories are present)</li>
+<li><code>fork:only</code> - excludes default parent repos</li>
+<li><code>stars:10..100</code> - list repositories that have 10 to 100 stars</li>
+<li><code>size:>=30000</code> - List repositories that are at least 30 MB.</li>
+<li><code>webos created:<2011-01-01</code> Matches repositories with the word "webos" that were created before 2011.</li>
+<li><code>language:go</code> - includes only those are of Go</li>
+<li><code>jquery in:name,description</code> - search for "jquery" in name and description</li>
+<li><code>caddy in:name,readme</code> - search for caddy in the name and readme</li>
+</ul>
   <div class="form-group">
     <label for="repo" class="col-sm-4 control-label">Repository Name</label>
     <div class="col-sm-8">
@@ -89,12 +106,28 @@
 <script>
 var repoNames = new Bloodhound({
   datumTokenizer: Bloodhound.tokenizers.whitespace,
-  queryTokenizer: Bloodhound.tokenizers.whitespace,
+  queryTokenizer: Bloodhound.tokenizers.obj.whitespace('full_name', 'description'),
   remote: {
     url: '/typeahead/repo?repo=%QUERY',
     wildcard: '%QUERY'
   }
 });
+
+compileOutput = function(result) {
+  var output = "<div><strong>"+result.full_name+"</strong>"
+  if (result.homepage != "") {
+    output += (" | "+result.homepage);
+  }
+  output += "<p>"
+  if (result.description.length > 50) {
+    output += result.description.substr(0,50) + ".."
+  } else {
+    output += result.description
+  }
+  output += "</p>"
+  console.log(output)
+  return output
+}
 
 $('input#repoNew').typeahead(null, {
   name: 'repo',
@@ -102,8 +135,22 @@ $('input#repoNew').typeahead(null, {
   hint: false,
   highlight: false,
   minLength: 1,
-  source: repoNames
+  source: repoNames,
+  templates: {
+    empty: [
+      '<div class="empty-message">',
+        'could not find any repositories matching the criteria',
+      '</div>'
+    ].join('\n'),
+    suggestion: compileOutput
+  }
 });
+
+$('#typeaheadUsage code').on('click', function() {
+  var t = $(this).text();
+  $('#repoNew').val(t).trigger("input").focus();
+})
+
 
 </script>
 {{ end }}

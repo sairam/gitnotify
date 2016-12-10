@@ -259,12 +259,7 @@ func processForMail(conf *Setting) error {
 
 func getNewInfo(branch *branches, option string) []*TagInfo {
 	branch.option = option
-	branchesURL := fmt.Sprintf("%srepos/%s/%s", config.GithubAPIEndPoint, branch.repo.Repo, branch.option)
-	// fmt.Println(branchesURL)
-	v := new([]*TagInfo)
-	req, _ := http.NewRequest("GET", branchesURL, nil)
-	branch.client.Do(req, v)
-	return *v
+	return getBranchTagInfo(branch.client, branch.repo.Repo, option)
 }
 
 func diffWithOldBranches(v []*TagInfo, branch *branches, option string, info map[string]*Information) []string {

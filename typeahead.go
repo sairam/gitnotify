@@ -7,10 +7,21 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
-// TypeAhead is responsible for handling 2 types of typeaheads
+type searchRepo struct {
+	Items []searchRepoName `json:"items"`
+}
+
+type searchRepoName struct {
+	Name        string `json:"full_name"`
+	Description string `json:"description"`
+	HomePage    string `json:"homepage"`
+}
+
+// this file is responsible for handling 2 types of typeaheads
 // 1. Repository name
 // 2. Branch Name
 
@@ -24,43 +35,25 @@ func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	userInfo := hc.userLoggedinInfo()
 
-	// https://api.github.com/search/repositories?q=tetris+language:assembly&sort=stars&order=desc
-	client := newGithubClient(userInfo.Token)
 	search := getRepoName(r.URL.Query())
-
-	searchRepositoryURL := fmt.Sprintf("%ssearch/repositories?page=%d&q=%s", config.GithubAPIEndPoint, 1, search)
-	fmt.Println(searchRepositoryURL)
-	req, _ := http.NewRequest("GET", searchRepositoryURL, nil)
-	v := new(searchRepo)
-	client.Do(req, v)
-	fmt.Println(*v)
-
-	suggestions := make([]string, 0, len(v.Items))
-	for _, i := range v.Items {
-		suggestions = append(suggestions, i.Name)
-	}
+	search = strings.Replace(search, " ", "+", -1)
+	client := newGithubClient(userInfo.Token)
+	result := githubSearchRepos(client, search)
 
 	b := new(bytes.Buffer)
-	json.NewEncoder(b).Encode(suggestions)
+	json.NewEncoder(b).Encode(result.Items)
 
-	cacheSince := time.Now().Format(http.TimeFormat)
-	// cache for 1 day
-	cacheUntil := time.Now().AddDate(0, 0, 1).Format(http.TimeFormat)
-	maxAge := time.Now().AddDate(0, 0, 1).Unix()
-	w.Header().Set("Cache-Control", fmt.Sprintf("max-age:%d, public", maxAge))
-	w.Header().Set("Last-Modified", cacheSince)
-	w.Header().Set("Expires", cacheUntil)
+	if config.RunMode != "dev" {
+		// cache for 1 day
+		cacheUntil := time.Now().AddDate(0, 0, 1).Format(http.TimeFormat)
+		maxAge := time.Now().AddDate(0, 0, 1).Unix()
+		cacheSince := time.Now().Format(http.TimeFormat)
+		w.Header().Set("Expires", cacheUntil)
+		w.Header().Set("Cache-Control", fmt.Sprintf("max-age:%d, public", maxAge))
+		w.Header().Set("Last-Modified", cacheSince)
+	}
 
 	io.Copy(w, b)
-	// write to w
-}
-
-type searchRepo struct {
-	Items []searchRepoName `json:"items"`
-}
-
-type searchRepoName struct {
-	Name string `json:"full_name"`
 }
 
 func branchTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
