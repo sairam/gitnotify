@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/aryann/difflib"
@@ -226,13 +227,17 @@ func processForMail(conf *Setting) error {
 	mailContent.Data = diff
 
 	htmlBuffer := &bytes.Buffer{}
-
 	displayPage(htmlBuffer, "changes_mail", mailContent)
 	html, _ := ioutil.ReadAll(htmlBuffer)
 
+	textBuffer := &bytes.Buffer{}
+	displayPage(textBuffer, "changes_mail_text", mailContent)
+	text, _ := ioutil.ReadAll(textBuffer)
+	textContent := strings.Replace(string(text), "\n\n", "\n", -1)
+	textContent = strings.Replace(textContent, "\n\n", "\n", -1)
+
 	loc, _ := time.LoadLocation(conf.User.TimeZoneName)
 	t := time.Now().In(loc)
-
 	subject := "[GitNotify] New Updates from your Repositories - " + t.Format("02 Jan 2006 | 15 Hrs")
 
 	to := &recepient{
@@ -244,7 +249,7 @@ func processForMail(conf *Setting) error {
 
 	ctx := &emailCtx{
 		Subject:  subject,
-		TextBody: "diff", // text
+		TextBody: textContent,
 		HTMLBody: string(html),
 	}
 

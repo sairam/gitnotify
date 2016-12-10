@@ -1,0 +1,52 @@
+{{ .Name }}, Thanks for using GitNotify({{ .WebsiteURL }}) for periodic diffs from public Github repositories
+
+Here is the latest diff that was composed:
+
+-----------------------------------------------------------
+{{ range $repo := .Data }}
+{{ with $repo }}
+{{ .RepoName }}: {{ githubRepoLink .RepoName }}
+  {{ range $branch, $commit := .References }}
+  {{ if ne $commit.NewCommit "" }}
+  {{$branch}} Branch: {{githubTreeLink $repo.RepoName $branch}}
+    {{ if eq $commit.OldCommit "" }}
+    {{ if eq $commit.NewCommit "<none>" }}
+    Branch Not Found
+    {{ else }}
+    Next message will contain the diff.
+
+    Previous Commit: Newly Tracked Branch
+    Latest   Commit: {{ $commit.NewCommit }}
+    {{ end }}
+    {{ else if eq $commit.OldCommit $commit.NewCommit }}
+    No new Commits created recently
+    {{ else }}
+    Compare Commits: {{ githubCompareLink $repo.RepoName $commit.OldCommit $commit.NewCommit }}
+    Text Diff: {{ githubCompareLink $repo.RepoName $commit.OldCommit $commit.NewCommit }}.diff
+
+    Previous Commit: {{ $commit.OldCommit }}
+    Latest   Commit: {{ $commit.NewCommit }}
+    {{ end }}
+  {{ end }}
+  {{ end }}
+
+  {{ range $t := .Others }}
+  {{ with $t }}
+  New {{ .Title }}:
+      {{ $len := len .References }}
+      {{ if eq $len 0 }}
+      No new {{.Title}} created recently
+      {{ else }}
+      {{ range $ref := .References }}
+      * {{ $ref }}: {{ githubTreeLink $repo.RepoName $ref }}
+      {{ end }}
+      {{ end }}
+  {{ end }}
+  {{ end }}
+-----------------------------------------------------------
+{{ end }}
+{{ end }}
+
+content provided by GitNotify | http://gitnotify.com
+prepared for: {{ .User }}
+unsubscribe at {{ .WebsiteURL }} if you do not want these messages on the website.

@@ -43,9 +43,8 @@ go get -u github.com/spf13/cast
 1. The `config.yml` file containing the settings
 
 ## TODO
-1. Add text output for email
-1. Host on separate instance (install Caddy w/ https and configure server)
 1. Validate repo name from server side and autofill default branch name
+1. Host on separate instance (install Caddy w/ https and configure server)
 1. Add LICENSE to repository
 1. Log when adding a repository from the UI fails
 

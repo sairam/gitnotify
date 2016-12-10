@@ -3,7 +3,6 @@ package main
 // Mail helper methods
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"time"
 
@@ -65,25 +64,6 @@ type emailCtx struct {
 	TextBody string
 }
 
-func testEmail() {
-	to := &recepient{
-		Name:     "sairam",
-		Address:  "sairam.kunala@gmail.com",
-		UserName: "sairam",
-		Provider: "github",
-	}
-
-	htmlBody, _ := ioutil.ReadFile("tmpl/changes_mail.html")
-
-	ctx := &emailCtx{
-		Subject:  "Testing Email",
-		TextBody: "no text for you",
-		HTMLBody: string(htmlBody),
-	}
-
-	sendEmail(to, ctx)
-}
-
 func sendEmail(to *recepient, e *emailCtx) {
 	var from = &recepient{
 		Name:    config.FromName,
@@ -102,7 +82,7 @@ func sendEmail(to *recepient, e *emailCtx) {
 	// m.SetHeader("List-Archive", fmt.Sprintf("")) // resource path like https://github.com/spf13/hugo
 	m.SetHeader("List-Unsubscribe", fmt.Sprintf("<mailto:unsub+%s-%s@%s>, <%s>", to.Provider, to.UserName, config.ServerHost, config.ServerProto+config.ServerHost))
 
-	m.SetBody("text/plain", fmt.Sprintf("Hi %s,\n\n%s", to.Name, e.TextBody))
+	m.SetBody("text/plain", e.TextBody)
 	m.AddAlternative("text/html", e.HTMLBody)
 
 	emailCh <- m
