@@ -103,16 +103,24 @@
   <body>
     <div class="row text-center">
       <div class="col-xs-12 col-sm-12 col-md-offset-3 col-md-6 col-lg-offset-3 col-lg-6">
-        <nav>
-          <h3 class="pull-left"><a href="/">GitNotify</a></h3>
-          {{ if eq .User.UserName "" }}
-            <div class="alert alert-warning" role="alert">You need to login to use the service</div>
-          {{ else }}
-            <a class="btn btn-danger" href="/logout" style="float:right">Logout</a>
-            <span style="float:right">Logged in as <strong>@{{.User.UserName}}({{.User.Provider}})</strong> &nbsp;&nbsp;</span>
-            <h1 class="text-center">{{.PageTitle}}</h1>
-          {{ end }}
-        </nav>
+        <div class="row">
+          <div class="col-md-2">
+            <h3><a href="/">GitNotify</a></h3>
+          </div>
+          <div class="col-md-8"><h1 class="text-center">{{.PageTitle}}</h1></div>
+          <div class="col-md-2">
+            {{ if eq .User.UserName "" }}{{ else }}
+            <br>
+            <a class="btn btn-danger" href="/logout">Logout</a>
+            @{{.User.UserName}}({{.User.Provider}})</strong> &nbsp;&nbsp;</span>
+            {{ end }}
+          </div>
+        </div>
+
+        {{ if eq .User.UserName "" }}
+          <div class="alert alert-warning" role="alert"><a href="/auth/github">Kindly login using Github to use the service</a> (or) <a href="https://github.com/sairam/gitnotify/" target="_blank">Checkout the source code</a></div>
+        {{ end }}
+
         {{ range $x := .Flashes }}
         <div class="alert alert-info" role="alert">{{ $x | safeHTML }}</div>
         {{ end }}

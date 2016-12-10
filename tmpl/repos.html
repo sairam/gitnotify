@@ -4,15 +4,15 @@
 <div class="pull-right">
   <div class="pull-left">
     {{ if .Data.CronRunning }}
-    Email Notifications are scheduled <a class="btn btn-info" href="/user">Modify Settings</a>&nbsp;&nbsp;
+    Emails are scheduled <a class="btn btn-info" href="/user">Modify Settings</a>&nbsp;&nbsp;
     {{ else }}
-      <a class="btn btn-danger" href="/user">Configure Time to receive Email Notifications</a>&nbsp;&nbsp;
+      To Receive Emails <a class="btn btn-danger" href="/user">Configure Time to Send</a>&nbsp;&nbsp;
     {{ end }}
   </div>
 
 <!-- Post to /run?save=false if you don't want to persist changes -->
 <form action="/run" method="post" style="float:left">
-  <button type="submit" class="btn btn-danger">Force Run Updates</button>
+  <button type="submit" class="btn btn-success">Check Latest Updates</button>
 </form>
 
 </div>
@@ -29,19 +29,18 @@
 {{ if eq .Repo "" }}
 
 <a name="new"></a>
-<h2>Create new</h2>
+<h2>Track new</h2>
 
-<a href="https://developer.github.com/v3/search/#search-repositories" target="_blank">Search Repositories API</a> is used for the typeahead<br>
-Try one of these options
+<h4>Click on one of the following to get started</h4>
 <ul id="typeaheadUsage">
 <li><code>docker</code> <code>rails</code> <code>react</code> <code>awesome-go</code> <code>caddy</code> </li>
 <li><code>rea user:facebook</code> - Finds all repos from "facebook" org having "rea" </li>
-<li><code>user:defunkt forks:>100</code> - List all repos from "defunkt" user with more than "100" forks </li>
+<!-- <li><code>user:defunkt forks:>100</code> - List all repos from "defunkt" user with more than "100" forks </li>
 <li><code>fork:true</code> - to include forked repos (by default only non-forked repostories are present)</li>
 <li><code>fork:only</code> - excludes default parent repos</li>
 <li><code>stars:10..100</code> - list repositories that have 10 to 100 stars</li>
 <li><code>size:>=30000</code> - List repositories that are at least 30 MB</li>
-<li><code>webos created:<2011-01-01</code> Matches repositories with "webos" that were created before "2011"</li>
+<li><code>webos created:<2011-01-01</code> Matches repositories with "webos" that were created before "2011"</li> -->
 <li><code>language:go</code> - includes only those are of Go</li>
 <li><code>jquery in:name,description</code> - search for "jquery" in name and description</li>
 <li><code>caddy in:name,readme</code> - search for caddy in the name and readme</li>
@@ -50,7 +49,9 @@ Try one of these options
     <label for="repo" class="col-sm-4 control-label">Repository Name</label>
     <div class="col-sm-8">
       <input type="text" class="form-control" id="repoNew" value="{{ .Repo }}" name="repo">
-      <p class="help-block">Add the name of the github repository to track</p>
+      <p class="help-block">Add the name of the github repository to track <br>
+      <a href="https://developer.github.com/v3/search/#search-repositories" target="_blank">Advanced Usage Guide</a><br>
+      </p>
     </div>
   </div>
 
@@ -190,7 +191,7 @@ $('input#repoNew').on('focusout', function() {
 <div class="col-md-2">
   <ul class="list-group" style="position:fixed">
     {{ range .Repos }}
-    <li class="list-group-item"><strong>{{ if eq .Repo "" }}<a href="#new">Create new{{else}}<a href="#{{.Repo}}">{{.Repo}}{{end}}</a></strong></li>
+    <li class="list-group-item"><strong>{{ if eq .Repo "" }}<a href="#new">Track new{{else}}<a href="#{{.Repo}}">{{.Repo}}{{end}}</a></strong></li>
     {{ end }}
   </ul>
 </div>
