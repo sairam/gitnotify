@@ -166,6 +166,9 @@ $('input#repoNew').typeahead(null, {
 var selectedRepoName = "";
 
 $('input#repoNew').on('focusout', function() {
+  if ($(this).val().indexOf("/") == -1) {
+    return;
+  }
   if (selectedRepoName == $(this).val()) {
     return;
   }
