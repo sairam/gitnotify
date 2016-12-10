@@ -12,3 +12,4 @@ smtpPort:          587
 sesConfigurationSet: "gitnotify"
 googleAnalytics: ""
 runMode: "dev" # "prod"
+cacheIncomingRequests: true

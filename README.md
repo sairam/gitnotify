@@ -43,8 +43,10 @@ go get -u github.com/spf13/cast
 1. The `config.yml` file containing the settings
 
 ## TODO
-1. Validate repo name from server side and autofill default branch name
+1. Use select2 instead of input box since typeahead.js does not allow multiple inputs
+1. Cache response of typeahead/branch list from Github to serve in Frontend
 1. Host on separate instance (install Caddy w/ https and configure server)
+1. Add Favicon
 1. Add LICENSE to repository
 1. Log when adding a repository from the UI fails
 
