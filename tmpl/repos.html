@@ -40,8 +40,8 @@ Try one of these options
 <li><code>fork:true</code> - to include forked repos (by default only non-forked repostories are present)</li>
 <li><code>fork:only</code> - excludes default parent repos</li>
 <li><code>stars:10..100</code> - list repositories that have 10 to 100 stars</li>
-<li><code>size:>=30000</code> - List repositories that are at least 30 MB.</li>
-<li><code>webos created:<2011-01-01</code> Matches repositories with the word "webos" that were created before 2011.</li>
+<li><code>size:>=30000</code> - List repositories that are at least 30 MB</li>
+<li><code>webos created:<2011-01-01</code> Matches repositories with "webos" that were created before "2011"</li>
 <li><code>language:go</code> - includes only those are of Go</li>
 <li><code>jquery in:name,description</code> - search for "jquery" in name and description</li>
 <li><code>caddy in:name,readme</code> - search for caddy in the name and readme</li>
@@ -136,6 +136,7 @@ $('input#repoNew').typeahead(null, {
   highlight: false,
   minLength: 1,
   source: repoNames,
+  displayKey: 'full_name',
   templates: {
     empty: [
       '<div class="empty-message">',
