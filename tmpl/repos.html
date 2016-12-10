@@ -68,22 +68,19 @@ Try one of these options
 {{ end }}
 
 <div class="form-group">
-  <div class="col-sm-offset-4 col-sm-8">
+  <div class="col-sm-offset-4 col-sm-4">
     <div class="checkbox">
       <label>
         <input type="hidden" name="branches" value="false" />
-        <input type="checkbox" name="branches" value="true" {{if .Branches }}checked="checked"{{end}} > Track Branches
+        <input type="checkbox" name="branches" value="true" {{if .Branches }}checked="checked"{{end}} > Track New Branches
       </label>
     </div>
   </div>
-</div>
-
-<div class="form-group">
-  <div class="col-sm-offset-4 col-sm-8">
+  <div class="col-sm-4">
     <div class="checkbox">
       <label>
         <input type="hidden" name="tags" value="false" />
-        <input type="checkbox" name="tags" value="true" {{if .Tags }}checked="checked"{{end}} > Track Tags
+        <input type="checkbox" name="tags" value="true" {{if .Tags }}checked="checked"{{end}} > Track New Tags
       </label>
     </div>
   </div>

@@ -287,13 +287,13 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 				hc.addFlash("Delete config for " + repo.Repo)
 			}
 		}
-
 		// TODO - not going to send an email on Create/Delete
+		// we may want to get the latest branch or remove from the main tracked list
 		// sendEmail(formAction, repo)
 
 	}
 
-	conf.Repos = append(conf.Repos, &Repo{})
+	conf.Repos = append([]*Repo{&Repo{}}, conf.Repos...)
 
 	t := &SettingsPage{isCronPresentFor(configFile)}
 
