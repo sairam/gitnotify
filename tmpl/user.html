@@ -32,9 +32,9 @@
   {{ $hourExistingList := split .Hour "," }}
   {{ $count := len .Hour }}
   <div class="form-group">
-  <label for="hour">Which Hour?</label>
+  <label for="hour">Select Hours</label>
   <p class="help-block">{{ if eq $count 0 }}We suggest to select 08 hrs or 17hrs depending on when you have free time{{end}}</p>
-  <select name="hour" id="hour" class="form-control" multiple="multiple">
+  <select name="hour" id="hour" class=" form-control" multiple="multiple">
     <option class="input-lg" value="*">Every Hour</option>
     {{ range $hour := $hours }}<option class="input-lg" value="{{$hour}}"{{ if in $hourExistingList $hour}} selected="selected"{{end}}>{{$hour}} hrs</option>{{ end }}
   </select>
@@ -45,7 +45,7 @@
   {{ $weekdaysExistingList := split .WeekDay "," }}
   {{ $count := len .WeekDay }}
   <div class="form-group">
-  <label for="weekday">File input</label>
+  <label for="weekday">Select days of week</label>
   <p class="help-block">{{ if eq $count 0 }}We suggest you select Monday through Thursday{{end}}</p>
   <select name="weekday" id="weekday" class="form-control" multiple="multiple">
     <option value="*" class="input-lg">Every Day</option>
@@ -87,6 +87,9 @@
 {{ end }}
 
 <script>
+
+$('select').select2();
+
 function pad(number, length){
   var str = "" + number
   while (str.length < length) {
