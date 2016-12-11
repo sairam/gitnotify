@@ -60,8 +60,12 @@ func userSettingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 	conf := new(Setting)
 	conf.load(configFile)
 
+	isReset := len(r.URL.Query()["reset"]) > 0
+
 	formAction := "update"
-	if formAction == "update" {
+	if isReset && r.URL.Query()["reset"][0] == "default" && conf.User.Disabled == true {
+	} else if formAction == "update" {
+
 		r.ParseForm()
 
 		// validate
