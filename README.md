@@ -43,10 +43,7 @@ go get -u github.com/spf13/cast
 1. The `config.yml` file containing the settings
 
 ## TODO
-1. Host on separate instance (install Caddy w/ https and configure server)
 1. Log when adding a repository from the UI fails
-1. Use select2 instead of input box since typeahead.js does not allow multiple inputs
-1. Cache response of typeahead/branch list from Github to serve in Frontend
 
 ### Known Knowns
 1. Clean up fetched_info from `settings.yml` file when a repository is removed
