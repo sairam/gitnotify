@@ -6,13 +6,17 @@
     {{ if .Data.CronRunning }}
     Emails are scheduled <a class="btn btn-info" href="/user">Modify Settings</a>&nbsp;&nbsp;
     {{ else }}
-      To Receive Emails <a class="btn btn-danger" href="/user">Configure Time to Send</a>&nbsp;&nbsp;
+    To Receive Emails <a class="btn btn-danger" href="/user">Configure Time to Send</a>&nbsp;&nbsp;
     {{ end }}
   </div>
 
 <!-- Post to /run?save=false if you don't want to persist changes -->
 <form action="/run" method="post" style="float:left">
+  {{ if .Data.EmailPresent }}
   <button type="submit" class="btn btn-success">Check Latest Updates</button>
+  {{ else }}
+  <a class="btn btn-danger" href="/user">Set Email Address</a>&nbsp;&nbsp;
+  {{ end }}
 </form>
 
 </div>

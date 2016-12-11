@@ -295,14 +295,18 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 
 	conf.Repos = append([]*Repo{&Repo{}}, conf.Repos...)
 
-	t := &SettingsPage{isCronPresentFor(configFile)}
+	t := &SettingsPage{isCronPresentFor(configFile), false}
+	if conf.usersEmail() != "" {
+		t.EmailPresent = true
+	}
 
 	page := newPage(hc, "Edit/Add Repos to Track", "Edit/Add Repos to Track", conf, t)
 	displayPage(w, "repos", page)
 }
 
 type SettingsPage struct {
-	CronRunning bool
+	CronRunning  bool
+	EmailPresent bool
 }
 
 func validateRemoteRepoName(conf *Setting, repo string, provider string) bool {
