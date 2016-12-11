@@ -65,7 +65,9 @@
   <div class="form-group">
   <label for="tzName">TimeZone Name</label>
   <select name="tzName" id="tzName" maxlength="5" minlength="5" class="form-control input-lg">
+    {{ if ne .TimeZoneName "" }}
     <option selected="selected" value="{{.TimeZoneName}}">{{.TimeZoneName}}</option>
+    {{ end }}
   </select>
   <p class="help-block"><a href="javascript:displayTzOptions(true)">Load All TimeZones</a> | <a href="javascript:displayTzOptions(false)">Reload Names from Offset</a><br/>TimeZone name is used to schedule the email</p>
   </div>
@@ -141,9 +143,18 @@ function getTZOffset() {
 function loadFromSystem(force) {
 var offset = getTZOffset();
 var tz = $("input[name=tz]");
-if(force) {tz.val(offset); displayTzOptions(false)}
-if(tz.val() === "") {tz.val(offset);}
-return false
+if(force) {
+  tz.val(offset);
+}
+
+if(tz.val() === "") {
+  tz.val(offset);
+  displayTzOptions(true);
+} else {
+  displayTzOptions(false);
+}
+
+return false;
 }
 loadFromSystem(false)
 </script>

@@ -76,7 +76,7 @@ func init() {
 // load envconfig via https://github.com/kelseyhightower/envconfig
 func initAuth(p *mux.Router) {
 	goth.UseProviders(
-		github.New(os.Getenv("GITHUB_KEY"), os.Getenv("GITHUB_SECRET"), config.ServerProto+config.ServerHost+"/auth/github/callback"),
+		github.New(os.Getenv("GITHUB_KEY"), os.Getenv("GITHUB_SECRET"), config.ServerProto+config.ServerHost+"/auth/github/callback", "user:email"),
 		// gitlab.New(os.Getenv("GITLAB_KEY"), os.Getenv("GITLAB_SECRET"), serverProto+host+"/auth/github/callback"),
 	)
 

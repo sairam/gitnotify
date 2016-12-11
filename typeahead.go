@@ -49,7 +49,7 @@ func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 		search = strings.Replace(search, data[0], rep, 1)
 	}
 	client := newGithubClient(userInfo.Token)
-	result := githubSearchRepos(client, search)
+	result, _ := githubSearchRepos(client, search)
 
 	if config.RunMode != "dev" {
 		// cache for 1 day
@@ -98,9 +98,6 @@ func branchTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 	for _, r := range result {
 		tab.AllBranches = append(tab.AllBranches, r.Name)
 	}
-
-	fmt.Println(tab.AllBranches)
-	fmt.Println(tab.DefaultBranch)
 
 	if config.RunMode != "dev" {
 		// cache for 1 day

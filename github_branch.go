@@ -100,10 +100,11 @@ func githubDefaultBranch(client *githubApp.Client, repoName string) (string, err
 	repoURL := fmt.Sprintf("%srepos/%s", config.GithubAPIEndPoint, repoName)
 	req, _ := http.NewRequest("GET", repoURL, nil)
 	gr, _ := client.Do(req, v)
-	if gr.StatusCode == 404 {
+
+	if gr.StatusCode >= 400 {
+		// TODO: 401 - Re-auth the user
 		return "", errors.New("repo not found")
 	}
-	fmt.Println(v.DefaultBranch, " is the default branch")
 	return v.DefaultBranch, nil
 }
 
@@ -115,11 +116,14 @@ func githubBranchTagInfo(client *githubApp.Client, repoName, option string) []*T
 	return *v
 }
 
-func githubSearchRepos(client *githubApp.Client, search string) []*searchRepoItem {
+func githubSearchRepos(client *githubApp.Client, search string) ([]*searchRepoItem, error) {
 	searchRepositoryURL := fmt.Sprintf("%ssearch/repositories?page=%d&q=%s", config.GithubAPIEndPoint, 1, search)
 	fmt.Println("Search Request:", search)
 	req, _ := http.NewRequest("GET", searchRepositoryURL, nil)
 	v := new(searchRepo)
-	client.Do(req, v)
-	return v.Items
+	gr, _ := client.Do(req, v)
+	if gr.StatusCode >= 400 {
+		return nil, errors.New("issue")
+	}
+	return v.Items, nil
 }

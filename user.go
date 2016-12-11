@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"net/mail"
 	"strconv"
@@ -64,27 +65,41 @@ func userSettingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 
 		// validate
-		e, err := mail.ParseAddress(r.Form["email"][0])
-		if err == nil {
-			conf.User.Email = e.Address
-		} else {
-			hc.addFlash("email address provided is invalid format")
+		if len(r.Form["email"]) > 0 {
+			e, err := mail.ParseAddress(r.Form["email"][0])
+			if err == nil {
+				conf.User.Email = e.Address
+			} else {
+				hc.addFlash("email address provided is invalid format")
+			}
 		}
 
 		// TODO A bad name can spoil the email address "to" field when sending email
 		// limit to 100 chars
-		conf.User.Name = r.Form["name"][0]
+		if len(r.Form["name"]) > 0 {
+			conf.User.Name = r.Form["name"][0]
+		}
 
 		conf.User.TimeZone = cleanTz(r.Form["tz"][0])
 
-		err = cleanTzName(r.Form["tzName"][0])
-		if err == nil {
-			conf.User.TimeZoneName = r.Form["tzName"][0]
+		if len(r.Form["tzName"]) > 0 {
+			err := cleanTzName(r.Form["tzName"][0])
+			if err == nil {
+				conf.User.TimeZoneName = r.Form["tzName"][0]
+			} else {
+				hc.addFlash(err.Error())
+			}
 		} else {
-			hc.addFlash(err.Error())
+			offset := convertTzOffsetToInt(conf.User.TimeZone)
+			timeZoneNames := tzByOffset[offset]
+			if len(timeZoneNames) > 0 {
+				conf.User.TimeZoneName = timeZoneNames[0].Location
+			} else {
+				log.Println("Could not find TimeZone Name for ", conf.User.TimeZone)
+				conf.User.TimeZoneName = "UTC"
+			}
 		}
 
-		// validate hour
 		conf.User.Hour = cleanHour(r.Form["hour"])
 
 		// validate weekday
@@ -96,6 +111,16 @@ func userSettingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	http.Redirect(w, r, "/user", 302)
 
+}
+
+func convertTzOffsetToInt(offset string) int {
+	intOffset := 1
+	if offset[0:1] == "-" {
+		intOffset = -1
+	}
+	hour, _ := strconv.Atoi(offset[1:3])
+	minute, _ := strconv.Atoi(offset[3:5])
+	return (intOffset*hour*60 + minute) * 60
 }
 
 type invalidTimezone struct{}
