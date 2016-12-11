@@ -80,12 +80,16 @@ func forceRunHandler(w http.ResponseWriter, r *http.Request) {
 	userInfo := hc.userLoggedinInfo()
 	configFile := userInfo.getConfigFile()
 
-	// hidden feature: useful for testing. pass ?save=false in the POST url
-	isSaveFalse := isSaveSetToFalse(r.URL.Query())
-
-	cronJob{configFile, !isSaveFalse}.Run()
-
-	hc.addFlash("Check email to see latest information")
+	conf := new(Setting)
+	conf.load(configFile)
+	if conf.usersEmail() == "" {
+		hc.addFlash("Email is not set. Go to <a href=\"/user\">/user</a> to set")
+	} else {
+		// hidden feature: useful for testing. pass ?save=false in the POST url
+		isSaveFalse := isSaveSetToFalse(r.URL.Query())
+		cronJob{configFile, !isSaveFalse}.Run()
+		hc.addFlash("Check email to see latest changes")
+	}
 
 	http.Redirect(w, r, homePageForLoggedIn, 302)
 }
