@@ -37,11 +37,11 @@ var (
 		"div":      div,
 		"mod":      mod,
 
-		"WebsiteLink":   githubWebsiteLink,
-		"RepoLink":      githubRepoLink,
-		"TreeLink":      githubTreeLink,
-		"CommitLink":    githubCommitLink,
-		"CompareLink":   githubCompareLink,
+		"WebsiteLink":   WebsiteLink,
+		"RepoLink":      RepoLink,
+		"TreeLink":      TreeLink,
+		"CommitLink":    CommitLink,
+		"CompareLink":   CompareLink,
 		"shortCommit":   shortCommit,
 		"cleanRepoName": cleanRepoName,
 	}

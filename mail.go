@@ -29,15 +29,21 @@ func mailDaemon() {
 			}
 			if !open {
 				if s, err = d.Dial(); err != nil {
-					log.Println("going to panic")
-					panic(err)
+					log.Println("going to panic. ")
+					log.Println(err)
+					// panic(err)
+				} else {
+					open = true
 				}
-				open = true
 			}
-			if err := gomail.Send(s, m); err != nil {
-				log.Print(err)
+			if open {
+				if err := gomail.Send(s, m); err != nil {
+					log.Print(err)
+				}
+				log.Println("done sending the email")
+			} else {
+				log.Println("see above error. did not panic")
 			}
-			log.Println("done sending the email")
 			// You should close the Amazon SES within 5 seconds of next request. else you it fails with 421.
 		case <-time.After(4 * time.Second):
 			if open {
