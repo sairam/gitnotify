@@ -64,7 +64,7 @@
 
   <div class="form-group">
   <label for="tzName">TimeZone Name</label>
-  <select name="tzName" id="tzName" maxlength="5" minlength="5" class="form-control input-lg">
+  <select name="tzName" id="tzName" class="form-control input-lg">
     {{ if ne .TimeZoneName "" }}
     <option selected="selected" value="{{.TimeZoneName}}">{{.TimeZoneName}}</option>
     {{ end }}
@@ -133,12 +133,11 @@ function displayTzOptions(all) {
 }
 
 function setTimezones(json) {
-  $("#tzName").empty()
-  for (i =0 ; i < json.length ; i++ ) {
-    o = json[i];
-    var option = $('<option></option>').attr("value", o).text(o);
-    $("#tzName").append(option);
+  var results = [];
+  for(i=0; i < json.length ; i++) {
+    results.push({id: json[i], text: json[i]})
   }
+  $("#tzName").select2({data: results});
 }
 
 function convertOffsetToInteger(offset) {
