@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -155,6 +156,11 @@ func main() {
 	})
 	r.HandleFunc("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeContent(w, r, "robots.txt", time.Now(), strings.NewReader("User-agent: *\n"))
+	})
+
+	r.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
+		d := fmt.Sprintf("status:%s\ntime:%s\n", "pong", time.Now())
+		http.ServeContent(w, r, "ping", time.Now(), strings.NewReader(d))
 	})
 
 	srv := &http.Server{
