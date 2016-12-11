@@ -80,6 +80,15 @@ func userSettingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 			conf.User.Name = r.Form["name"][0]
 		}
 
+		if len(r.Form["disabled"]) > 0 {
+			if r.Form["disabled"][0] == "tRu3" {
+				conf.User.Disabled = true
+			}
+			if r.Form["disabled"][0] == "enable" {
+				conf.User.Disabled = false
+			}
+		}
+
 		conf.User.TimeZone = cleanTz(r.Form["tz"][0])
 
 		if len(r.Form["tzName"]) > 0 {

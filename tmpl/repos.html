@@ -283,7 +283,7 @@ function getTZOffset() {
 
 // The user is coming in first time, we will put in a schedule for him at 8am every day based on the TZ
 $.ajax({
-  url: "/user",
+  url: "/user?set=default",
   type: 'POST',
   data: { hour: "08", weekday: "*", tz: getTZOffset() },
   dataType: "text"

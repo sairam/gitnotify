@@ -64,6 +64,11 @@ func upsertCronEntry(s *Setting) {
 		stopCronIfAlreadyRunning(filename)
 		return
 	}
+	if s.User.Disabled == true {
+		log.Printf("User `%s` does not want any emails\n", s.Auth.UserName)
+		stopCronIfAlreadyRunning(filename)
+		return
+	}
 
 	log.Printf("(re)starting cron for `%s`\n", s.Auth.UserName)
 	cronEntry := fmt.Sprintf("TZ=%s 0 0 %s * * %s", tzName, hour, weekday)

@@ -43,6 +43,7 @@ func (c *Setting) usersName() string {
 type UserNotification struct {
 	Email     string `yaml:"email"`
 	Name      string `yaml:"name"`
+	Disabled  bool   `yaml:"disabled"`
 	Frequency `yaml:",inline"`
 }
 

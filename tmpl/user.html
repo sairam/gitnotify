@@ -2,7 +2,7 @@
 
 {{ $nextRunTimeLength := len .Data.NextRunTimes }}
 {{ if eq $nextRunTimeLength 0 }}
-<div class="alert alert-danger" role="alert">Select Hour/Day/TimeZone or Email to get recurring emails</div>
+<div class="alert alert-danger" role="alert">Review the below options to recieve emails</div>
 {{ else }}
 
 <div class="pull-right">
@@ -72,6 +72,22 @@
   <p class="help-block"><a href="javascript:displayTzOptions(true)">Load All TimeZones</a> | <a href="javascript:displayTzOptions(false)">Reload Names from Offset</a><br/>TimeZone name is used to schedule the email</p>
   </div>
 
+  {{ if eq .Disabled false }}
+  <div>
+  <a href="#" onclick="disableNotifications();" class="btn btn-danger"> Disable all notifications</a>
+  You need to confirm by checking a box below
+  </div>
+  <div class="hide form-control">
+      <input type="checkbox" class="" name="disable" value="tRu3" /> I am sure I want to DISABLE notifications!
+  </div>
+  {{ else }}
+  <h4>SCHEDULED NOTIFICATIONS ARE CURRENTLY DISABLED. KINDLY CHECK THE BELOW OPTION TO ENABLE</h4>
+  <label class="form-control">
+    <input type="checkbox" name="disabled" value="enable" /> I wish to ENABLE notifications!
+  </label>
+  {{ end }}
+
+  <br><br>
   <button type="submit" class="btn btn-info btn-lg">Save My Preferences</button>
 
 </form>
@@ -157,6 +173,13 @@ if(tz.val() === "") {
 return false;
 }
 loadFromSystem(false)
+
+function disableNotifications() {
+  $('input[name="disable"]').attr('name', 'disabled');
+  $('input[name="disabled"]').parent().removeClass('hide');
+  return false;
+}
+
 </script>
 
 </div>
