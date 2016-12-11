@@ -49,9 +49,8 @@ Here is the latest diff that was composed
     {{ else if eq $commit.OldCommit $commit.NewCommit }}
       No new Commits created recently
     {{ else }}
-      Compare Link: <a href="{{ CompareLink "github" $repo.RepoName $commit.OldCommit $commit.NewCommit }}">{{ $repo.RepoName }}/{{ shortCommit $commit.OldCommit}}..{{shortCommit $commit.NewCommit}}</a><br>
       <pre>Previous Commit: {{ $commit.OldCommit }}<br>Latest   Commit: {{ $commit.NewCommit}}</pre><br/>
-      Code Diff : <a href="{{ CompareLink "github" $repo.RepoName $commit.OldCommit $commit.NewCommit }}.diff">{{ $repo.RepoName }}/{{shortCommit  $commit.OldCommit}}..{{shortCommit $commit.NewCommit}}.diff</a><br>
+      Code Link: <a href="{{ CompareLink "github" $repo.RepoName $commit.OldCommit $commit.NewCommit }}">{{ $repo.RepoName }}/{{ shortCommit $commit.OldCommit}}..{{shortCommit $commit.NewCommit}}</a> <a href="{{ CompareLink "github" $repo.RepoName $commit.OldCommit $commit.NewCommit }}.diff">[text diff]</a><br>
     {{ end }}
     </td>
   </tr>

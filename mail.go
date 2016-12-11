@@ -31,6 +31,7 @@ func mailDaemon() {
 				if s, err = d.Dial(); err != nil {
 					log.Println("going to panic. ")
 					log.Println(err)
+					// panic: dial tcp: lookup email-smtp.us-east-1.amazonaws.com on 8.8.4.4:53: dial udp 8.8.4.4:53: i/o timeout
 					// panic(err)
 				} else {
 					open = true

@@ -18,7 +18,7 @@ type searchRepo struct {
 
 // Used to load github data
 type searchRepoItem struct {
-	ID          string `json:"full_name"`
+	ID          string `json:"name"`
 	Name        string `json:"full_name"`
 	Description string `json:"description"`
 	HomePage    string `json:"homepage"`
