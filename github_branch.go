@@ -54,6 +54,10 @@ func shortCommit(commit string) string {
 	return commit
 }
 
+func githubWebsiteLink() string {
+	return config.GithubURLEndPoint
+}
+
 func githubRepoLink(repo string) string {
 	return fmt.Sprintf(githubRepoEndPoint, repo)
 }
@@ -94,11 +98,8 @@ type defaultBranch struct {
 func githubDefaultBranch(client *githubApp.Client, repoName string) (string, error) {
 	v := &defaultBranch{}
 	repoURL := fmt.Sprintf("%srepos/%s", config.GithubAPIEndPoint, repoName)
-	fmt.Println(repoURL)
 	req, _ := http.NewRequest("GET", repoURL, nil)
 	gr, _ := client.Do(req, v)
-	fmt.Println(v)
-	fmt.Println(gr.StatusCode)
 	if gr.StatusCode == 404 {
 		return "", errors.New("repo not found")
 	}

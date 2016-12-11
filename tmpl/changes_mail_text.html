@@ -5,10 +5,10 @@ Here is the latest diff that was composed:
 -----------------------------------------------------------
 {{ range $repo := .Data }}
 {{ with $repo }}
-{{ .RepoName }}: {{ githubRepoLink .RepoName }}
+{{ .RepoName }}: {{ RepoLink "github" .RepoName }}
   {{ range $branch, $commit := .References }}
   {{ if ne $commit.NewCommit "" }}
-  {{$branch}} Branch: {{githubTreeLink $repo.RepoName $branch}}
+  {{$branch}} Branch: {{ TreeLink "github" $repo.RepoName $branch}}
     {{ if eq $commit.OldCommit "" }}
     {{ if eq $commit.NewCommit "<none>" }}
     Branch Not Found
@@ -21,8 +21,8 @@ Here is the latest diff that was composed:
     {{ else if eq $commit.OldCommit $commit.NewCommit }}
     No new Commits created recently
     {{ else }}
-    Compare Commits: {{ githubCompareLink $repo.RepoName $commit.OldCommit $commit.NewCommit }}
-    Text Diff: {{ githubCompareLink $repo.RepoName $commit.OldCommit $commit.NewCommit }}.diff
+    Compare Commits: {{ CompareLink "github" $repo.RepoName $commit.OldCommit $commit.NewCommit }}
+          Text Diff: {{ CompareLink "github" $repo.RepoName $commit.OldCommit $commit.NewCommit }}.diff
 
     Previous Commit: {{ $commit.OldCommit }}
     Latest   Commit: {{ $commit.NewCommit }}
@@ -38,7 +38,7 @@ Here is the latest diff that was composed:
       No new {{.Title}} created recently
       {{ else }}
       {{ range $ref := .References }}
-      * {{ $ref }}: {{ githubTreeLink $repo.RepoName $ref }}
+      * {{ $ref }}: {{ TreeLink "github" $repo.RepoName $ref }}
       {{ end }}
       {{ end }}
   {{ end }}

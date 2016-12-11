@@ -29,7 +29,7 @@ Here is the latest diff that was composed
 {{ range $repo := .Data }}
 {{ with $repo }}
   <tr>
-    <td align="center" style="padding: 1em;" colspan="2"><a href="{{ githubRepoLink .RepoName }}">{{ .RepoName }}</a>
+    <td align="center" style="padding: 1em;" colspan="2"><a href="{{ RepoLink "github" .RepoName }}">{{ .RepoName }}</a>
       <a name="{{ cleanRepoName .RepoName }}"></a></td>
   </tr>
 
@@ -37,7 +37,7 @@ Here is the latest diff that was composed
   {{ range $branch, $commit := .References }}
   {{ if ne $commit.NewCommit "" }}
   <tr>
-    <td style="padding: 0.7em;" align="right">Branch: <strong><a href="{{githubTreeLink $repo.RepoName $branch}}">{{$branch}}</a></strong></td>
+    <td style="padding: 0.7em;" align="right">Branch: <strong><a href="{{ TreeLink "github" $repo.RepoName $branch}}">{{$branch}}</a></strong></td>
     <td style="padding: 0.7em;">
     {{ if eq $commit.OldCommit "" }}
       {{ if eq $commit.NewCommit "<none>" }}
@@ -49,9 +49,9 @@ Here is the latest diff that was composed
     {{ else if eq $commit.OldCommit $commit.NewCommit }}
       No new Commits created recently
     {{ else }}
-      Compare Link: <a href="{{ githubCompareLink $repo.RepoName $commit.OldCommit $commit.NewCommit }}">{{ $repo.RepoName }}/{{ shortCommit $commit.OldCommit}}..{{shortCommit $commit.NewCommit}}</a><br>
+      Compare Link: <a href="{{ CompareLink "github" $repo.RepoName $commit.OldCommit $commit.NewCommit }}">{{ $repo.RepoName }}/{{ shortCommit $commit.OldCommit}}..{{shortCommit $commit.NewCommit}}</a><br>
       <pre>Previous Commit: {{ $commit.OldCommit }}<br>Latest   Commit: {{ $commit.NewCommit}}</pre><br/>
-      Code Diff : <a href="{{ githubCompareLink $repo.RepoName $commit.OldCommit $commit.NewCommit }}.diff">{{ $repo.RepoName }}/{{shortCommit  $commit.OldCommit}}..{{shortCommit $commit.NewCommit}}.diff</a><br>
+      Code Diff : <a href="{{ CompareLink "github" $repo.RepoName $commit.OldCommit $commit.NewCommit }}.diff">{{ $repo.RepoName }}/{{shortCommit  $commit.OldCommit}}..{{shortCommit $commit.NewCommit}}.diff</a><br>
     {{ end }}
     </td>
   </tr>
@@ -70,7 +70,7 @@ Here is the latest diff that was composed
       {{ else }}
       <ul>
         {{ range $ref := .References }}
-        <li><a href="{{ githubTreeLink $repo.RepoName $ref }}">{{ $ref }}</a></li>
+        <li><a href="{{ TreeLink "github" $repo.RepoName $ref }}">{{ $ref }}</a></li>
         {{ end }}
       </ul>
       {{ end }}
