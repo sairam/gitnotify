@@ -7,6 +7,8 @@ fromName:    "Git Notify"
 fromEmail:   "hub@gitnotify.com"
 githubURLEndPoint: "https://github.com/"
 githubAPIEndPoint: "https://api.github.com/"
+gitlabURLEndPoint: "https://gitlab.com/"
+gitlabAPIEndPoint: "https://gitlab.com/api/v3/"
 smtpHost:          "email-smtp.us-east-1.amazonaws.com"
 smtpPort:          587
 sesConfigurationSet: "gitnotify"

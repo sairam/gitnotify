@@ -25,6 +25,8 @@ type AppConfig struct {
 	FromEmail         string `yaml:"fromEmail"`         // email address of from email address
 	GithubAPIEndPoint string `yaml:"githubAPIEndPoint"` // server endpoint with protocol for https://api.github.com
 	GithubURLEndPoint string `yaml:"githubURLEndPoint"` // website end point https://github.com
+	GitlabAPIEndPoint string `yaml:"gitlabAPIEndPoint"` // server endpoint with protocol for https://gitlab.com/api/v3/
+	GitlabURLEndPoint string `yaml:"gitlabURLEndPoint"` // website end point https://gitlab.com
 	SMTPHost          string `yaml:"smtpHost"`
 	SMTPPort          int    `yaml:"smtpPort"`
 	SMTPSesConfSet    string `yaml:"sesConfigurationSet"` // ses configuration set used as a custom header while sending email
@@ -83,6 +85,11 @@ var (
 	githubTreeURLEndPoint    string
 	githubCommitURLEndPoint  string
 	githubCompareURLEndPoint string
+
+	gitlabRepoEndPoint       string
+	gitlabTreeURLEndPoint    string
+	gitlabCommitURLEndPoint  string
+	gitlabCompareURLEndPoint string
 )
 
 func loadConfig() {
@@ -115,6 +122,11 @@ func loadConfig() {
 	githubTreeURLEndPoint = config.GithubURLEndPoint + "%s/tree/%s"            // repo/abc , develop
 	githubCommitURLEndPoint = config.GithubURLEndPoint + "%s/commits/%s"       // repo/abc , develop
 	githubCompareURLEndPoint = config.GithubURLEndPoint + "%s/compare/%s...%s" // repo/abc, base, target commit ref
+
+	gitlabRepoEndPoint = config.GitlabURLEndPoint + "%s/"                      // repo/abc
+	gitlabTreeURLEndPoint = config.GitlabURLEndPoint + "%s/tree/%s"            // repo/abc , develop
+	gitlabCommitURLEndPoint = config.GitlabURLEndPoint + "%s/commits/%s"       // repo/abc , develop
+	gitlabCompareURLEndPoint = config.GitlabURLEndPoint + "%s/compare/%s...%s" // repo/abc, base, target commit ref
 
 }
 

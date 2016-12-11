@@ -263,7 +263,7 @@ func processForMail(conf *Setting) error {
 
 func getNewInfo(branch *branches, option string) []*TagInfo {
 	branch.option = option
-	return getBranchTagInfo(branch.client, branch.repo.Repo, option)
+	return githubBranchTagInfo(branch.client, branch.repo.Repo, option)
 }
 
 func diffWithOldBranches(v []*TagInfo, branch *branches, option string, info map[string]*Information) []string {

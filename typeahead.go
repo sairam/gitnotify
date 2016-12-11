@@ -13,10 +13,12 @@ import (
 )
 
 type searchRepo struct {
-	Items []searchRepoName `json:"items"`
+	Items []*searchRepoItem `json:"items"`
 }
 
-type searchRepoName struct {
+// Used to load github data
+type searchRepoItem struct {
+	ID          string `json:"full_name"`
 	Name        string `json:"full_name"`
 	Description string `json:"description"`
 	HomePage    string `json:"homepage"`
@@ -60,7 +62,7 @@ func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	b := new(bytes.Buffer)
-	json.NewEncoder(b).Encode(result.Items)
+	json.NewEncoder(b).Encode(result)
 	io.Copy(w, b)
 }
 

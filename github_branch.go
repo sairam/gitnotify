@@ -83,12 +83,12 @@ func newGithubClient(token string) *githubApp.Client {
 
 // caches branch response
 func githubBranches(client *githubApp.Client, repoName string) []*TagInfo {
-	return getBranchTagInfo(client, repoName, "branches")
+	return githubBranchTagInfo(client, repoName, "branches")
 }
 
 // caches branch response
 func githubTags(client *githubApp.Client, repoName string) []*TagInfo {
-	return getBranchTagInfo(client, repoName, "tags")
+	return githubBranchTagInfo(client, repoName, "tags")
 }
 
 type defaultBranch struct {
@@ -107,7 +107,7 @@ func githubDefaultBranch(client *githubApp.Client, repoName string) (string, err
 	return v.DefaultBranch, nil
 }
 
-func getBranchTagInfo(client *githubApp.Client, repoName, option string) []*TagInfo {
+func githubBranchTagInfo(client *githubApp.Client, repoName, option string) []*TagInfo {
 	v := new([]*TagInfo)
 	branchesURL := fmt.Sprintf("%srepos/%s/%s", config.GithubAPIEndPoint, repoName, option)
 	req, _ := http.NewRequest("GET", branchesURL, nil)
@@ -115,11 +115,11 @@ func getBranchTagInfo(client *githubApp.Client, repoName, option string) []*TagI
 	return *v
 }
 
-func githubSearchRepos(client *githubApp.Client, search string) *searchRepo {
+func githubSearchRepos(client *githubApp.Client, search string) []*searchRepoItem {
 	searchRepositoryURL := fmt.Sprintf("%ssearch/repositories?page=%d&q=%s", config.GithubAPIEndPoint, 1, search)
 	fmt.Println("Search Request:", search)
 	req, _ := http.NewRequest("GET", searchRepositoryURL, nil)
 	v := new(searchRepo)
 	client.Do(req, v)
-	return v
+	return v.Items
 }
