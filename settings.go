@@ -223,7 +223,8 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 	case "show":
 	case "update":
 		var references []reference
-		for _, t := range strings.Split(r.Form["references"][0], ",") {
+
+		for _, t := range r.Form["references"] {
 			// TODO - add validation on name of references
 			str := strings.TrimSpace(t)
 			if str == "" {

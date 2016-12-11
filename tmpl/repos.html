@@ -94,7 +94,13 @@
 <div class="form-group">
   <label for="references" class="col-sm-4 control-label">Track Branches</label>
   <div class="col-sm-8">
-    <input type="text" class="form-control" id="references" value="{{ range $i, $x := .NamedReferences }}{{ $x }},{{ end }}" name="references">
+    <select multiple="multiple" class="form-control" id="references" name="references">
+    {{ range $i, $x := .NamedReferences }}
+    <option selected="selected" value="{{$x}}">{{$x}}</option>
+    {{ end }}
+    </select>
+
+    <!-- <input type="text" class="form-control" id="references" value="{{ range $i, $x := .NamedReferences }}{{ $x }},{{ end }}" name="references"> -->
     <p class="help-block">Get code diffs in email for these branches</p>
   </div>
 </div>
@@ -183,8 +189,15 @@ $('input#repoNew').on('focusout', function() {
     format: "json",
     cache: true,
     success: function(result) {
-      var branch = JSON.parse(result).default_branch
-      branchInput.val(branch)
+      var data = JSON.parse(result);
+      var branch = data.default_branch;
+
+      var results = [];
+      for(i=0; i < data.branches.length ; i++) {
+        results.push({id: data.branches[i], text: data.branches[i]})
+      }
+      branchInput.select2({data: results, closeOnSelect: false}).select2('open');
+      branchInput.val(branch).trigger('change');
     },
     failure: function() {
       console.log("Repo does not exist")
@@ -216,6 +229,37 @@ $('input#repoNew').on('focusout', function() {
   </ul>
 </div>
 </div>
-
 {{ end }}
+
+<script>
+$('select#references').each(function(){
+  repoName = $(this).parents('form').find('input[name=repo]').val();
+  // we are going to use a different method for branches of adding a "new repo"
+  if (repoName == "") {
+    $(this).select2();
+    return;
+  }
+  $(this).select2({
+    ajax: {
+      context: $(this),
+      url: "/typeahead/branch?repo="+repoName,
+      data: function (params) {
+        return {};
+      },
+      // we are overriding the initialised select2 here.once initialized,
+      // we do not make an ajax call again to load branches
+      success: function(data) {
+        var results = [];
+        for(i=0; i < data.branches.length ; i++) {
+          results.push({id: data.branches[i], text: data.branches[i]})
+        }
+        $(this).select2({data: results, closeOnSelect: false}).select2('open');
+      },
+      dataType: 'json',
+      cache: true,
+      delay: 250,
+    }
+  })
+})
+</script>
 {{ partial "footer" . }}
