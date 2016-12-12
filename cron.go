@@ -120,7 +120,7 @@ func (t cronJob) Run() {
 	conf := new(Setting)
 	log.Printf("Processing file through cron - %s", filename)
 	conf.load(filename)
-	processForMail(conf)
+	processDiffForUser(conf)
 	if t.save {
 		conf.save(filename)
 	}

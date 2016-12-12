@@ -40,11 +40,15 @@ func (c *Setting) usersName() string {
 
 // UserNotification is the customization/scheduling is provided for user
 // We are only going to send emails.
+// TODO - UserNotification should be an array of type of notifications like name, Webhook with Disabled option etc.,
 type UserNotification struct {
 	Email     string `yaml:"email"`
 	Name      string `yaml:"name"`
 	Disabled  bool   `yaml:"disabled"`
 	Frequency `yaml:",inline"`
+
+	WebhookURL  string `yaml:"webhook_url"`
+	WebhookType string `yaml:"webhook_type"`
 }
 
 // Frequency is the cron format along with a TimeZone to process

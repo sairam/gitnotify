@@ -51,7 +51,7 @@ Here is the latest diff that was composed
       No new Commits created recently
     {{ else }}
       <pre>Previous Commit: {{ $commit.OldCommit }}<br>Latest   Commit: {{ $commit.NewCommit}}</pre><br/>
-      Code Diff Link: <a href="{{ CompareLink "github" $repo.RepoName $commit.OldCommit $commit.NewCommit }}">{{ $repo.RepoName }}/{{ shortCommit $commit.OldCommit}}..{{shortCommit $commit.NewCommit}}</a> <a href="{{ CompareLink "github" $repo.RepoName $commit.OldCommit $commit.NewCommit }}.diff">[text diff]</a><br>
+      Code Diff: <a href="{{ CompareLink "github" $repo.RepoName $commit.OldCommit $commit.NewCommit }}">{{ $repo.RepoName }}/{{ shortCommit $commit.OldCommit}}..{{shortCommit $commit.NewCommit}}</a> <a href="{{ CompareLink "github" $repo.RepoName $commit.OldCommit $commit.NewCommit }}.diff">[text]</a><br>
     {{ end }}
     </td>
   </tr>
