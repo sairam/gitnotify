@@ -4,7 +4,6 @@
 {{ if eq $nextRunTimeLength 0 }}
 <div class="alert alert-danger" role="alert">Review the below options to recieve emails</div>
 {{ else }}
-
 <div class="pull-right">
 <a class="btn btn-info" href="#scheduled">Scheduled Time for Next {{ $nextRunTimeLength }} Runs</a>
 </div>
@@ -85,6 +84,7 @@
     <option{{ if eq $option $type  }} selected="selected"{{end}} value="{{$option}}">{{capitalizeOrNone $option}}</option>
   {{ end }}
   </select>
+  </div>
 
   <div class="form-group">
   <label for="webhookURL">Webhook URL</label>
@@ -93,7 +93,6 @@
   </div>
 
   <button type="submit" class="btn btn-info btn-lg">Save My Preferences</button>
-
   <hr>
 
   {{ if eq .Disabled false }}
@@ -130,6 +129,9 @@
 {{ end }}
 </ul>
 {{ end }}
+
+</div>
+</div>
 
 <script>
 
@@ -207,9 +209,5 @@ function disableNotifications() {
 }
 
 </script>
-
-</div>
-</div>
-
 
 {{ partial "footer" . }}
