@@ -29,8 +29,9 @@ Here is the latest diff that was composed
 <!-- loop through repositories -->
 {{ range $repo := .Data }}
 {{ with $repo }}
+{{ $provider := .Provider }}
   <tr>
-    <td align="center" style="padding: 1em;" colspan="2"><a href="{{ RepoLink "github" .RepoName }}">{{ .RepoName }}</a>
+    <td align="center" style="padding: 1em;" colspan="2"><a href="{{ RepoLink $provider .RepoName }}">{{ .RepoName }}</a>
       <a name="{{ cleanRepoName .RepoName }}"></a></td>
   </tr>
 
@@ -38,7 +39,7 @@ Here is the latest diff that was composed
   {{ range $branch, $commit := .References }}
   {{ if ne $commit.NewCommit "" }}
   <tr>
-    <td style="padding: 0.7em;" align="right">Branch: <strong><a href="{{ TreeLink "github" $repo.RepoName $branch}}">{{$branch}}</a></strong></td>
+    <td style="padding: 0.7em;" align="right">Branch: <strong><a href="{{ TreeLink $provider $repo.RepoName $branch}}">{{$branch}}</a></strong></td>
     <td style="padding: 0.7em;">
     {{ if eq $commit.OldCommit "" }}
       {{ if eq $commit.NewCommit "<none>" }}
@@ -51,7 +52,7 @@ Here is the latest diff that was composed
       No new Commits created recently
     {{ else }}
       <pre>Previous Commit: {{ $commit.OldCommit }}<br>Latest   Commit: {{ $commit.NewCommit}}</pre><br/>
-      Code Diff: <a href="{{ CompareLink "github" $repo.RepoName $commit.OldCommit $commit.NewCommit }}">{{ $repo.RepoName }}/{{ shortCommit $commit.OldCommit}}..{{shortCommit $commit.NewCommit}}</a> <a href="{{ CompareLink "github" $repo.RepoName $commit.OldCommit $commit.NewCommit }}.diff">[text]</a><br>
+      Code Diff: <a href="{{ CompareLink $provider $repo.RepoName $commit.OldCommit $commit.NewCommit }}">{{ $repo.RepoName }}/{{ shortCommit $commit.OldCommit}}..{{shortCommit $commit.NewCommit}}</a> <a href="{{ CompareLink $provider $repo.RepoName $commit.OldCommit $commit.NewCommit }}.diff">[text]</a><br>
     {{ end }}
     </td>
   </tr>
@@ -70,7 +71,7 @@ Here is the latest diff that was composed
       {{ else }}
       <ul>
         {{ range $ref := .References }}
-        <li><a href="{{ TreeLink "github" $repo.RepoName $ref }}">{{ $ref }}</a></li>
+        <li><a href="{{ TreeLink $provider $repo.RepoName $ref }}">{{ $ref }}</a></li>
         {{ end }}
       </ul>
       {{ end }}

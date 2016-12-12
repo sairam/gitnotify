@@ -90,10 +90,14 @@ type Repo struct {
 	NamedReferences []reference `yaml:"commits"`
 	Branches        bool        `yaml:"new_branches"`
 	Tags            bool        `yaml:"new_tags"`
+	Provider        string
 }
 type reference string
 
-// var t = afero.Fs
+type SettingsPage struct {
+	CronRunning  bool
+	EmailPresent bool
+}
 
 func (c *Setting) String() string {
 	arr := make([]string, len(c.Repos))
@@ -122,6 +126,13 @@ func (c *Setting) load(settingFile string) error {
 	}
 
 	err = yaml.Unmarshal(data, c)
+
+	// set provider at repo level
+	if c.Auth.Provider != "" {
+		for _, repo := range c.Repos {
+			repo.Provider = c.Auth.Provider
+		}
+	}
 
 	if err != nil {
 		return err
@@ -228,6 +239,12 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 	case "show":
 	case "update":
 		var references []reference
+		var provider = "github"
+
+		// TODO based on the provider, we need to load the config file
+		if len(r.Form["provider"]) > 0 {
+			provider = r.Form["provider"][0]
+		}
 
 		for _, t := range r.Form["references"] {
 			// TODO - add validation on name of references
@@ -243,7 +260,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 			hc.addFlash("Invalid Repo Name Provided")
 			break
 		}
-		repoPresent := validateRemoteRepoName(conf, repoName, "github")
+		repoPresent := validateRemoteRepoName(conf, repoName, provider)
 		if !repoPresent {
 			hc.addFlash("Could not find Repo on Github")
 			break
@@ -254,6 +271,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 			references,
 			contains(r.Form["branches"], "true"),
 			contains(r.Form["tags"], "true"),
+			provider, // TODO change this to use argument from form
 		}
 
 		// TODO move method under repo/settings struct
@@ -262,8 +280,6 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 			formAction = "create"
 		}
 
-		// userInfo := hc.userLoggedinInfo()
-		// configFile := userInfo.getConfigFile()
 		if err := conf.save(configFile); err != nil {
 			hc.addFlash("Error saving configuration " + err.Error() + " for " + repo.Repo)
 		} else {
@@ -285,8 +301,6 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 		if success == false {
 			hc.addFlash("Error deleting Repository " + repo.Repo)
 		} else {
-			// userInfo := hc.userLoggedinInfo()
-			// configFile := userInfo.getConfigFile()
 			if err := conf.save(configFile); err != nil {
 				hc.addFlash("Error saving configuration " + err.Error() + " for " + repo.Repo)
 			} else {
@@ -310,15 +324,17 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 	displayPage(w, "repos", page)
 }
 
-type SettingsPage struct {
-	CronRunning  bool
-	EmailPresent bool
-}
-
 func validateRemoteRepoName(conf *Setting, repo string, provider string) bool {
-	if provider == "github" {
+	if provider == GithubProvider {
 		client := newGithubClient(conf.Auth.Token)
 		branch, err := githubDefaultBranch(client, repo)
+		if err != nil || branch == "" {
+			return false
+		}
+		return true
+	} else if provider == GitlabProvider {
+		client := newGitlabClient(conf.Auth.Token)
+		branch, err := gitlabDefaultBranch(client, repo)
 		if err != nil || branch == "" {
 			return false
 		}
@@ -328,7 +344,6 @@ func validateRemoteRepoName(conf *Setting, repo string, provider string) bool {
 }
 
 func validateRepoName(repo string) string {
-
 	data := repoValidator.FindAllString(repo, -1)
 	if len(data) == 1 {
 		return data[0]

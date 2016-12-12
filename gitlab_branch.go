@@ -24,6 +24,11 @@ Example:
 //
 
 // Helpers
+
+func gitlabWebsiteLink() string {
+	return config.GitlabURLEndPoint
+}
+
 func gitlabRepoLink(repo string) string {
 	return fmt.Sprintf(gitlabRepoEndPoint, repo)
 }

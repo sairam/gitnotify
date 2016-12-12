@@ -7,9 +7,14 @@ import "strings"
 // GithubProvider ..
 const GithubProvider = "github"
 
+// GitlabProvider ..
+const GitlabProvider = "gitlab"
+
 func WebsiteLink(provider string) string {
 	if provider == GithubProvider {
 		return githubWebsiteLink()
+	} else if provider == GitlabProvider {
+		return gitlabWebsiteLink()
 	}
 	return ""
 }
@@ -17,6 +22,8 @@ func WebsiteLink(provider string) string {
 func RepoLink(provider string, repo string) string {
 	if provider == GithubProvider {
 		return githubRepoLink(repo)
+	} else if provider == GitlabProvider {
+		return gitlabRepoLink(repo)
 	}
 	return ""
 }
@@ -24,6 +31,8 @@ func RepoLink(provider string, repo string) string {
 func TreeLink(provider string, repo, ref string) string {
 	if provider == GithubProvider {
 		return githubTreeLink(repo, ref)
+	} else if provider == GitlabProvider {
+		return gitlabTreeLink(repo, ref)
 	}
 	return ""
 }
@@ -31,6 +40,8 @@ func TreeLink(provider string, repo, ref string) string {
 func CommitLink(provider string, repo, ref string) string {
 	if provider == GithubProvider {
 		return githubCommitLink(repo, ref)
+	} else if provider == GitlabProvider {
+		return gitlabCommitLink(repo, ref)
 	}
 	return ""
 }
@@ -38,6 +49,8 @@ func CommitLink(provider string, repo, ref string) string {
 func CompareLink(provider string, repo, oldCommit, newCommit string) string {
 	if provider == GithubProvider {
 		return githubCompareLink(repo, oldCommit, newCommit)
+	} else if provider == GitlabProvider {
+		return gitlabCompareLink(repo, oldCommit, newCommit)
 	}
 	return ""
 }

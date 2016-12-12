@@ -125,7 +125,7 @@ func fetchFiles(provider string) []string {
 
 // load all files and adds the cron entries
 func getData(provider string) {
-	files := fetchFiles("github")
+	files := fetchFiles(provider)
 	for i, filename := range files {
 		if filename == "" {
 			continue
@@ -286,18 +286,18 @@ func processForSlack(diff []*LocalDiffs, slackURL string) error {
 			if reference.NewCommit == noneString {
 				commitDiffLink = fmt.Sprintf("Branch is not present")
 			} else if reference.OldCommit == "" {
-				commitDiffLink = fmt.Sprintf("New branch being tracked. Current Commit is %s", &slackTypeLink{shortCommit(reference.NewCommit), TreeLink("github", repo.RepoName, reference.NewCommit)})
+				commitDiffLink = fmt.Sprintf("New branch being tracked. Current Commit is %s", &slackTypeLink{shortCommit(reference.NewCommit), TreeLink(repo.Provider, repo.RepoName, reference.NewCommit)})
 			} else if reference.OldCommit == reference.NewCommit {
-				commitDiffLink = fmt.Sprintf("No recent changes. Last Commit is %s", &slackTypeLink{shortCommit(reference.NewCommit), TreeLink("github", repo.RepoName, reference.NewCommit)})
+				commitDiffLink = fmt.Sprintf("No recent changes. Last Commit is %s", &slackTypeLink{shortCommit(reference.NewCommit), TreeLink(repo.Provider, repo.RepoName, reference.NewCommit)})
 			} else {
 				text := fmt.Sprintf("%s..%s", shortCommit(reference.OldCommit), shortCommit(reference.NewCommit))
-				href := CompareLink("github", repo.RepoName, reference.OldCommit, reference.NewCommit)
+				href := CompareLink(repo.Provider, repo.RepoName, reference.OldCommit, reference.NewCommit)
 				commitDiffLink = fmt.Sprintf("Compare Diff: %s", (&slackTypeLink{text, href}).String())
 			}
 			branchTitle := fmt.Sprintf("Branch: %s", branch)
 
 			attachment := SlackAttachment{
-				Title:          (&slackTypeLink{branchTitle, TreeLink("github", repo.RepoName, branch)}).String(),
+				Title:          (&slackTypeLink{branchTitle, TreeLink(repo.Provider, repo.RepoName, branch)}).String(),
 				MarkdownFormat: []string{"text"},
 				Text:           commitDiffLink,
 			}
@@ -307,7 +307,7 @@ func processForSlack(diff []*LocalDiffs, slackURL string) error {
 		for _, r := range repo.Others {
 			links := make([]string, 0, 1)
 			for _, treeName := range r.References {
-				href := TreeLink("github", repo.RepoName, treeName)
+				href := TreeLink(repo.Provider, repo.RepoName, treeName)
 				links = append(links, (&slackTypeLink{treeName, href}).String())
 			}
 			if len(r.References) == 0 {
@@ -323,7 +323,7 @@ func processForSlack(diff []*LocalDiffs, slackURL string) error {
 
 		message := &SlackMessage{
 			Username:    "gitnotify",
-			Text:        fmt.Sprintf("*Changes for %s*:", &slackTypeLink{repo.RepoName, RepoLink("github", repo.RepoName)}),
+			Text:        fmt.Sprintf("*Changes for %s*:", &slackTypeLink{repo.RepoName, RepoLink(repo.Provider, repo.RepoName)}),
 			Attachments: attachments,
 		}
 

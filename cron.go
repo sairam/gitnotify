@@ -135,7 +135,7 @@ func initCron() {
 	crons = cron.New()
 	crons.Start()
 
-	go getData("github")
+	go getData(GithubProvider)
 }
 
 // There is no idiomatic way to compare SpecSchedule, put in a sort of adjustment

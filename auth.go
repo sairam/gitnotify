@@ -112,7 +112,7 @@ func initAuth(p *mux.Router) {
 		auth.save()
 
 		hc := &httpContext{res, req}
-		hc.setSession(auth)
+		hc.setSession(auth, authType)
 
 		http.Redirect(res, req, homePageForLoggedIn, 302)
 	}).Methods("GET")
