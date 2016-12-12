@@ -233,7 +233,7 @@ func processDiffForUser(conf *Setting) {
 }
 
 func processForWebhook(diff []*LocalDiffs, conf *Setting) error {
-	if conf.User.WebhookType == "slack" {
+	if conf.User.WebhookType == "slack" && conf.User.WebhookURL != "" {
 		log.Println("sending a slack message")
 		return processForSlack(diff, conf.User.WebhookURL)
 	}

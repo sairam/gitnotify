@@ -72,9 +72,34 @@
   <p class="help-block"><a href="javascript:displayTzOptions(true)">Load All TimeZones</a> | <a href="javascript:displayTzOptions(false)">Reload Names from Offset</a><br/>TimeZone name is used to schedule the email</p>
   </div>
 
+  <button type="submit" class="btn btn-info btn-lg">Save My Preferences</button>
+
+  <hr>
+
+  <h3>Add Webhook Integration</h3>
+  <div class="form-group">
+  <label for="tzName">Webhook Type</label>
+  <select name="webhookType" id="webhookType" class="form-control input-lg">
+  {{ $type := .WebhookType }}
+  {{ range $option:=WebhooksList }}
+    <option{{ if eq $option $type  }} selected="selected"{{end}} value="{{$option}}">{{capitalizeOrNone $option}}</option>
+  {{ end }}
+  </select>
+
+  <div class="form-group">
+  <label for="webhookURL">Webhook URL</label>
+  <input type="url" name="webhookURL" id="webhookURL" class="form-control input-lg" value="{{.WebhookURL}}">
+  <p class="help-block">JSON will be POSTed based on the type supported above</p>
+  </div>
+
+  <button type="submit" class="btn btn-info btn-lg">Save My Preferences</button>
+
+  <hr>
+
   {{ if eq .Disabled false }}
-  <div>
+  <div class="pull-right">
   <a href="#" onclick="disableNotifications();" class="btn btn-danger"> Disable all notifications</a>
+  <br>
   You need to confirm by checking a box below
   </div>
   <div class="hide form-control">
@@ -93,6 +118,8 @@
 </form>
 {{ end }}
 {{ end }}
+
+<br><br><hr><br>
 
 {{ if gt $nextRunTimeLength 0 }}
 <a name="scheduled"></a>

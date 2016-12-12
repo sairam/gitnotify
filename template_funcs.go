@@ -37,13 +37,15 @@ var (
 		"div":      div,
 		"mod":      mod,
 
-		"WebsiteLink":   WebsiteLink,
-		"RepoLink":      RepoLink,
-		"TreeLink":      TreeLink,
-		"CommitLink":    CommitLink,
-		"CompareLink":   CompareLink,
-		"shortCommit":   shortCommit,
-		"cleanRepoName": cleanRepoName,
+		"WebsiteLink":      WebsiteLink,
+		"RepoLink":         RepoLink,
+		"TreeLink":         TreeLink,
+		"CommitLink":       CommitLink,
+		"CompareLink":      CompareLink,
+		"shortCommit":      shortCommit,
+		"cleanRepoName":    cleanRepoName,
+		"WebhooksList":     WebhooksList,
+		"capitalizeOrNone": capitalizeOrNone,
 	}
 )
 

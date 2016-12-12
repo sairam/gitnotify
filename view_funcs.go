@@ -1,5 +1,7 @@
 package main
 
+import "strings"
+
 // Helper Functions used in views like email,
 
 // GithubProvider ..
@@ -25,6 +27,7 @@ func TreeLink(provider string, repo, ref string) string {
 	}
 	return ""
 }
+
 func CommitLink(provider string, repo, ref string) string {
 	if provider == GithubProvider {
 		return githubCommitLink(repo, ref)
@@ -37,4 +40,15 @@ func CompareLink(provider string, repo, oldCommit, newCommit string) string {
 		return githubCompareLink(repo, oldCommit, newCommit)
 	}
 	return ""
+}
+
+func WebhooksList() []string {
+	return append([]string{""}, config.WebhookIntegrations...)
+}
+
+func capitalizeOrNone(option string) string {
+	if option == "" {
+		return "None"
+	}
+	return strings.ToTitle(option)
 }

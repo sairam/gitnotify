@@ -16,24 +16,25 @@ import (
 
 // AppConfig is
 type AppConfig struct {
-	ServerProto       string `yaml:"serverProto"`       // can be http:// or https://
-	ServerHost        string `yaml:"serverHost"`        // domain.com with port . Used at redirection for OAuth
-	LocalHost         string `yaml:"localHost"`         // host:port combination used for starting the server
-	DataDir           string `yaml:"dataDir"`           // relative path from server to write the data
-	SettingsFile      string `yaml:"settingsFile"`      // name of file to be looked up/saved to for data
-	FromName          string `yaml:"fromName"`          // name of from email user
-	FromEmail         string `yaml:"fromEmail"`         // email address of from email address
-	GithubAPIEndPoint string `yaml:"githubAPIEndPoint"` // server endpoint with protocol for https://api.github.com
-	GithubURLEndPoint string `yaml:"githubURLEndPoint"` // website end point https://github.com
-	GitlabAPIEndPoint string `yaml:"gitlabAPIEndPoint"` // server endpoint with protocol for https://gitlab.com/api/v3/
-	GitlabURLEndPoint string `yaml:"gitlabURLEndPoint"` // website end point https://gitlab.com
-	SMTPHost          string `yaml:"smtpHost"`
-	SMTPPort          int    `yaml:"smtpPort"`
-	SMTPSesConfSet    string `yaml:"sesConfigurationSet"` // ses configuration set used as a custom header while sending email
-	GoogleAnalytics   string `yaml:"googleAnalytics"`
-	SMTPUser          string // environment variable
-	SMTPPass          string // environment variable
-	RunMode           string `yaml:"runMode"` // when runMode is "dev", we use it to reload templates on every request. else they are loaded only once
+	ServerProto         string   `yaml:"serverProto"`       // can be http:// or https://
+	ServerHost          string   `yaml:"serverHost"`        // domain.com with port . Used at redirection for OAuth
+	LocalHost           string   `yaml:"localHost"`         // host:port combination used for starting the server
+	DataDir             string   `yaml:"dataDir"`           // relative path from server to write the data
+	SettingsFile        string   `yaml:"settingsFile"`      // name of file to be looked up/saved to for data
+	FromName            string   `yaml:"fromName"`          // name of from email user
+	FromEmail           string   `yaml:"fromEmail"`         // email address of from email address
+	GithubAPIEndPoint   string   `yaml:"githubAPIEndPoint"` // server endpoint with protocol for https://api.github.com
+	GithubURLEndPoint   string   `yaml:"githubURLEndPoint"` // website end point https://github.com
+	GitlabAPIEndPoint   string   `yaml:"gitlabAPIEndPoint"` // server endpoint with protocol for https://gitlab.com/api/v3/
+	GitlabURLEndPoint   string   `yaml:"gitlabURLEndPoint"` // website end point https://gitlab.com
+	SMTPHost            string   `yaml:"smtpHost"`
+	SMTPPort            int      `yaml:"smtpPort"`
+	SMTPSesConfSet      string   `yaml:"sesConfigurationSet"` // ses configuration set used as a custom header while sending email
+	GoogleAnalytics     string   `yaml:"googleAnalytics"`
+	SMTPUser            string   // environment variable
+	SMTPPass            string   // environment variable
+	RunMode             string   `yaml:"runMode"` // when runMode is "dev", we use it to reload templates on every request. else they are loaded only once
+	WebhookIntegrations []string `yaml:"webhookIntegrations"`
 }
 
 var config = new(AppConfig)

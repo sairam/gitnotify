@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"net/mail"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -117,6 +118,16 @@ func userSettingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 		// validate weekday
 		conf.User.WeekDay = cleanWeekday(r.Form["weekday"])
+
+		if len(r.Form["webhookType"]) > 0 {
+			conf.User.WebhookType = r.Form["webhookType"][0]
+		}
+
+		if len(r.Form["webhookURL"]) > 0 {
+			if _, err := url.ParseRequestURI(r.Form["webhookURL"][0]); err == nil {
+				conf.User.WebhookURL = r.Form["webhookURL"][0]
+			}
+		}
 
 		conf.save(configFile)
 		upsertCronEntry(conf)
