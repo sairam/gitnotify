@@ -12,7 +12,7 @@ import (
 )
 
 // Repository is of the name ^ab-c/d_ef$
-var repoValidator = regexp.MustCompile("^[\\p{L}\\d_-]+/[\\p{L}\\d_-]+$")
+var repoValidator = regexp.MustCompile("^[\\p{L}\\d_-]+/[\\.\\p{L}\\d_-]+$")
 
 // Setting is the data structure that has all the details
 //  data/$provider/$username/settings.yml

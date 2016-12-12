@@ -42,7 +42,7 @@ func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 	search = strings.Replace(search, " ", "+", -1)
 	// Add support for regular searches
 	if strings.Contains(search, "/") {
-		var modifiedRepoValidator = regexp.MustCompile("[\\p{L}\\d_-]+/[\\p{L}\\d_-]*")
+		var modifiedRepoValidator = regexp.MustCompile("[\\p{L}\\d_-]+/[\\.\\p{L}\\d_-]*")
 		data := modifiedRepoValidator.FindAllString(search, -1)
 		d := strings.Split(data[0], "/")
 		rep := fmt.Sprintf("%s+user:%s", d[1], d[0])
