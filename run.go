@@ -169,7 +169,7 @@ func process(conf *Setting) ([]*LocalDiffs, error) {
 		branch.repo = repo
 
 		if repo.Branches || len(repo.NamedReferences) > 0 {
-			newBranches := getNewInfo(branch, "branches")
+			newBranches, _ := getNewInfo(branch, "branches")
 			if len(repo.NamedReferences) > 0 {
 
 				data := make(map[string]*BranchCommit)
@@ -209,7 +209,7 @@ func process(conf *Setting) ([]*LocalDiffs, error) {
 		}
 
 		if repo.Tags {
-			newTags := getNewInfo(branch, "tags")
+			newTags, _ := getNewInfo(branch, "tags")
 			tagsDiff := diffWithOldBranches(newTags, branch, "tags", conf.Info)
 			l := &LocalRef{
 				Title:      "Tags",
@@ -373,7 +373,7 @@ func processForMail(diff []*LocalDiffs, conf *Setting) error {
 	return nil
 }
 
-func getNewInfo(branch *branches, option string) []*TagInfo {
+func getNewInfo(branch *branches, option string) ([]*TagInfo, error) {
 	branch.option = option
 	return githubBranchTagInfo(branch.client, branch.repo.Repo, option)
 }

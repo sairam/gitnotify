@@ -122,14 +122,19 @@ func getBranchInfoForRepo(provider, token, repoName string) (*typeAheadBranchLis
 
 func getBranchInfoForGithub(token, repoName string) (*typeAheadBranchList, error) {
 	client := newGithubClient(token)
-	tab := &typeAheadBranchList{}
 
 	defaultBranch, err := githubDefaultBranch(client, repoName)
 	if err != nil {
 		return nil, err
 	}
+
+	result, err := githubBranches(client, repoName)
+	if err != nil {
+		return nil, err
+	}
+
+	tab := &typeAheadBranchList{}
 	tab.DefaultBranch = defaultBranch
-	result := githubBranches(client, repoName)
 	tab.AllBranches = make([]string, 0, len(result))
 	for _, r := range result {
 		tab.AllBranches = append(tab.AllBranches, r.Name)

@@ -82,12 +82,12 @@ func newGithubClient(token string) *githubApp.Client {
 }
 
 // caches branch response
-func githubBranches(client *githubApp.Client, repoName string) []*TagInfo {
+func githubBranches(client *githubApp.Client, repoName string) ([]*TagInfo, error) {
 	return githubBranchTagInfo(client, repoName, "branches")
 }
 
 // caches branch response
-func githubTags(client *githubApp.Client, repoName string) []*TagInfo {
+func githubTags(client *githubApp.Client, repoName string) ([]*TagInfo, error) {
 	return githubBranchTagInfo(client, repoName, "tags")
 }
 
@@ -108,12 +108,12 @@ func githubDefaultBranch(client *githubApp.Client, repoName string) (string, err
 	return v.DefaultBranch, nil
 }
 
-func githubBranchTagInfo(client *githubApp.Client, repoName, option string) []*TagInfo {
+func githubBranchTagInfo(client *githubApp.Client, repoName, option string) ([]*TagInfo, error) {
 	v := new([]*TagInfo)
 	branchesURL := fmt.Sprintf("%srepos/%s/%s", config.GithubAPIEndPoint, repoName, option)
 	req, _ := http.NewRequest("GET", branchesURL, nil)
 	client.Do(req, v)
-	return *v
+	return *v, nil
 }
 
 func githubSearchRepos(client *githubApp.Client, search string) ([]*searchRepoItem, error) {

@@ -35,6 +35,7 @@ type AppConfig struct {
 	SMTPPass            string   // environment variable
 	RunMode             string   `yaml:"runMode"` // when runMode is "dev", we use it to reload templates on every request. else they are loaded only once
 	WebhookIntegrations []string `yaml:"webhookIntegrations"`
+	SentryURL           string   `yaml:"sentryDSN"`
 }
 
 var config = new(AppConfig)
