@@ -8,26 +8,30 @@ import (
 	"strings"
 )
 
-const pathPartialTemplate = "tmpl/partials/"
-const pathTemplate = "tmpl/"
-
 type simpleTemplate struct {
 	prefix      string
 	partialsDir string
 	t           *template.Template
 }
 
-var templates *simpleTemplate
+var (
+	pathPartialTemplate string
+	pathTemplate        string
+	templates           *simpleTemplate
+)
 
 func init() {
+	pathPartialTemplate = config.TemplatePartialsDir
+	pathTemplate = config.TemplateDir
+
 	reloadTemplates()
 }
 
 func reloadTemplates() {
 	// Templates with functions available to them
 	templates = &simpleTemplate{
-		"tmpl/",
-		"tmpl/partials/",
+		pathTemplate,
+		pathPartialTemplate,
 		template.New("").Funcs(templateMap),
 	}
 	load()

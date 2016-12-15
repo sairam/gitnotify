@@ -16,3 +16,5 @@ googleAnalytics: ""
 runMode: "dev" # "prod"
 cacheIncomingRequests: true
 webhookIntegrations: ["slack"] # generic
+templateDir: "tmpl/" # should end with a /
+templatePartialsDir: "tmpl/partials/" # should end with a /

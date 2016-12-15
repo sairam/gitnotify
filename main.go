@@ -36,6 +36,14 @@ type AppConfig struct {
 	RunMode             string   `yaml:"runMode"` // when runMode is "dev", we use it to reload templates on every request. else they are loaded only once
 	WebhookIntegrations []string `yaml:"webhookIntegrations"`
 	SentryURL           string   `yaml:"sentryDSN"`
+
+	TemplateDir         string `yaml:"templateDir"`         // tmpl/
+	TemplatePartialsDir string `yaml:"templatePartialsDir"` // tmpl/partials/
+	// "changes_mail" and "changes_mail_text" are the files used to render
+	// "home" for home page, "repos" for the repositories page
+	// "text" for rendering simple text
+	// "user" for user preferences
+	// use "partial name" to render a file
 }
 
 var config = new(AppConfig)
