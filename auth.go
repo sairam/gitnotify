@@ -12,6 +12,7 @@ import (
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/github"
+	"github.com/markbates/goth/providers/gitlab"
 )
 
 // https://github.com/markbates/goth/blob/master/providers/github/github.go
@@ -77,12 +78,12 @@ func init() {
 func initAuth(p *mux.Router) {
 	goth.UseProviders(
 		github.New(os.Getenv("GITHUB_KEY"), os.Getenv("GITHUB_SECRET"), config.ServerProto+config.ServerHost+"/auth/github/callback", "user:email"),
-		// gitlab.New(os.Getenv("GITLAB_KEY"), os.Getenv("GITLAB_SECRET"), serverProto+host+"/auth/github/callback"),
+		gitlab.New(os.Getenv("GITLAB_KEY"), os.Getenv("GITLAB_SECRET"), config.ServerProto+config.ServerHost+"/auth/gitlab/callback"),
 	)
 
 	m := map[string]string{
 		"github": "Github",
-		// "gitlab": "GitLab",
+		"gitlab": "GitLab",
 	}
 
 	var keys []string

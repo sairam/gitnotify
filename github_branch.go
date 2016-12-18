@@ -118,7 +118,6 @@ func githubBranchTagInfo(client *githubApp.Client, repoName, option string) ([]*
 
 func githubSearchRepos(client *githubApp.Client, search string) ([]*searchRepoItem, error) {
 	searchRepositoryURL := fmt.Sprintf("%ssearch/repositories?page=%d&q=%s", config.GithubAPIEndPoint, 1, search)
-	fmt.Println("Search Request:", search)
 	req, _ := http.NewRequest("GET", searchRepositoryURL, nil)
 	v := new(searchRepo)
 	gr, _ := client.Do(req, v)

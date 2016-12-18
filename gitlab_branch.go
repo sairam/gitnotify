@@ -47,7 +47,7 @@ func gitlabCompareLink(repo, oldCommit, newCommit string) string {
 
 func newGitlabClient(token string) *gitlabApp.Client {
 	git := gitlabApp.NewOAuthClient(nil, token)
-	git.SetBaseURL("https://git.mydomain.com/api/v3")
+	git.SetBaseURL("https://gitlab.com/api/v3")
 	return git
 }
 
@@ -90,7 +90,7 @@ func gitlabBranches(client *gitlabApp.Client, repoID string) []string {
 
 // Project.Description contains links as well
 // TODO - modify Visibility to an option linked with oauth scope
-func gitlabSearchRepos(client *gitlabApp.Client, search string) []*searchRepoItem {
+func gitlabSearchRepos(client *gitlabApp.Client, search string) ([]*searchRepoItem, error) {
 	opt := &gitlabApp.ListProjectsOptions{Search: gitlabApp.String(search), Visibility: gitlabApp.String("public")}
 	projects, _, _ := client.Projects.ListProjects(opt)
 
@@ -102,5 +102,5 @@ func gitlabSearchRepos(client *gitlabApp.Client, search string) []*searchRepoIte
 		item.Name = p.PathWithNamespace
 		item.Description = p.Description
 	}
-	return t
+	return t, nil
 }

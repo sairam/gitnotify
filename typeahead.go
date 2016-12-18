@@ -31,7 +31,7 @@ type searchRepoItem struct {
 func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 
 	// TODO - we need to get "provider" while checking for logged in user itself
-	provider := "github"
+	provider := "gitlab"
 
 	// Redirect user if not logged in
 	hc := &httpContext{w, r}
@@ -58,10 +58,16 @@ func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getTypeAheadForProvider(provider, token, search string) ([]*searchRepoItem, error) {
-	// TODO Add Gitlab support
-	search = cleanSearchStringForGithub(search)
-	client := newGithubClient(token)
-	return githubSearchRepos(client, search)
+	fmt.Println("Search Request:", search, " Provider: ", provider)
+	if provider == GithubProvider {
+		search = cleanSearchStringForGithub(search)
+		client := newGithubClient(token)
+		return githubSearchRepos(client, search)
+	} else if provider == GitlabProvider {
+		client := newGitlabClient(token)
+		return gitlabSearchRepos(client, search)
+	}
+	return nil, nil // provider not supported
 }
 
 func cleanSearchStringForGithub(search string) string {
