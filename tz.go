@@ -1,13 +1,9 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
-	"io"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/sairam/timezone"
 )
@@ -51,22 +47,15 @@ func timezoneTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 		options = append(options, tz.Location)
 	}
 
-	b := new(bytes.Buffer)
-	json.NewEncoder(b).Encode(options)
-
-	cacheSince := time.Now().Format(http.TimeFormat)
-	// cache for 1 year
-	cacheUntil := time.Now().AddDate(1, 0, 0).Format(http.TimeFormat)
-	maxAge := time.Now().AddDate(1, 0, 0).Unix()
-	w.Header().Set("Cache-Control", fmt.Sprintf("max-age:%d, public", maxAge))
-	w.Header().Set("Last-Modified", cacheSince)
-	w.Header().Set("Expires", cacheUntil)
-	w.Header().Set("Content-Type", "application/json")
+	if config.RunMode != "dev" {
+		setCacheHeaders(w)
+	}
+	// w.Header().Set("Content-Type", "application/json")
 
 	if callback != "" {
 		w.Write([]byte(callback + "("))
 	}
-	io.Copy(w, b)
+	json.NewEncoder(w).Encode(options)
 	if callback != "" {
 		w.Write([]byte(")"))
 	}

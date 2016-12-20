@@ -37,7 +37,7 @@
     <option class="input-lg" value="*">Every Hour</option>
     {{ range $hour := $hours }}<option class="input-lg" value="{{$hour}}"{{ if in $hourExistingList $hour}} selected="selected"{{end}}>{{$hour}} hrs</option>{{ end }}
   </select>
-  <p class="help-block">Use Command Key on Mac (or) Ctrl key on Windows/Linux to select more than one option</p>
+  <p class="help-block">Select atleast one hour of the day receive notifications</p>
   </div>
 
   {{ $weekdays := (slice "Sunday" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday") }}
@@ -50,15 +50,14 @@
     <option value="*" class="input-lg">Every Day</option>
     {{ range $i, $day := $weekdays }}{{$j:= str $i}}<option class="input-lg" value="{{$i}}"{{if in $weekdaysExistingList $j}} selected="selected"{{end}}>{{$day}}</option>{{ end }}
   </select>
-  <p class="help-block">Use Command Key on Mac (or) Ctrl key on Windows/Linux to select more than one option</p>
+  <p class="help-block">Select atleast one day of week to receive notifications</p>
   </div>
 
   <!-- TZ management without Daylight Savings. Contribute if you can so that we can include dropdown of TZs -->
   <div class="form-group">
   <label for="tz">TimeZone Offset</label>
   <input type="text" name="tz" id="tz" maxlength="5" minlength="5" class="form-control input-lg" placeholder="GMT Offset: +0000 | +0100 | +0530 | -0700" value="{{.TimeZone}}" onchange="displayTzOptions(false)">
-  <p class="help-block"><a href="javascript:loadFromSystem(true)">Load from System Time</a>. TimeZone Offset is calculated from the browser. Extremes are -1200 &amp; +1400 <br />
-  <strong>NOTE:</strong> Use TimeZone name to consider Daylight Savings. Only valid TimeZone Names get displayed on change</p>
+  <p class="help-block"><a href="javascript:loadFromSystem(true)">Load from System Time</a> Note: TimeZone Offset is calculated from the browser. <br /><strong>NOTE:</strong> Use TimeZone name to consider Daylight Savings changes</p>
   </div>
 
   <div class="form-group">
@@ -68,7 +67,7 @@
     <option selected="selected" value="{{.TimeZoneName}}">{{.TimeZoneName}}</option>
     {{ end }}
   </select>
-  <p class="help-block"><a href="javascript:displayTzOptions(true)">Load All TimeZones</a> | <a href="javascript:displayTzOptions(false)">Reload Names from Offset</a><br/>TimeZone name is used to schedule the email</p>
+  <p class="help-block"> <strong>Can't find your timezone?</strong> <a href="javascript:displayTzOptions(true)">Load All TimeZones</a> or <a href="javascript:displayTzOptions(false)">Load based on Offset</a></p>
   </div>
 
   <button type="submit" class="btn btn-info btn-lg">Save My Preferences</button>
@@ -161,9 +160,11 @@ function displayTzOptions(all) {
 
 }
 
-function setTimezones(json) {
+function setTimezones(data) {
+  var json = JSON.parse(data);
   var results = [];
   for(i=0; i < json.length ; i++) {
+    console.log(json[i])
     results.push({id: json[i], text: json[i]})
   }
   $("#tzName").select2({data: results});

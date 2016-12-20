@@ -1,11 +1,9 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -30,9 +28,6 @@ type searchRepoItem struct {
 // 2. Branch Name
 func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 
-	// TODO - we need to get "provider" while checking for logged in user itself
-	provider := "gitlab"
-
 	// Redirect user if not logged in
 	hc := &httpContext{w, r}
 	redirected := hc.redirectUnlessLoggedIn()
@@ -40,6 +35,7 @@ func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userInfo := hc.userLoggedinInfo()
+	provider := userInfo.Provider
 
 	search := getRepoName(r.URL.Query())
 	result, err := getTypeAheadForProvider(provider, userInfo.Token, search)
@@ -52,9 +48,7 @@ func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 		setCacheHeaders(w)
 	}
 
-	b := new(bytes.Buffer)
-	json.NewEncoder(b).Encode(result)
-	io.Copy(w, b)
+	json.NewEncoder(w).Encode(result)
 }
 
 func getTypeAheadForProvider(provider, token, search string) ([]*searchRepoItem, error) {
@@ -114,9 +108,7 @@ func branchTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 		setCacheHeaders(w)
 	}
 
-	b := new(bytes.Buffer)
-	json.NewEncoder(b).Encode(tab)
-	io.Copy(w, b)
+	json.NewEncoder(w).Encode(tab)
 }
 
 func getBranchInfoForRepo(provider, token, repoName string) (*typeAheadBranchList, error) {
