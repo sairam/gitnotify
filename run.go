@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -327,9 +328,20 @@ func processForSlack(diff []*LocalDiffs, slackURL string) error {
 			Attachments: attachments,
 		}
 
-		buf := &bytes.Buffer{}
-		json.NewEncoder(buf).Encode(message)
-		http.Post(slackURL, "application/json", buf)
+		pr, pw := io.Pipe()
+		go func() {
+			// close the writer, so the reader knows there's no more data
+			defer pw.Close()
+
+			// write json data to the PipeReader through the PipeWriter
+			if err := json.NewEncoder(pw).Encode(message); err != nil {
+				log.Print(err)
+			}
+		}()
+
+		if _, err := http.Post(slackURL, "application/json", pr); err != nil {
+			return err
+		}
 	}
 	return nil
 }

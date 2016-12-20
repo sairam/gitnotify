@@ -47,6 +47,7 @@ func timezoneTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 		options = append(options, tz.Location)
 	}
 
+	// set to end of this year instead of 1 day
 	if config.RunMode != "dev" {
 		setCacheHeaders(w)
 	}
