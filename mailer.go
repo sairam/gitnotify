@@ -97,7 +97,7 @@ func sendEmail(to *recepient, e *emailCtx) {
 }
 
 // Use the channel in your program to send emails.
-// TODO add halt when required
+// add halt when required
 func stop() {
 	// Close the channel to stop the mail daemon.
 	close(emailCh)

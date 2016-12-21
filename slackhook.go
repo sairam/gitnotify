@@ -48,15 +48,14 @@ func (s *slackTypeLink) String() string {
 }
 
 func processForWebhook(diff []*gitRepoDiffs, conf *Setting) error {
-	if conf.User.WebhookType == "slack" && conf.User.WebhookURL != "" {
+	log.Println(conf.User.WebhookType, conf.User.WebhookURL)
+	if conf.User.isValidWebhook() {
 		log.Println("sending a slack message")
 		return processForSlack(diff, conf.User.WebhookURL)
 	}
 	return nil
 }
 
-// TODO: we are repeating the logic too much. clean it up from text, html emails and this.
-// Make a properly formatted struct / json
 func processForSlack(diff []*gitRepoDiffs, slackURL string) error {
 	// loop and construct the slack message and send it
 	for _, repo := range diff {

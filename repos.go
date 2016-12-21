@@ -39,9 +39,13 @@ func (c *Setting) usersName() string {
 	return c.User.Name
 }
 
+func (c *Setting) anyValidNotifications() bool {
+	return config.isEmailSetup() || c.User.isValidWebhook()
+}
+
 // UserNotification is the customization/scheduling is provided for user
-// We are only going to send emails.
-// TODO - UserNotification should be an array of type of notifications like name, Webhook with Disabled option etc.,
+// NOTE: this can be an array of notifications like email, Webhook options.
+// not gonna make the change to the array
 type UserNotification struct {
 	Email     string `yaml:"email"`
 	Name      string `yaml:"name"`
@@ -50,6 +54,10 @@ type UserNotification struct {
 
 	WebhookURL  string `yaml:"webhook_url"`
 	WebhookType string `yaml:"webhook_type"`
+}
+
+func (u *UserNotification) isValidWebhook() bool {
+	return u.WebhookType == "slack" && u.WebhookURL != ""
 }
 
 // Frequency is the cron format along with a TimeZone to process
@@ -159,7 +167,7 @@ func (c *Setting) save(settingFile string) error {
 	return ioutil.WriteFile(settingFile, out, 0600)
 }
 
-// TODO: move to helper file
+// move to helper file
 func contains(s []string, e string) bool {
 	for _, a := range s {
 		if a == e {
@@ -272,7 +280,6 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 		}
 
 		for _, t := range r.Form["references"] {
-			// TODO - add flash in case reference name is not a branch
 			str := strings.TrimSpace(t)
 			if str == "" {
 				continue
@@ -325,6 +332,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 		repo = &Repo{
 			Repo: repoName,
 		}
+
 		// TODO move method under repo/settings struct
 		var success bool
 		success, repo = deleteRepo(conf, repo)

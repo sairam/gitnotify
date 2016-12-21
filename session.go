@@ -94,10 +94,11 @@ func (hc *httpContext) addFlash(flash string) {
 	hc.saveSession(session)
 }
 
-// responsible for setting information about the logged in user via github into the session
+// responsible for setting information about the logged in user via {provider} into the session
+// NOTE session can support multiple logins via SessionName that can be passed
+// We are intentionally leaving at one login per session
 func (hc *httpContext) setSession(userInfo *Authentication, provider string) {
 
-	// TODO use provider as argument to hc.getSession
 	session := hc.getSession()
 	if session == nil {
 		return
@@ -114,7 +115,6 @@ func (hc *httpContext) setSession(userInfo *Authentication, provider string) {
 	hc.saveSession(session)
 }
 
-// TODO should return map[string]*Authentication
 func (hc *httpContext) userLoggedinInfo() *Authentication {
 	userInfo := new(Authentication)
 

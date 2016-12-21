@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/aryann/difflib"
@@ -100,7 +101,7 @@ func isSaveSetToFalse(q url.Values) bool {
 	return false
 }
 
-// Move to helper. statndard directory walk
+// Move to helper. regular directory walk
 func fetchFiles(provider string) []string {
 	dir := fmt.Sprintf("%s/%s", config.DataDir, provider)
 	fis, err := ioutil.ReadDir(dir)
@@ -111,8 +112,7 @@ func fetchFiles(provider string) []string {
 	files := make([]string, len(fis))
 	for i, fi := range fis {
 		if fi.IsDir() {
-			// TODO - merge by os.sep
-			files[i] = dir + "/" + fi.Name() + "/" + config.SettingsFile
+			files[i] = strings.Join([]string{dir, fi.Name(), config.SettingsFile}, string(os.PathSeparator))
 		}
 	}
 	return files
@@ -215,6 +215,10 @@ func process(conf *Setting) (allLocalDiffs []*gitRepoDiffs, err error) {
 }
 
 func processDiffForUser(conf *Setting) {
+	if !conf.anyValidNotifications() {
+		log.Printf("Not processing conf %s/%s since no valid notification mechanisms are found", conf.Auth.Provider, conf.Auth.UserName)
+		return
+	}
 	diff, err := process(conf)
 
 	if err == nil {

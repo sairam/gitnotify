@@ -5,8 +5,7 @@ import (
 	"fmt"
 )
 
-// This file provides helper functions to have business logic in run.go
-// TODO: move common error types into this file as well
+// This file provides helper functions to have business and view logic in run.go
 
 // GitClient is used to abstract out github vs gitlab client
 type GitClient interface{}
@@ -42,19 +41,17 @@ type GitRefWithCommit struct {
 	Commit string
 }
 
-func getGitConfig(provider string) (client GitRemoteIface) {
+func getGitConfig(provider string) GitRemoteIface {
 	return getGitClient(provider, "")
 }
 
-func getGitClient(provider, token string) (client GitRemoteIface) {
+func getGitClient(provider, token string) GitRemoteIface {
 	if provider == GithubProvider {
-		client = newGithubClient(token)
+		return newGithubClient(token)
 	} else if provider == GitlabProvider {
-		client = newGitlabClient(token)
-	} else {
-		client = &localGitnull{provider}
+		return newGitlabClient(token)
 	}
-	return
+	return &localGitnull{provider}
 }
 
 func getBranchTagInfo(client GitRemoteIface, branch *gitBranchList) ([]*GitRefWithCommit, error) {

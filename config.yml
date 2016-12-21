@@ -1,21 +1,34 @@
+# Required to start the server
 serverProto: "http://"
 serverHost:  "localhost:3000"
 localHost:   "localhost:3000"
-dataDir:     "./data"
-settingsFile: "settings.yml"
-fromName:    "Git Notify"
-fromEmail:   "hub@gitnotify.com"
+
+# Authentication Options
 githubURLEndPoint: "https://github.com/" # "https://github.acme.com/"
 githubAPIEndPoint: "https://api.github.com/" # "https://github.acme.com/api/v3/"
+
 gitlabURLEndPoint: "https://gitlab.com/" # "https://gitlab.acme.com/"
 gitlabAPIEndPoint: "https://gitlab.com/api/v3/" # "https://gitlab.acme.com/api/v3/"
-smtpHost:          "email-smtp.us-east-1.amazonaws.com"
-smtpPort:          587
+
+# Location of data being saved
+dataDir:     "./data"
+settingsFile: "settings.yml"
+
+# Notification From Name
+fromName:    "Git Notify"
+
+# Email Setup
+fromEmail:   "hub@gitnotify.com"
+smtpHost:    "email-smtp.us-east-1.amazonaws.com"
+# smtpHost:    "" # set as "" to disable emails
+smtpPort:    587
 sesConfigurationSet: "gitnotify"
+
 googleAnalytics: ""
 runMode: "dev" # "prod"
-cacheIncomingRequests: true
 webhookIntegrations: ["slack"] # generic
 templateDir: "tmpl/" # should end with a /
 templatePartialsDir: "tmpl/partials/" # should end with a /
-sentryDSN: "https://5f6f9d0b20ea49368fed66c990d47ec7:9830bb9809924977b9ec6ad41487c6a6@sentry.io/122248"
+
+cacheIncomingRequests: true
+sentryDSN: ""

@@ -8,10 +8,6 @@ import (
 	"time"
 )
 
-type searchRepo struct {
-	Items []*searchRepoItem `json:"items"`
-}
-
 // Used to load github data
 type searchRepoItem struct {
 	ID          string `json:"name"`

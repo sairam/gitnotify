@@ -83,7 +83,7 @@ func (g *localGithub) DefaultBranch(repoName string) (string, error) {
 	gr, _ := g.Client().Do(req, v)
 
 	if gr.StatusCode >= 400 {
-		// TODO: 401 - Re-auth the user
+		// 401 statusCode means the token is no longer valid
 		return "", errors.New("repo not found")
 	}
 	return v.DefaultBranch, nil
@@ -135,12 +135,16 @@ func (g *localGithub) branchTagInfo(repoName, option string) ([]*GitRefWithCommi
 	return refs, nil
 }
 
-// TODO searchRepo is github specific struct
+type ghSearchRepo struct {
+	Items []*searchRepoItem `json:"items"`
+}
+
+// searchRepoItem is used by the interface
 func (g *localGithub) SearchRepos(search string) ([]*searchRepoItem, error) {
 	search = g.cleanRepoName(search)
 	searchRepositoryURL := fmt.Sprintf("%ssearch/repositories?page=%d&q=%s", config.GithubAPIEndPoint, 1, search)
 	req, _ := http.NewRequest("GET", searchRepositoryURL, nil)
-	v := new(searchRepo)
+	v := new(ghSearchRepo)
 	gr, _ := g.Client().Do(req, v)
 	if gr.StatusCode >= 400 {
 		return nil, errors.New("issue")

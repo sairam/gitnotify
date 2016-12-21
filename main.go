@@ -33,7 +33,11 @@ var (
 
 func init() {
 	loadConfig()
-	go mailDaemon()
+	if config.isEmailSetup() {
+		go mailDaemon()
+	} else {
+		log.Print("Email is not configured")
+	}
 	go initCron()
 }
 

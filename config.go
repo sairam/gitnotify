@@ -43,6 +43,10 @@ type AppConfig struct {
 	SourceCodeLink string
 }
 
+func (c *AppConfig) isEmailSetup() bool {
+	return c.SMTPHost != ""
+}
+
 var config = new(AppConfig)
 
 func loadConfig() {
@@ -60,16 +64,17 @@ func loadConfig() {
 		panic(err)
 	}
 
-	// TODO - skip secure info in config
-	config.SMTPUser = os.Getenv("SMTP_USER")
-	config.SMTPPass = os.Getenv("SMTP_PASS")
+	if config.isEmailSetup() {
+		config.SMTPUser = os.Getenv("SMTP_USER")
+		config.SMTPPass = os.Getenv("SMTP_PASS")
 
-	// TODO dont send email, but start the server but not the email daemon
-	if config.SMTPUser == "" {
-		panic("Missing Configuration: SMTP username is not set!")
-	}
-	if config.SMTPPass == "" {
-		panic("Missing Configuration: SMTP password is not set!")
+		// dont send email, but start the server but not the email daemon
+		if config.SMTPUser == "" {
+			panic("Missing Configuration: SMTP username is not set!")
+		}
+		if config.SMTPPass == "" {
+			panic("Missing Configuration: SMTP password is not set!")
+		}
 	}
 
 	preInitAuth()

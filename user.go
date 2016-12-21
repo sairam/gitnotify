@@ -19,8 +19,8 @@ type UserPage struct {
 
 func userSettingsShowHandler(w http.ResponseWriter, r *http.Request) {
 
-	// Redirect user if not logged in
 	hc := &httpContext{w, r}
+	// Redirect user if not logged in
 	redirected := hc.redirectUnlessLoggedIn()
 	if redirected {
 		return
@@ -80,10 +80,12 @@ func userSettingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		// TODO A bad name can spoil the email address "to" field when sending email
-		// limit to 100 chars
+		// validate
 		if len(r.Form["name"]) > 0 {
 			conf.User.Name = r.Form["name"][0]
+			if len(conf.User.Name) > 100 {
+				conf.User.Name = conf.User.Name[0:100]
+			}
 		}
 
 		if len(r.Form["disabled"]) > 0 {
@@ -243,7 +245,6 @@ func makeStrings(count int, format string, delim string) string {
 	return strings.Join(cleanList, delim)
 }
 
-// TODO: move to helper file
 func deleteEmpty(s []string) []string {
 	var r []string
 	for _, str := range s {

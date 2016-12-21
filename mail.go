@@ -17,6 +17,10 @@ type MailContent struct {
 }
 
 func processForMail(diff []*gitRepoDiffs, conf *Setting) error {
+	if config.isEmailSetup() == false {
+		return nil
+	}
+
 	mailContent := &MailContent{
 		WebsiteURL: config.ServerProto + config.ServerHost,
 		User:       fmt.Sprintf("%s/%s", conf.Auth.Provider, conf.Auth.UserName),
