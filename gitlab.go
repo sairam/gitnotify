@@ -3,16 +3,11 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	gitlabApp "github.com/xanzy/go-gitlab"
 )
 
-// https://docs.gitlab.com/ce/api/branches.html
-// https://gitlab.com/api/v3/projects/2020683/repository/branches
-
-// https://docs.gitlab.com/ce/api/tags.html
-// https://gitlab.com/api/v3/projects/2020683/repository/tags
-// :proto://:hostname/api/v3/projects/:id/repository/tags
 /*
 Example:
   [{
@@ -22,7 +17,6 @@ Example:
     }
   }]
 */
-//
 
 // Helpers
 
@@ -48,7 +42,7 @@ func gitlabCompareLink(repo, oldCommit, newCommit string) string {
 
 func newGitlabClient(token string) *gitlabApp.Client {
 	git := gitlabApp.NewOAuthClient(nil, token)
-	git.SetBaseURL("https://gitlab.com/api/v3")
+	git.SetBaseURL(strings.TrimRight(config.GitlabAPIEndPoint, "/"))
 	return git
 }
 
@@ -103,7 +97,6 @@ func gitlabBranchesWithoutRefs(client *gitlabApp.Client, repoID string) ([]strin
 }
 
 // Project.Description contains links as well
-// TODO - modify Visibility to an option linked with oauth scope
 func gitlabSearchRepos(client *gitlabApp.Client, search string) ([]*searchRepoItem, error) {
 	opt := &gitlabApp.ListProjectsOptions{Search: gitlabApp.String(search)}
 	projects, _, err := client.Projects.ListProjects(opt)
@@ -121,4 +114,22 @@ func gitlabSearchRepos(client *gitlabApp.Client, search string) ([]*searchRepoIt
 		item.Description = p.Description
 	}
 	return t, nil
+}
+
+// TODO run synchronously
+func gitlabBranchInfo(client *gitlabApp.Client, repoName string) (*typeAheadBranchList, error) {
+	defaultBranch, err := gitlabDefaultBranch(client, repoName)
+	if err != nil {
+		return nil, err
+	}
+
+	branchList, err := gitlabBranchesWithoutRefs(client, repoName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &typeAheadBranchList{
+		DefaultBranch: defaultBranch,
+		AllBranches:   branchList,
+	}, nil
 }

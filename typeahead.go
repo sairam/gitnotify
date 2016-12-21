@@ -2,12 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
-	"regexp"
-	"strings"
 	"time"
 )
 
@@ -38,7 +35,8 @@ func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 	provider := userInfo.Provider
 
 	search := getRepoName(r.URL.Query())
-	result, err := getTypeAheadForProvider(provider, userInfo.Token, search)
+	result, err := getGitTypeAhead(provider, userInfo.Token, search)
+
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -49,32 +47,6 @@ func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(result)
-}
-
-func getTypeAheadForProvider(provider, token, search string) ([]*searchRepoItem, error) {
-	fmt.Println("Search Request:", search, " Provider: ", provider)
-	if provider == GithubProvider {
-		search = cleanSearchStringForGithub(search)
-		client := newGithubClient(token)
-		return githubSearchRepos(client, search)
-	} else if provider == GitlabProvider {
-		client := newGitlabClient(token)
-		return gitlabSearchRepos(client, search)
-	}
-	return nil, nil // provider not supported
-}
-
-func cleanSearchStringForGithub(search string) string {
-	search = strings.Replace(search, " ", "+", -1)
-	// Add support for regular searches
-	if strings.Contains(search, "/") {
-		var modifiedRepoValidator = regexp.MustCompile("[\\p{L}\\d_-]+/[\\.\\p{L}\\d_-]*")
-		data := modifiedRepoValidator.FindAllString(search, -1)
-		d := strings.Split(data[0], "/")
-		rep := fmt.Sprintf("%s+user:%s", d[1], d[0])
-		search = strings.Replace(search, data[0], rep, 1)
-	}
-	return search
 }
 
 type typeAheadBranchList struct {
@@ -90,6 +62,7 @@ func branchTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 	if redirected {
 		return
 	}
+
 	userInfo := hc.userLoggedinInfo()
 	provider := userInfo.Provider
 	repoName := getRepoName(r.URL.Query())
@@ -97,66 +70,19 @@ func branchTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	tab, err := getBranchInfoForRepo(provider, userInfo.Token, repoName)
+
+	tab, err := getGitBranchInfoForRepo(provider, userInfo.Token, repoName)
+
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
 
-	if config.RunMode != "dev" && provider != GitlabProvider {
+	if config.RunMode != runModeDev && provider != GitlabProvider {
 		setCacheHeaders(w)
 	}
 
 	json.NewEncoder(w).Encode(tab)
-}
-
-func getBranchInfoForRepo(provider, token, repoName string) (*typeAheadBranchList, error) {
-	if provider == GithubProvider {
-		return getBranchInfoForGithub(token, repoName)
-	} else if provider == GitlabProvider {
-		return getBranchInfoForGitlab(token, repoName)
-	}
-	return nil, errors.New("no provider")
-}
-
-func getBranchInfoForGithub(token, repoName string) (*typeAheadBranchList, error) {
-	client := newGithubClient(token)
-
-	defaultBranch, err := githubDefaultBranch(client, repoName)
-	if err != nil {
-		return nil, err
-	}
-
-	result, err := githubBranches(client, repoName)
-	if err != nil {
-		return nil, err
-	}
-
-	tab := &typeAheadBranchList{}
-	tab.DefaultBranch = defaultBranch
-	tab.AllBranches = make([]string, 0, len(result))
-	for _, r := range result {
-		tab.AllBranches = append(tab.AllBranches, r.Name)
-	}
-	return tab, nil
-}
-
-func getBranchInfoForGitlab(token, repoName string) (*typeAheadBranchList, error) {
-	client := newGitlabClient(token)
-
-	defaultBranch, err := gitlabDefaultBranch(client, repoName)
-	if err != nil {
-		return nil, err
-	}
-
-	branchList, err := gitlabBranchesWithoutRefs(client, repoName)
-	if err != nil {
-		return nil, err
-	}
-	return &typeAheadBranchList{
-		DefaultBranch: defaultBranch,
-		AllBranches:   branchList,
-	}, nil
 }
 
 func getRepoName(q url.Values) string {

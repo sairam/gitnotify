@@ -4,43 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	githubApp "github.com/google/go-github/github"
 	"golang.org/x/oauth2"
 )
-
-/*
-Example:
-  [{
-    "name": "1-2-stable",
-    "commit": {
-      "sha": "5b3f7563ae1b4a7160fda7fe34240d40c5777dcd",
-      "url": "https://api.github.com/repos/rails/rails/commits/5b3f7563ae1b4a7160fda7fe34240d40c5777dcd"
-    }
-  }]
-*/
-
-// TagInfo .
-// In `Tag` ignore zipball_url, tarball_url
-type TagInfo struct {
-	Name   string     `json:"name"`
-	Commit *CommitRef `json:"commit"`
-}
-
-func (e *TagInfo) String() string {
-	return Stringify(e)
-}
-
-// CommitRef is
-type CommitRef struct {
-	Sha string `json:"sha"`
-	URL string `json:"url"`
-}
-
-func (e *CommitRef) String() string {
-	return Stringify(e)
-}
 
 // Helpers
 func cleanRepoName(repo string) string {
@@ -108,8 +77,36 @@ func githubDefaultBranch(client *githubApp.Client, repoName string) (string, err
 	return v.DefaultBranch, nil
 }
 
+/*
+Example:
+  [{
+    "name": "1-2-stable",
+    "commit": {
+      "sha": "5b3f7563ae1b4a7160fda7fe34240d40c5777dcd",
+      "url": "https://api.github.com/repos/rails/rails/commits/5b3f7563ae1b4a7160fda7fe34240d40c5777dcd"
+    }
+  }]
+*/
+type tagInfo struct {
+	Name   string     `json:"name"`
+	Commit *commitRef `json:"commit"`
+}
+
+func (e *tagInfo) String() string {
+	return Stringify(e)
+}
+
+type commitRef struct {
+	Sha string `json:"sha"`
+	URL string `json:"url"`
+}
+
+func (e *commitRef) String() string {
+	return Stringify(e)
+}
+
 func githubBranchTagInfo(client *githubApp.Client, repoName, option string) ([]*GitRefWithCommit, error) {
-	v := new([]*TagInfo)
+	v := new([]*tagInfo)
 	branchesURL := fmt.Sprintf("%srepos/%s/%s", config.GithubAPIEndPoint, repoName, option)
 	req, _ := http.NewRequest("GET", branchesURL, nil)
 	client.Do(req, v)
@@ -126,6 +123,7 @@ func githubBranchTagInfo(client *githubApp.Client, repoName, option string) ([]*
 	return refs, nil
 }
 
+// TODO searchRepo is github specific struct
 func githubSearchRepos(client *githubApp.Client, search string) ([]*searchRepoItem, error) {
 	searchRepositoryURL := fmt.Sprintf("%ssearch/repositories?page=%d&q=%s", config.GithubAPIEndPoint, 1, search)
 	req, _ := http.NewRequest("GET", searchRepositoryURL, nil)
@@ -135,4 +133,38 @@ func githubSearchRepos(client *githubApp.Client, search string) ([]*searchRepoIt
 		return nil, errors.New("issue")
 	}
 	return v.Items, nil
+}
+
+func githubCleanRepoName(search string) string {
+	search = strings.Replace(search, " ", "+", -1)
+	// Add support for regular searches
+	if strings.Contains(search, "/") {
+		var modifiedRepoValidator = regexp.MustCompile("[\\p{L}\\d_-]+/[\\.\\p{L}\\d_-]*")
+		data := modifiedRepoValidator.FindAllString(search, -1)
+		d := strings.Split(data[0], "/")
+		rep := fmt.Sprintf("%s+user:%s", d[1], d[0])
+		search = strings.Replace(search, data[0], rep, 1)
+	}
+	return search
+}
+
+// TODO run synchronously
+func githubBranchInfo(client *githubApp.Client, repoName string) (*typeAheadBranchList, error) {
+	defaultBranch, err := githubDefaultBranch(client, repoName)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := githubBranches(client, repoName)
+	if err != nil {
+		return nil, err
+	}
+
+	tab := &typeAheadBranchList{}
+	tab.DefaultBranch = defaultBranch
+	tab.AllBranches = make([]string, 0, len(result))
+	for _, r := range result {
+		tab.AllBranches = append(tab.AllBranches, r.Name)
+	}
+	return tab, nil
 }

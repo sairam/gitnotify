@@ -47,6 +47,8 @@ type AppConfig struct {
 	// use "partial name" to render a file
 
 	Providers map[string]string // List of ProviderNames that are configured as per auth
+
+	SourceCodeLink string
 }
 
 var config = new(AppConfig)
@@ -153,6 +155,8 @@ func loadConfig() {
 		gitlabCommitURLEndPoint = config.GitlabURLEndPoint + "%s/commits/%s"       // repo/abc , develop
 		gitlabCompareURLEndPoint = config.GitlabURLEndPoint + "%s/compare/%s...%s" // repo/abc, base, target commit ref
 	}
+
+	config.SourceCodeLink = "https://github.com/sairam/gitnotify/"
 
 }
 

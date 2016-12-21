@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 
 	githubApp "github.com/google/go-github/github"
 	gitlabApp "github.com/xanzy/go-gitlab"
@@ -48,5 +49,26 @@ func getBranchTagInfo(branch *branches) ([]*GitRefWithCommit, error) {
 		return nil, errors.New("Operation " + branch.option + " not supported")
 	}
 	return nil, errors.New("Provider " + provider + " not supported")
+}
 
+func getGitTypeAhead(provider, token, search string) ([]*searchRepoItem, error) {
+	fmt.Println("Search Request:", search, " Provider: ", provider)
+	client, _ := getGitClient(provider, token)
+	if provider == GithubProvider {
+		search = githubCleanRepoName(search)
+		return githubSearchRepos(client.(*githubApp.Client), search)
+	} else if provider == GitlabProvider {
+		return gitlabSearchRepos(client.(*gitlabApp.Client), search)
+	}
+	return nil, errors.New("Provider " + provider + " not supported")
+}
+
+func getGitBranchInfoForRepo(provider, token, repoName string) (*typeAheadBranchList, error) {
+	client, _ := getGitClient(provider, token)
+	if provider == GithubProvider {
+		return githubBranchInfo(client.(*githubApp.Client), repoName)
+	} else if provider == GitlabProvider {
+		return gitlabBranchInfo(client.(*gitlabApp.Client), repoName)
+	}
+	return nil, errors.New("Provider " + provider + " not supported")
 }

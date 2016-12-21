@@ -76,7 +76,7 @@ func upsertCronEntry(s *Setting) {
 		return
 	}
 
-	log.Printf("(re)starting cron for %s|%s\n", s.Auth.UserName, s.Auth.Provider)
+	log.Printf("(re)starting cron for %s/%s\n", s.Auth.Provider, s.Auth.UserName)
 	cronEntry := fmt.Sprintf("TZ=%s 0 0 %s * * %s", tzName, hour, weekday)
 
 	toStart := true
