@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"sync"
 	"time"
 
 	"gopkg.in/robfig/cron.v2"
@@ -17,8 +18,11 @@ import (
 // 4. Once the job runs, get the next date and save to file
 // 5. When a user saves the schedule, delete the old schedule reference, add the cron and save the next date to file
 
-var runningCrons = make(map[string]cron.EntryID)
-var crons *cron.Cron
+var (
+	cronLocker   sync.Mutex
+	crons        *cron.Cron
+	runningCrons = make(map[string]cron.EntryID)
+)
 
 func isCronPresentFor(filename string) bool {
 	id := runningCrons[filename]
@@ -48,8 +52,9 @@ func checkCronEntries(filename string) (nextRunTimes []string) {
 	return
 }
 
-// TODO - make this access concurrent with locks
 func upsertCronEntry(s *Setting) {
+	cronLocker.Lock()
+	defer cronLocker.Unlock()
 
 	tzName := s.User.TimeZoneName
 	hour := s.User.Hour
@@ -71,7 +76,7 @@ func upsertCronEntry(s *Setting) {
 		return
 	}
 
-	log.Printf("(re)starting cron for `%s`|`%s`\n", s.Auth.UserName, s.Auth.Provider)
+	log.Printf("(re)starting cron for %s|%s\n", s.Auth.UserName, s.Auth.Provider)
 	cronEntry := fmt.Sprintf("TZ=%s 0 0 %s * * %s", tzName, hour, weekday)
 
 	toStart := true
