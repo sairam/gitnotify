@@ -30,6 +30,7 @@ func (e *branches) String() string {
 	return Stringify(e)
 }
 
+// BranchCommit tracks old and new commits
 type BranchCommit struct {
 	OldCommit string
 	NewCommit string
@@ -39,6 +40,7 @@ func (e *BranchCommit) String() string {
 	return Stringify(e)
 }
 
+// LocalDiffs ..
 type LocalDiffs struct {
 	RepoName   string
 	Provider   string
@@ -52,6 +54,7 @@ func (e *LocalDiffs) String() string {
 
 var mailContent = &MailContent{}
 
+// MailContent ..
 type MailContent struct {
 	WebsiteURL string
 	User       string // provider/username
@@ -251,12 +254,14 @@ func processForWebhook(diff []*LocalDiffs, conf *Setting) error {
 	return nil
 }
 
+// SlackMessage ..
 type SlackMessage struct {
 	Username    string            `json:"username"`
 	Text        string            `json:"text"`
 	Attachments []SlackAttachment `json:"attachments"`
 }
 
+// SlackAttachment ..
 type SlackAttachment struct {
 	Fallback       string                 `json:"fallback"`
 	Title          string                 `json:"title"`
@@ -267,9 +272,10 @@ type SlackAttachment struct {
 	Fields         []SlackAttachmentField `json:"fields"`
 	MarkdownFormat []string               `json:"mrkdwn_in"`
 	Text           string                 `json:"text"`
-	ThumbnailUrl   string                 `json:"thumb_url,omitempty"`
+	ThumbnailURL   string                 `json:"thumb_url,omitempty"`
 }
 
+// SlackAttachmentField ..
 type SlackAttachmentField struct {
 	Title string `json:"title"`
 	Value string `json:"value"`

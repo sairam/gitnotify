@@ -33,16 +33,16 @@ func getGitClient(provider, token string) (client GitClient, err error) {
 func getBranchTagInfo(branch *branches) ([]*GitRefWithCommit, error) {
 	provider := branch.auth.Provider
 	if provider == GithubProvider {
-		if branch.option == "branches" {
+		if branch.option == gitRefBranch {
 			return githubBranches(branch.client.(*githubApp.Client), branch.repo.Repo)
-		} else if branch.option == "tags" {
+		} else if branch.option == gitRefTag {
 			return githubTags(branch.client.(*githubApp.Client), branch.repo.Repo)
 		}
 		return nil, errors.New("Operation " + branch.option + " not supported")
 	} else if provider == GitlabProvider {
-		if branch.option == "branches" {
+		if branch.option == gitRefBranch {
 			return gitlabBranches(branch.client.(*gitlabApp.Client), branch.repo.Repo)
-		} else if branch.option == "tags" {
+		} else if branch.option == gitRefTag {
 			return gitlabTags(branch.client.(*gitlabApp.Client), branch.repo.Repo)
 		}
 		return nil, errors.New("Operation " + branch.option + " not supported")

@@ -19,13 +19,15 @@ import (
 //	github.AuthURL = "https://github.acme.com/login/oauth/authorize
 //	github.TokenURL = "https://github.acme.com/login/oauth/access_token
 //	github.ProfileURL = "https://github.acme.com/api/v3/user
-
-// Customizing Auth/Token/Profile URL unavailable for Gitlab.
-// TODO send PR
-// https://github.com/markbates/goth/blob/master/providers/gitlab/gitlab.go
-
 // https://developer.github.com/v3/oauth/#scopes
 // for github, add scope: "repo:status" to access private repositories
+
+// Sent PR - https://github.com/markbates/goth/pull/110/files
+// https://github.com/markbates/goth/blob/master/providers/gitlab/gitlab.go
+//	gitlab.AuthURL = "https://gitlab.acme.com/login/oauth/authorize
+//	gitlab.TokenURL = "https://gitlab.acme.com/login/oauth/access_token
+//	gitlab.ProfileURL = "https://gitlab.acme.com/api/v3/user
+// gitlab does not have any scopes, you get full access to the user's account
 
 // Authentication data/$provider/$user/$settingsFile
 type Authentication struct {

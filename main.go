@@ -49,7 +49,13 @@ type AppConfig struct {
 
 var config = new(AppConfig)
 
-const configFile = "config.yml"
+const (
+	configFile       = "config.yml"
+	runModeDev       = "dev"
+	gitRefBranch     = "branches"
+	gitRefTag        = "tags"
+	formUpdateString = "update"
+)
 
 //Page has all information about the page
 type Page struct {

@@ -12,6 +12,7 @@ import (
 	"github.com/sairam/timezone"
 )
 
+// UserPage ..
 type UserPage struct {
 	NextRunTimes []string
 }

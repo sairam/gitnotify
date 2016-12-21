@@ -10,6 +10,7 @@ const GithubProvider = "github"
 // GitlabProvider ..
 const GitlabProvider = "gitlab"
 
+// WebsiteLink ..
 func WebsiteLink(provider string) string {
 	if provider == GithubProvider {
 		return githubWebsiteLink()
@@ -19,6 +20,7 @@ func WebsiteLink(provider string) string {
 	return ""
 }
 
+// RepoLink ..
 func RepoLink(provider string, repo string) string {
 	if provider == GithubProvider {
 		return githubRepoLink(repo)
@@ -28,6 +30,7 @@ func RepoLink(provider string, repo string) string {
 	return ""
 }
 
+// TreeLink ..
 func TreeLink(provider string, repo, ref string) string {
 	if provider == GithubProvider {
 		return githubTreeLink(repo, ref)
@@ -37,6 +40,7 @@ func TreeLink(provider string, repo, ref string) string {
 	return ""
 }
 
+// CommitLink ..
 func CommitLink(provider string, repo, ref string) string {
 	if provider == GithubProvider {
 		return githubCommitLink(repo, ref)
@@ -46,6 +50,7 @@ func CommitLink(provider string, repo, ref string) string {
 	return ""
 }
 
+// CompareLink ..
 func CompareLink(provider string, repo, oldCommit, newCommit string) string {
 	if provider == GithubProvider {
 		return githubCompareLink(repo, oldCommit, newCommit)
@@ -55,6 +60,7 @@ func CompareLink(provider string, repo, oldCommit, newCommit string) string {
 	return ""
 }
 
+// WebhooksList ..
 func WebhooksList() []string {
 	return append([]string{""}, config.WebhookIntegrations...)
 }

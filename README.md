@@ -13,7 +13,7 @@ go get -u github.com/google/go-github/github
 go get -u github.com/gorilla/mux
 go get -u github.com/gorilla/sessions
 go get -u github.com/markbates/goth
-go get -u github.com/sairam/timezone # forked and added a method
+go get -u github.com/sairam/timezone
 go get -u github.com/spf13/cast
 ```
 

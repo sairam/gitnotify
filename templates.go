@@ -45,7 +45,7 @@ func displayText(hc *httpContext, w io.Writer, text string) {
 
 // page path relative to 'tmpl', example "settings"
 func displayPage(w io.Writer, page string, data interface{}) {
-	if config.RunMode == "dev" {
+	if config.RunMode == runModeDev {
 		reloadTemplates()
 	}
 

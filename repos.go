@@ -95,6 +95,7 @@ type Repo struct {
 }
 type reference string
 
+// SettingsPage ..
 type SettingsPage struct {
 	CronRunning  bool
 	EmailPresent bool
@@ -211,7 +212,7 @@ func settingsShowHandler(w http.ResponseWriter, r *http.Request) {
 // SettingsSaveHandler is responsible for persisting the information into the file
 // and displays any errors in case of failure. If success redirects to /
 func settingsSaveHandler(w http.ResponseWriter, r *http.Request) {
-	settingsHandler(w, r, "update")
+	settingsHandler(w, r, formUpdateString)
 }
 
 // src=github&repo=harshjv/donut&tree=master
@@ -250,7 +251,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 	conf := new(Setting)
 	conf.load(configFile)
 
-	if formAction == "update" {
+	if formAction == formUpdateString {
 		r.ParseForm()
 		if len(r.Form["_delete"]) > 0 && r.Form["_delete"][0] == "true" {
 			formAction = "delete"
@@ -261,7 +262,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 
 	switch formAction {
 	case "show":
-	case "update":
+	case formUpdateString:
 		var references []reference
 		var provider = userInfo.Provider
 
@@ -299,10 +300,11 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 		}
 
 		// TODO move method under repo/settings struct
-		info := upsertRepo(conf, repo)
-		if info {
-			formAction = "create"
-		}
+		upsertRepo(conf, repo)
+		// info :=
+		// if info {
+		// 	formAction = "create"
+		// }
 
 		if err := conf.save(configFile); err != nil {
 			hc.addFlash("Error saving configuration " + err.Error() + " for " + repo.Repo)

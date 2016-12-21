@@ -44,7 +44,7 @@ func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if config.RunMode != "dev" && provider != GitlabProvider {
+	if config.RunMode != runModeDev && provider != GitlabProvider {
 		setCacheHeaders(w)
 	}
 
