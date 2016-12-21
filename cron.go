@@ -70,7 +70,7 @@ func upsertCronEntry(s *Setting) {
 		return
 	}
 
-	log.Printf("(re)starting cron for `%s`\n", s.Auth.UserName)
+	log.Printf("(re)starting cron for `%s`|`%s`\n", s.Auth.UserName, s.Auth.Provider)
 	cronEntry := fmt.Sprintf("TZ=%s 0 0 %s * * %s", tzName, hour, weekday)
 
 	toStart := true
@@ -136,6 +136,7 @@ func initCron() {
 	crons.Start()
 
 	go getData(GithubProvider)
+	go getData(GitlabProvider)
 }
 
 // There is no idiomatic way to compare SpecSchedule, put in a sort of adjustment

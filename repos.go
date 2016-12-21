@@ -239,7 +239,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 	case "show":
 	case "update":
 		var references []reference
-		var provider = "github"
+		var provider = userInfo.Provider
 
 		// TODO based on the provider, we need to load the config file
 		if len(r.Form["provider"]) > 0 {
@@ -262,7 +262,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 		}
 		repoPresent := validateRemoteRepoName(conf, repoName, provider)
 		if !repoPresent {
-			hc.addFlash("Could not find Repo on Github")
+			hc.addFlash("Could not find Repo on " + provider)
 			break
 		}
 

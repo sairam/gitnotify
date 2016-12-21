@@ -44,7 +44,7 @@ func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if config.RunMode != "dev" {
+	if config.RunMode != "dev" && provider != GitlabProvider {
 		setCacheHeaders(w)
 	}
 
@@ -84,8 +84,6 @@ type typeAheadBranchList struct {
 
 func branchTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 
-	provider := "github"
-
 	// Redirect user if not logged in
 	hc := &httpContext{w, r}
 	redirected := hc.redirectUnlessLoggedIn()
@@ -93,6 +91,7 @@ func branchTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userInfo := hc.userLoggedinInfo()
+	provider := userInfo.Provider
 	repoName := getRepoName(r.URL.Query())
 	if repoName == "" {
 		http.NotFound(w, r)
@@ -104,7 +103,7 @@ func branchTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if config.RunMode != "dev" {
+	if config.RunMode != "dev" && provider != GitlabProvider {
 		setCacheHeaders(w)
 	}
 
@@ -114,6 +113,8 @@ func branchTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 func getBranchInfoForRepo(provider, token, repoName string) (*typeAheadBranchList, error) {
 	if provider == GithubProvider {
 		return getBranchInfoForGithub(token, repoName)
+	} else if provider == GitlabProvider {
+		return getBranchInfoForGitlab(token, repoName)
 	}
 	return nil, errors.New("no provider")
 }
@@ -138,6 +139,24 @@ func getBranchInfoForGithub(token, repoName string) (*typeAheadBranchList, error
 		tab.AllBranches = append(tab.AllBranches, r.Name)
 	}
 	return tab, nil
+}
+
+func getBranchInfoForGitlab(token, repoName string) (*typeAheadBranchList, error) {
+	client := newGitlabClient(token)
+
+	defaultBranch, err := gitlabDefaultBranch(client, repoName)
+	if err != nil {
+		return nil, err
+	}
+
+	branchList, err := gitlabBranchesWithoutRefs(client, repoName)
+	if err != nil {
+		return nil, err
+	}
+	return &typeAheadBranchList{
+		DefaultBranch: defaultBranch,
+		AllBranches:   branchList,
+	}, nil
 }
 
 func getRepoName(q url.Values) string {

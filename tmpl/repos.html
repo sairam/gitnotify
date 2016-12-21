@@ -21,6 +21,8 @@
 
 </div>
 
+{{ $provider := .User.Provider}}
+
 {{ with .Context }}
 <div class="row">
   <div class="col-md-10">
@@ -33,9 +35,10 @@
 {{ if eq .Repo "" }}
 
 <a name="new"></a>
-<h2>Track new</h2>
+<h2>Track a New Repository</h2>
 
-<h4>Click on one of the following to get started</h4>
+{{ if eq $provider "github"}}
+<h4>No repos to track? May we offer some suggestions?</h4>
 <ul id="typeaheadUsage">
 <li><code>docker</code> <code>rails</code> <code>react</code> <code>awesome-go</code> <code>caddy</code> </li>
 <li><code>rea user:facebook</code> - Finds all repos from "facebook" org having "rea" </li>
@@ -49,15 +52,30 @@
 <li><code>jquery in:name,description</code> - search for "jquery" in name and description</li>
 <li><code>caddy in:name,readme</code> - search for caddy in the name and readme</li>
 </ul>
-  <div class="form-group">
-    <label for="repo" class="col-sm-4 control-label">Repository Name</label>
-    <div class="col-sm-8">
-      <input type="text" class="form-control" id="repoNew" value="{{ .Repo }}" name="repo" placeholder="rails/rails | react | user:facebook | kafka user:apache | wordpress">
-      <p class="help-block">Add the name of the github repository to track <br>
-      <a href="https://developer.github.com/v3/search/#search-repositories" target="_blank">Advanced Usage Guide</a><br>
-      </p>
-    </div>
+<div class="form-group">
+  <label for="repo" class="col-sm-4 control-label">Repository Name</label>
+  <div class="col-sm-8">
+    <input type="text" class="form-control" id="repoNew" value="{{ .Repo }}" name="repo" placeholder="rails/rails | react | user:facebook | kafka user:apache | wordpress">
+    <p class="help-block">Add the name of the github repository to track <br>
+    <a href="https://developer.github.com/v3/search/#search-repositories" target="_blank">Advanced Usage Guide</a><br>
+    </p>
   </div>
+</div>
+
+{{ else if eq $provider "gitlab"}}
+
+<h4>Track the repositories you are part of</h4>
+<p>Gitlab only allows users to track the projects they are part of</p>
+<div class="form-group">
+  <label for="repo" class="col-sm-4 control-label">Repository Name</label>
+  <div class="col-sm-8">
+    <input type="text" class="form-control" id="repoNew" value="{{ .Repo }}" name="repo" placeholder="username/test">
+    <p class="help-block">Add the name of the gitlab repository to track <br>
+    </p>
+  </div>
+</div>
+
+  {{ end }}
 
 {{ else }}
   <a name="{{.Repo}}"></a>
@@ -123,7 +141,7 @@ var repoNames = new Bloodhound({
   datumTokenizer: Bloodhound.tokenizers.whitespace,
   queryTokenizer: Bloodhound.tokenizers.obj.whitespace('full_name', 'description'),
   remote: {
-    url: '/typeahead/repo?repo=%QUERY',
+    url: '/typeahead/repo?repo=%QUERY&provider={{$provider}}',
     wildcard: '%QUERY'
   }
 });
@@ -185,7 +203,7 @@ $('input#repoNew').on('focusout', function() {
   selectedRepoName = $(this).val();
   var branchInput = $(this).parents('form').find('#references');
   $.ajax({
-    url: "/typeahead/branch?repo="+selectedRepoName,
+    url: "/typeahead/branch?provider={{$provider}}&repo="+selectedRepoName,
     format: "json",
     cache: true,
     success: function(result) {
@@ -242,7 +260,7 @@ $('select#references').each(function(){
   $(this).select2({
     ajax: {
       context: $(this),
-      url: "/typeahead/branch?repo="+repoName,
+      url: "/typeahead/branch?provider={{$provider}}&repo="+repoName,
       data: function (params) {
         return {};
       },

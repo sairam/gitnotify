@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	gitlabApp "github.com/xanzy/go-gitlab"
 )
@@ -57,42 +58,59 @@ func gitlabDefaultBranch(client *gitlabApp.Client, repoID string) (string, error
 	return p.DefaultBranch, err
 }
 
-func gitlabTagsWithCommits(client *gitlabApp.Client, repoID string) []string {
-	listBranches, _, _ := client.Tags.ListTags(repoID)
-	branches := make([]string, 0, len(listBranches))
-	for _, b := range listBranches {
-		branches = append(branches, b.Name)
+func gitlabTags(client *gitlabApp.Client, repoID string) ([]*GitRefWithCommit, error) {
+	listBranches, _, err := client.Tags.ListTags(repoID)
+	if err != nil {
+		return nil, err
 	}
-	return branches
-}
-
-func gitlabBranchesWithCommits(client *gitlabApp.Client, repoID string) []*TagInfo {
-	listBranches, _, _ := client.Branches.ListBranches(repoID)
-	branches := make([]*TagInfo, 0, len(listBranches))
+	branches := make([]*GitRefWithCommit, 0, len(listBranches))
 	for _, b := range listBranches {
-		t := &TagInfo{
+		t := &GitRefWithCommit{
 			Name:   b.Name,
-			Commit: &CommitRef{Sha: b.Commit.ID},
+			Commit: b.Commit.ID,
 		}
 		branches = append(branches, t)
 	}
-	return branches
+	return branches, nil
 }
 
-func gitlabBranches(client *gitlabApp.Client, repoID string) []string {
-	listBranches, _, _ := client.Branches.ListBranches(repoID)
+func gitlabBranches(client *gitlabApp.Client, repoID string) ([]*GitRefWithCommit, error) {
+	listBranches, _, err := client.Branches.ListBranches(repoID)
+	if err != nil {
+		return nil, err
+	}
+	branches := make([]*GitRefWithCommit, 0, len(listBranches))
+	for _, b := range listBranches {
+		t := &GitRefWithCommit{
+			Name:   b.Name,
+			Commit: b.Commit.ID,
+		}
+		branches = append(branches, t)
+	}
+	return branches, nil
+}
+
+func gitlabBranchesWithoutRefs(client *gitlabApp.Client, repoID string) ([]string, error) {
+	listBranches, _, err := client.Branches.ListBranches(repoID)
+	if err != nil {
+		return nil, err
+	}
 	branches := make([]string, 0, len(listBranches))
 	for _, b := range listBranches {
 		branches = append(branches, b.Name)
 	}
-	return branches
+	return branches, nil
 }
 
 // Project.Description contains links as well
 // TODO - modify Visibility to an option linked with oauth scope
 func gitlabSearchRepos(client *gitlabApp.Client, search string) ([]*searchRepoItem, error) {
-	opt := &gitlabApp.ListProjectsOptions{Search: gitlabApp.String(search), Visibility: gitlabApp.String("public")}
-	projects, _, _ := client.Projects.ListProjects(opt)
+	opt := &gitlabApp.ListProjectsOptions{Search: gitlabApp.String(search)}
+	projects, _, err := client.Projects.ListProjects(opt)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
 
 	t := make([]*searchRepoItem, 0, len(projects))
 	for _, p := range projects {

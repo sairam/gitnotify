@@ -13,8 +13,6 @@ import (
 	"time"
 
 	"github.com/aryann/difflib"
-
-	githubApp "github.com/google/go-github/github"
 )
 
 const noneString = "<none>"
@@ -22,7 +20,7 @@ const noneString = "<none>"
 type branches struct {
 	repo    *Repo
 	auth    *Authentication
-	client  *githubApp.Client
+	client  GitClient
 	option  string
 	oldList []string
 	newList []string
@@ -145,18 +143,23 @@ func (userNotFound) Error() string {
 }
 
 // process is called from the cron job
-func process(conf *Setting) ([]*LocalDiffs, error) {
+func process(conf *Setting) (allLocalDiffs []*LocalDiffs, err error) {
 	if conf.usersEmail() == "" {
 		log.Printf("No email address for %s\n", conf.Auth.UserName)
 		return nil, &userNotFound{}
 	}
-	client := newGithubClient(conf.Auth.Token)
+
+	var client GitClient
+	if client, err = getGitClient(conf.Auth.Provider, conf.Auth.Token); err != nil {
+		return nil, err
+	}
+
 	branch := &branches{
 		client: client,
 		auth:   conf.Auth,
 	}
 
-	var allLocalDiffs = make([]*LocalDiffs, 0, len(conf.Repos))
+	allLocalDiffs = make([]*LocalDiffs, 0, len(conf.Repos))
 
 	// loop through repos and their branches
 	for _, repo := range conf.Repos {
@@ -385,12 +388,13 @@ func processForMail(diff []*LocalDiffs, conf *Setting) error {
 	return nil
 }
 
-func getNewInfo(branch *branches, option string) ([]*TagInfo, error) {
+// option can be tags or branches
+func getNewInfo(branch *branches, option string) ([]*GitRefWithCommit, error) {
 	branch.option = option
-	return githubBranchTagInfo(branch.client, branch.repo.Repo, option)
+	return getBranchTagInfo(branch)
 }
 
-func diffWithOldBranches(v []*TagInfo, branch *branches, option string, info map[string]*Information) []string {
+func diffWithOldBranches(v []*GitRefWithCommit, branch *branches, option string, info map[string]*Information) []string {
 	newBranches := make([]string, len(v))
 	for i, a := range v {
 		newBranches[i] = a.Name
@@ -430,7 +434,7 @@ func getNewStrings(old, new []string) []string {
 // in the branches we are tracking,
 // newcommit is "" // means that we are no longer tracking the branch/ref
 // newcommit is <none> if branch is not found/deleted in remote
-func diffWithOldCommits(v []*TagInfo, branch *branches, data map[string]*BranchCommit) {
+func diffWithOldCommits(v []*GitRefWithCommit, branch *branches, data map[string]*BranchCommit) {
 	for _, a := range branch.repo.NamedReferences {
 		s := string(a)
 		c := data[s]
@@ -442,10 +446,10 @@ func diffWithOldCommits(v []*TagInfo, branch *branches, data map[string]*BranchC
 	}
 }
 
-func findBranchCommit(v []*TagInfo, branch string) string {
+func findBranchCommit(v []*GitRefWithCommit, branch string) string {
 	for _, a := range v {
 		if a.Name == branch {
-			return a.Commit.Sha
+			return a.Commit
 		}
 	}
 	return noneString

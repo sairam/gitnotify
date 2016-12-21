@@ -24,8 +24,8 @@ Example:
 // TagInfo .
 // In `Tag` ignore zipball_url, tarball_url
 type TagInfo struct {
-	Name   string     `json:"name" yaml:"name"`
-	Commit *CommitRef `json:"commit" yaml:"commit"`
+	Name   string     `json:"name"`
+	Commit *CommitRef `json:"commit"`
 }
 
 func (e *TagInfo) String() string {
@@ -34,8 +34,8 @@ func (e *TagInfo) String() string {
 
 // CommitRef is
 type CommitRef struct {
-	Sha string `json:"sha" yaml:"sha"`
-	URL string `json:"url" yaml:"url"`
+	Sha string `json:"sha"`
+	URL string `json:"url"`
 }
 
 func (e *CommitRef) String() string {
@@ -82,12 +82,12 @@ func newGithubClient(token string) *githubApp.Client {
 }
 
 // caches branch response
-func githubBranches(client *githubApp.Client, repoName string) ([]*TagInfo, error) {
+func githubBranches(client *githubApp.Client, repoName string) ([]*GitRefWithCommit, error) {
 	return githubBranchTagInfo(client, repoName, "branches")
 }
 
 // caches branch response
-func githubTags(client *githubApp.Client, repoName string) ([]*TagInfo, error) {
+func githubTags(client *githubApp.Client, repoName string) ([]*GitRefWithCommit, error) {
 	return githubBranchTagInfo(client, repoName, "tags")
 }
 
@@ -108,12 +108,22 @@ func githubDefaultBranch(client *githubApp.Client, repoName string) (string, err
 	return v.DefaultBranch, nil
 }
 
-func githubBranchTagInfo(client *githubApp.Client, repoName, option string) ([]*TagInfo, error) {
+func githubBranchTagInfo(client *githubApp.Client, repoName, option string) ([]*GitRefWithCommit, error) {
 	v := new([]*TagInfo)
 	branchesURL := fmt.Sprintf("%srepos/%s/%s", config.GithubAPIEndPoint, repoName, option)
 	req, _ := http.NewRequest("GET", branchesURL, nil)
 	client.Do(req, v)
-	return *v, nil
+	refs := make([]*GitRefWithCommit, 0, len(*v))
+
+	for _, r := range *v {
+		ref := &GitRefWithCommit{
+			Name:   r.Name,
+			Commit: r.Commit.Sha,
+		}
+		refs = append(refs, ref)
+	}
+
+	return refs, nil
 }
 
 func githubSearchRepos(client *githubApp.Client, search string) ([]*searchRepoItem, error) {
