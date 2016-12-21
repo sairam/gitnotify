@@ -59,11 +59,12 @@ func upsertCronEntry(s *Setting) {
 	a := s.Auth
 	filename := a.getConfigFile()
 
-	if weekday == "" || hour == "" || tzName == "" || s.usersEmail() == "" {
+	if weekday == "" || hour == "" || tzName == "" || (!isValidEmail(s.usersEmail()) && s.User.WebhookURL == "") {
 		log.Printf("Not starting cron for `%s` since attributes are not set\n", s.Auth.UserName)
 		stopCronIfAlreadyRunning(filename)
 		return
 	}
+
 	if s.User.Disabled == true {
 		log.Printf("User `%s` does not want any emails\n", s.Auth.UserName)
 		stopCronIfAlreadyRunning(filename)

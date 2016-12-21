@@ -1,5 +1,6 @@
 # gitnotify
-## Github Release/Branch Version Watcher
+## Github and Gitlab Release/Branch Version Watcher
+Get periodic emails about the code diff for Gitlab and Github repositories
 
 ## How to Setup
 ### Fetch Dependencies
@@ -42,33 +43,19 @@ go get -u github.com/spf13/cast
 1. The `.env.prod` file containing the environment variables
 1. The `config.yml` file containing the settings
 
-## TODO
-1. Log when adding a repository from the UI fails
-
-### Known Knowns
-1. Clean up fetched_info from `settings.yml` file when a repository is removed
-1. Fix manual editing of cron.v2 since it does not work on +0530 like TZs
-1. Integration and Unit tests need to be added
-1. Fix `TODO` present in the code
-
-### Nice to Have
-1. JSON output to be used for sending information as webhooks to Zapier like services
-1. Add support for Gitlab
-1. An LRU Based Cache backed by disk with memory constraints. To Explore: hashicorp/golang-lru, boltdb/bolt, wunderlist/ttlcache, redis
-
 ## FAQ
 ### Can I run this inside my own organisation
-Only the Configuration needs to be setup properly.
+Only the Configuration needs to be setup.
 
 ## Disclaimer
-I started learning Go (~Sep 2016) and this is my first project trying to "solve" a problem
+I started learning Go (~Sep 2016) and this is my first moderate sized project trying to "solve" a problem
 
 ## Flow of user
 ### Development Flow
 1. Users login via Github
 1. Users keep "an eye" on a project
 1. Notifies users on
-  1. creation of new branches/tags.
+  1. creation of new branches/tags
   1. Track a branch for latest commits and links
 1. Send email with summary
 
@@ -81,7 +68,7 @@ I started learning Go (~Sep 2016) and this is my first project trying to "solve"
 
 ### Backend Flow
 1. A non logged in user sees the static page present at /home at /
-1. User logs in via Github
+1. User logs in via Github/Gitlab
 1. Settings page has a set of repositories s/he is tracking
 1. Suggestions based on code language can be pulled for user to track
 1. Once user adds the config, we save it to the settings

@@ -1,8 +1,8 @@
 {{ partial "header" . }}
 
 <h1>Keep an eye on any Github projects</h1>
-<h3>Get Daily Code Diffs from Public Github Repositories</h3>
-<h4>[ Email &amp; Slack Integrations available ]</h4>
+<h3>Get Daily Code Diffs from Public Github or your Gitlab Repositories</h3>
+<h4>[ Get notified via Email &amp; Slack ]</h4>
 <hr>
 <div style="font-size: 1.4em;">
 <h3>Use Cases</h3>
@@ -18,9 +18,13 @@
   <br><br>
   <div class="">
     <h3>Track Repositories</h3>
+    <a href="/auth/github">
     <img src="//i.imgur.com/mYOGdKp.png" class="img-responsive img-thumbnail" alt="Track a repository" title="Track a repository">
+  </a>
     <h3>Get Emails</h3>
+    <a href="/auth/github">
     <img src="//i.imgur.com/x0riDRa.png" class="img-responsive img-thumbnail" alt="Get Email with changes" title="Get Email with changes">
+  </a>
   </div>
   <br><br>
   {{ partial "display_button" . }}

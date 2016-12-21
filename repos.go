@@ -316,7 +316,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 	conf.Repos = append([]*Repo{&Repo{}}, conf.Repos...)
 
 	t := &SettingsPage{isCronPresentFor(configFile), false}
-	if conf.usersEmail() != "" {
+	if isValidEmail(conf.usersEmail()) {
 		t.EmailPresent = true
 	}
 

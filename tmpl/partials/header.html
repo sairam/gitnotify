@@ -126,7 +126,7 @@
         </div>
 
         {{ if eq .User.UserName "" }}
-          <div class="alert alert-warning" role="alert"><a href="/auth/github">Kindly login using Github to use the service</a> (or) <a href="https://github.com/sairam/gitnotify/" target="_blank">Checkout the source code</a></div>
+          <div class="alert alert-warning" role="alert"><a href="/auth/github">Kindly login using Github to use the service</a> <a href="/auth/gitlab">Gitlab</a> (or) <a href="https://github.com/sairam/gitnotify/" target="_blank">Checkout the source code</a></div>
         {{ end }}
 
         {{ range $x := .Flashes }}

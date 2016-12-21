@@ -82,7 +82,7 @@ func forceRunHandler(w http.ResponseWriter, r *http.Request) {
 
 	conf := new(Setting)
 	conf.load(configFile)
-	if conf.usersEmail() == "" {
+	if !isValidEmail(conf.usersEmail()) {
 		hc.addFlash("Email is not set. Go to <a href=\"/user\">/user</a> to set")
 	} else {
 		// hidden feature: useful for testing. pass ?save=false in the POST url
@@ -92,6 +92,13 @@ func forceRunHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, homePageForLoggedIn, 302)
+}
+
+func isValidEmail(email string) bool {
+	if email == "" || strings.Contains(email, "@users.noreply.github.com") {
+		return false
+	}
+	return true
 }
 
 func isSaveSetToFalse(q url.Values) bool {
@@ -144,7 +151,7 @@ func (userNotFound) Error() string {
 
 // process is called from the cron job
 func process(conf *Setting) (allLocalDiffs []*LocalDiffs, err error) {
-	if conf.usersEmail() == "" {
+	if !isValidEmail(conf.usersEmail()) {
 		log.Printf("No email address for %s\n", conf.Auth.UserName)
 		return nil, &userNotFound{}
 	}
