@@ -18,42 +18,53 @@ Example:
   }]
 */
 
+type localGitlab struct {
+	client GitClient
+}
+
 // Helpers
 
-func gitlabWebsiteLink() string {
+func (*localGitlab) WebsiteLink() string {
 	return config.GitlabURLEndPoint
 }
 
-func gitlabRepoLink(repo string) string {
+func (*localGitlab) RepoLink(repo string) string {
 	return fmt.Sprintf(gitlabRepoEndPoint, repo)
 }
 
-func gitlabTreeLink(repo, ref string) string {
+func (*localGitlab) TreeLink(repo, ref string) string {
 	return fmt.Sprintf(gitlabTreeURLEndPoint, repo, ref)
 }
 
-func gitlabCommitLink(repo, ref string) string {
+func (*localGitlab) CommitLink(repo, ref string) string {
 	return fmt.Sprintf(gitlabCommitURLEndPoint, repo, ref)
 }
 
-func gitlabCompareLink(repo, oldCommit, newCommit string) string {
+func (*localGitlab) CompareLink(repo, oldCommit, newCommit string) string {
 	return fmt.Sprintf(gitlabCompareURLEndPoint, repo, oldCommit, newCommit)
 }
 
-func newGitlabClient(token string) *gitlabApp.Client {
+func (g *localGitlab) Client() *gitlabApp.Client {
+	return g.client.(*gitlabApp.Client)
+}
+
+func newGitlabClient(token string) *localGitlab {
+	if token == "" {
+		return &localGitlab{}
+	}
 	git := gitlabApp.NewOAuthClient(nil, token)
 	git.SetBaseURL(strings.TrimRight(config.GitlabAPIEndPoint, "/"))
-	return git
+	return &localGitlab{git}
 }
 
 // repoID can be integer or user/repo format
-func gitlabDefaultBranch(client *gitlabApp.Client, repoID string) (string, error) {
-	p, _, err := client.Projects.GetProject(repoID)
+func (g *localGitlab) DefaultBranch(repoID string) (string, error) {
+	p, _, err := g.Client().Projects.GetProject(repoID)
 	return p.DefaultBranch, err
 }
 
-func gitlabTags(client *gitlabApp.Client, repoID string) ([]*GitRefWithCommit, error) {
-	listBranches, _, err := client.Tags.ListTags(repoID)
+func (g *localGitlab) Tags(repoID string) ([]*GitRefWithCommit, error) {
+	listBranches, _, err := g.Client().Tags.ListTags(repoID)
 	if err != nil {
 		return nil, err
 	}
@@ -68,8 +79,8 @@ func gitlabTags(client *gitlabApp.Client, repoID string) ([]*GitRefWithCommit, e
 	return branches, nil
 }
 
-func gitlabBranches(client *gitlabApp.Client, repoID string) ([]*GitRefWithCommit, error) {
-	listBranches, _, err := client.Branches.ListBranches(repoID)
+func (g *localGitlab) Branches(repoID string) ([]*GitRefWithCommit, error) {
+	listBranches, _, err := g.Client().Branches.ListBranches(repoID)
 	if err != nil {
 		return nil, err
 	}
@@ -84,8 +95,8 @@ func gitlabBranches(client *gitlabApp.Client, repoID string) ([]*GitRefWithCommi
 	return branches, nil
 }
 
-func gitlabBranchesWithoutRefs(client *gitlabApp.Client, repoID string) ([]string, error) {
-	listBranches, _, err := client.Branches.ListBranches(repoID)
+func (g *localGitlab) BranchesWithoutRefs(repoID string) ([]string, error) {
+	listBranches, _, err := g.Client().Branches.ListBranches(repoID)
 	if err != nil {
 		return nil, err
 	}
@@ -98,9 +109,9 @@ func gitlabBranchesWithoutRefs(client *gitlabApp.Client, repoID string) ([]strin
 }
 
 // Project.Description contains links as well
-func gitlabSearchRepos(client *gitlabApp.Client, search string) ([]*searchRepoItem, error) {
+func (g *localGitlab) SearchRepos(search string) ([]*searchRepoItem, error) {
 	opt := &gitlabApp.ListProjectsOptions{Search: gitlabApp.String(search)}
-	projects, _, err := client.Projects.ListProjects(opt)
+	projects, _, err := g.Client().Projects.ListProjects(opt)
 	if err != nil {
 		log.Print(err)
 		return nil, err
@@ -115,22 +126,4 @@ func gitlabSearchRepos(client *gitlabApp.Client, search string) ([]*searchRepoIt
 		item.Description = p.Description
 	}
 	return t, nil
-}
-
-// TODO run asynchronously
-func gitlabBranchInfo(client *gitlabApp.Client, repoName string) (*typeAheadBranchList, error) {
-	defaultBranch, err := gitlabDefaultBranch(client, repoName)
-	if err != nil {
-		return nil, err
-	}
-
-	branchList, err := gitlabBranchesWithoutRefs(client, repoName)
-	if err != nil {
-		return nil, err
-	}
-
-	return &typeAheadBranchList{
-		DefaultBranch: defaultBranch,
-		AllBranches:   branchList,
-	}, nil
 }

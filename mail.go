@@ -1,104 +1,56 @@
 package main
 
-// Mail helper methods
 import (
+	"bytes"
 	"fmt"
-	"log"
+	"io/ioutil"
+	"strings"
 	"time"
-
-	"gopkg.in/gomail.v2"
 )
 
-var (
-	emailCh = make(chan *gomail.Message)
-)
+// MailContent ..
+type MailContent struct {
+	WebsiteURL string
+	User       string // provider/username
+	Name       string
+	Data       []*gitRepoDiffs
+}
 
-func mailDaemon() {
-	var s gomail.SendCloser
-	var err error
-	open := false
-
-	d := gomail.NewDialer(config.SMTPHost, config.SMTPPort, config.SMTPUser, config.SMTPPass)
-	d.LocalName = "localhost"
-	for {
-		select {
-		case m, ok := <-emailCh:
-			log.Println("attempting to send the email!")
-			if !ok {
-				return
-			}
-			if !open {
-				if s, err = d.Dial(); err != nil {
-					log.Println("going to panic. ")
-					log.Println(err)
-					// panic: dial tcp: lookup email-smtp.us-east-1.amazonaws.com on 8.8.4.4:53: dial udp 8.8.4.4:53: i/o timeout
-					// panic(err)
-				} else {
-					open = true
-				}
-			}
-			if open {
-				if err := gomail.Send(s, m); err != nil {
-					log.Print(err)
-				}
-				log.Println("done sending the email")
-			} else {
-				log.Println("see above error. did not panic")
-			}
-			// You should close the Amazon SES within 5 seconds of next request. else you it fails with 421.
-		case <-time.After(4 * time.Second):
-			if open {
-				if err := s.Close(); err != nil {
-					log.Println("going to panic. well. not really!")
-					log.Println(err)
-					// panic(err)
-				}
-				open = false
-			}
-		}
+func processForMail(diff []*gitRepoDiffs, conf *Setting) error {
+	mailContent := &MailContent{
+		WebsiteURL: config.ServerProto + config.ServerHost,
+		User:       fmt.Sprintf("%s/%s", conf.Auth.Provider, conf.Auth.UserName),
+		Name:       conf.usersName(),
 	}
-}
+	mailContent.Data = diff
 
-type recepient struct {
-	Name     string
-	Address  string
-	UserName string
-	Provider string
-}
+	htmlBuffer := &bytes.Buffer{}
+	displayPage(htmlBuffer, "changes_mail", mailContent)
+	html, _ := ioutil.ReadAll(htmlBuffer)
 
-type emailCtx struct {
-	Subject  string
-	HTMLBody string
-	TextBody string
-}
+	textBuffer := &bytes.Buffer{}
+	displayPage(textBuffer, "changes_mail_text", mailContent)
+	text, _ := ioutil.ReadAll(textBuffer)
+	textContent := strings.Replace(string(text), "\n\n", "\n", -1)
+	textContent = strings.Replace(textContent, "\n\n", "\n", -1)
 
-func sendEmail(to *recepient, e *emailCtx) {
-	var from = &recepient{
-		Name:    config.FromName,
-		Address: config.FromEmail,
+	loc, _ := time.LoadLocation(conf.User.TimeZoneName)
+	t := time.Now().In(loc)
+	subject := "[GitNotify] New Updates from your Repositories - " + t.Format("02 Jan 2006 | 15 Hrs")
+
+	to := &recepient{
+		Name:     conf.usersName(),
+		Address:  conf.usersEmail(),
+		UserName: conf.Auth.UserName,
+		Provider: conf.Auth.Provider,
 	}
 
-	m := gomail.NewMessage()
-	m.SetHeader("From", m.FormatAddress(from.Address, from.Name))
-	m.SetAddressHeader("To", to.Address, to.Name)
-	m.SetHeader("Subject", e.Subject)
-	if config.SMTPSesConfSet != "" {
-		m.SetHeader("X-SES-CONFIGURATION-SET", config.SMTPSesConfSet)
+	ctx := &emailCtx{
+		Subject:  subject,
+		TextBody: textContent,
+		HTMLBody: string(html),
 	}
-	m.SetHeader("X-SES-MESSAGE-TAGS", fmt.Sprintf("%s=%s", to.Provider, to.UserName))
-	m.SetHeader("List-ID", fmt.Sprintf("%s/%s <%s.%s.%s>", to.Provider, to.UserName, to.Provider, to.UserName, "gitnotify.com"))
-	// m.SetHeader("List-Archive", fmt.Sprintf("")) // resource path like https://github.com/spf13/hugo
-	m.SetHeader("List-Unsubscribe", fmt.Sprintf("<mailto:unsub+%s-%s@%s>, <%s>", to.Provider, to.UserName, config.ServerHost, config.ServerProto+config.ServerHost))
 
-	m.SetBody("text/plain", e.TextBody)
-	m.AddAlternative("text/html", e.HTMLBody)
-
-	emailCh <- m
-}
-
-// Use the channel in your program to send emails.
-// TODO add halt when required
-func stop() {
-	// Close the channel to stop the mail daemon.
-	close(emailCh)
+	sendEmail(to, ctx)
+	return nil
 }

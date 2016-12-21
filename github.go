@@ -11,35 +11,46 @@ import (
 	"golang.org/x/oauth2"
 )
 
-func githubWebsiteLink() string {
+type localGithub struct {
+	client GitClient
+}
+
+func (*localGithub) WebsiteLink() string {
 	return config.GithubURLEndPoint
 }
 
-func githubRepoLink(repo string) string {
+func (*localGithub) RepoLink(repo string) string {
 	return fmt.Sprintf(githubRepoEndPoint, repo)
 }
 
-func githubTreeLink(repo, ref string) string {
+func (*localGithub) TreeLink(repo, ref string) string {
 	return fmt.Sprintf(githubTreeURLEndPoint, repo, ref)
 }
 
-func githubCommitLink(repo, ref string) string {
+func (*localGithub) CommitLink(repo, ref string) string {
 	return fmt.Sprintf(githubCommitURLEndPoint, repo, ref)
 }
 
-func githubCompareLink(repo, oldCommit, newCommit string) string {
+func (*localGithub) CompareLink(repo, oldCommit, newCommit string) string {
 	return fmt.Sprintf(githubCompareURLEndPoint, repo, oldCommit, newCommit)
 }
 
-// Helper method to create github client
-func newGithubClient(token string) *githubApp.Client {
-	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
-	tc := oauth2.NewClient(oauth2.NoContext, ts)
-	return githubApp.NewClient(tc)
+func (g *localGithub) Client() *githubApp.Client {
+	return g.client.(*githubApp.Client)
 }
 
-func githubBranchesWithoutRefs(client *githubApp.Client, repoName string) ([]string, error) {
-	listBranches, err := githubBranches(client, repoName)
+// Helper method to create github client
+func newGithubClient(token string) *localGithub {
+	if token == "" {
+		return &localGithub{}
+	}
+	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
+	tc := oauth2.NewClient(oauth2.NoContext, ts)
+	return &localGithub{githubApp.NewClient(tc)}
+}
+
+func (g *localGithub) BranchesWithoutRefs(repoName string) ([]string, error) {
+	listBranches, err := g.Branches(repoName)
 	if err != nil {
 		return nil, err
 	}
@@ -52,24 +63,24 @@ func githubBranchesWithoutRefs(client *githubApp.Client, repoName string) ([]str
 }
 
 // caches branch response
-func githubBranches(client *githubApp.Client, repoName string) ([]*GitRefWithCommit, error) {
-	return githubBranchTagInfo(client, repoName, "branches")
+func (g *localGithub) Branches(repoName string) ([]*GitRefWithCommit, error) {
+	return g.branchTagInfo(repoName, gitRefBranch)
 }
 
 // caches branch response
-func githubTags(client *githubApp.Client, repoName string) ([]*GitRefWithCommit, error) {
-	return githubBranchTagInfo(client, repoName, "tags")
+func (g *localGithub) Tags(repoName string) ([]*GitRefWithCommit, error) {
+	return g.branchTagInfo(repoName, gitRefTag)
 }
 
-type defaultBranch struct {
+type ghDefaultBranch struct {
 	DefaultBranch string `json:"default_branch"`
 }
 
-func githubDefaultBranch(client *githubApp.Client, repoName string) (string, error) {
-	v := &defaultBranch{}
+func (g *localGithub) DefaultBranch(repoName string) (string, error) {
+	v := &ghDefaultBranch{}
 	repoURL := fmt.Sprintf("%srepos/%s", config.GithubAPIEndPoint, repoName)
 	req, _ := http.NewRequest("GET", repoURL, nil)
-	gr, _ := client.Do(req, v)
+	gr, _ := g.Client().Do(req, v)
 
 	if gr.StatusCode >= 400 {
 		// TODO: 401 - Re-auth the user
@@ -88,29 +99,29 @@ Example:
     }
   }]
 */
-type tagInfo struct {
-	Name   string     `json:"name"`
-	Commit *commitRef `json:"commit"`
+type ghTagInfo struct {
+	Name   string       `json:"name"`
+	Commit *ghCommitRef `json:"commit"`
 }
 
-func (e *tagInfo) String() string {
+func (e *ghTagInfo) String() string {
 	return Stringify(e)
 }
 
-type commitRef struct {
+type ghCommitRef struct {
 	Sha string `json:"sha"`
 	URL string `json:"url"`
 }
 
-func (e *commitRef) String() string {
+func (e *ghCommitRef) String() string {
 	return Stringify(e)
 }
 
-func githubBranchTagInfo(client *githubApp.Client, repoName, option string) ([]*GitRefWithCommit, error) {
-	v := new([]*tagInfo)
+func (g *localGithub) branchTagInfo(repoName, option string) ([]*GitRefWithCommit, error) {
+	v := new([]*ghTagInfo)
 	branchesURL := fmt.Sprintf("%srepos/%s/%s", config.GithubAPIEndPoint, repoName, option)
 	req, _ := http.NewRequest("GET", branchesURL, nil)
-	client.Do(req, v)
+	g.Client().Do(req, v)
 	refs := make([]*GitRefWithCommit, 0, len(*v))
 
 	for _, r := range *v {
@@ -125,18 +136,19 @@ func githubBranchTagInfo(client *githubApp.Client, repoName, option string) ([]*
 }
 
 // TODO searchRepo is github specific struct
-func githubSearchRepos(client *githubApp.Client, search string) ([]*searchRepoItem, error) {
+func (g *localGithub) SearchRepos(search string) ([]*searchRepoItem, error) {
+	search = g.cleanRepoName(search)
 	searchRepositoryURL := fmt.Sprintf("%ssearch/repositories?page=%d&q=%s", config.GithubAPIEndPoint, 1, search)
 	req, _ := http.NewRequest("GET", searchRepositoryURL, nil)
 	v := new(searchRepo)
-	gr, _ := client.Do(req, v)
+	gr, _ := g.Client().Do(req, v)
 	if gr.StatusCode >= 400 {
 		return nil, errors.New("issue")
 	}
 	return v.Items, nil
 }
 
-func githubCleanRepoName(search string) string {
+func (g *localGithub) cleanRepoName(search string) string {
 	search = strings.Replace(search, " ", "+", -1)
 	// Add support for regular searches
 	if strings.Contains(search, "/") {
@@ -147,22 +159,4 @@ func githubCleanRepoName(search string) string {
 		search = strings.Replace(search, data[0], rep, 1)
 	}
 	return search
-}
-
-// TODO run asynchronously
-func githubBranchInfo(client *githubApp.Client, repoName string) (*typeAheadBranchList, error) {
-	defaultBranch, err := githubDefaultBranch(client, repoName)
-	if err != nil {
-		return nil, err
-	}
-
-	branches, err := githubBranchesWithoutRefs(client, repoName)
-	if err != nil {
-		return nil, err
-	}
-
-	return &typeAheadBranchList{
-		DefaultBranch: defaultBranch,
-		AllBranches:   branches,
-	}, nil
 }

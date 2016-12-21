@@ -272,7 +272,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 		}
 
 		for _, t := range r.Form["references"] {
-			// TODO - add validation on name of references
+			// TODO - add flash in case reference name is not a branch
 			str := strings.TrimSpace(t)
 			if str == "" {
 				continue
@@ -285,7 +285,8 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 			hc.addFlash("Invalid Repo Name Provided")
 			break
 		}
-		repoPresent := validateRemoteRepoName(conf, repoName, provider)
+
+		repoPresent := validateRemoteRepoName(provider, conf.Auth.Token, repoName)
 		if !repoPresent {
 			hc.addFlash("Could not find Repo on " + provider)
 			break
@@ -296,20 +297,23 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 			references,
 			contains(r.Form["branches"], "true"),
 			contains(r.Form["tags"], "true"),
-			provider, // TODO change this to use argument from form
+			provider,
 		}
 
 		// TODO move method under repo/settings struct
-		upsertRepo(conf, repo)
-		// info :=
-		// if info {
-		// 	formAction = "create"
-		// }
+		info := upsertRepo(conf, repo)
+		if info {
+			formAction = "create"
+		}
 
 		if err := conf.save(configFile); err != nil {
 			hc.addFlash("Error saving configuration " + err.Error() + " for " + repo.Repo)
 		} else {
-			hc.addFlash("Updated config for " + repo.Repo)
+			if formAction == "create" {
+				hc.addFlash("Started tracking '" + repo.Repo + "'")
+			} else {
+				hc.addFlash("Updated config for '" + repo.Repo + "'")
+			}
 		}
 	case "delete":
 		repoName := validateRepoName(r.Form["repo"][0])
@@ -350,25 +354,6 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 
 	page := newPage(hc, "Edit/Add Repos to Track", "Edit/Add Repos to Track", conf, t)
 	displayPage(w, "repos", page)
-}
-
-func validateRemoteRepoName(conf *Setting, repo string, provider string) bool {
-	if provider == GithubProvider {
-		client := newGithubClient(conf.Auth.Token)
-		branch, err := githubDefaultBranch(client, repo)
-		if err != nil || branch == "" {
-			return false
-		}
-		return true
-	} else if provider == GitlabProvider {
-		client := newGitlabClient(conf.Auth.Token)
-		branch, err := gitlabDefaultBranch(client, repo)
-		if err != nil || branch == "" {
-			return false
-		}
-		return true
-	}
-	return false
 }
 
 func validateRepoName(repo string) string {

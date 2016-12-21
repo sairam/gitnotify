@@ -1,68 +1,55 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/aryann/difflib"
 )
 
 const noneString = "<none>"
 
-type branches struct {
+// contains oldList, newList of the branches
+// Used for tracking tags/branches/repoNames
+type gitBranchList struct {
 	repo    *Repo
-	auth    *Authentication
-	client  GitClient
 	option  string
 	oldList []string
 	newList []string
 }
 
-func (e *branches) String() string {
+func (e *gitBranchList) String() string {
 	return Stringify(e)
 }
 
-// BranchCommit tracks old and new commits
-type BranchCommit struct {
+// gitCommitDiff tracks old and new commits
+type gitCommitDiff struct {
 	OldCommit string
 	NewCommit string
 }
 
-func (e *BranchCommit) String() string {
+func (e *gitCommitDiff) String() string {
 	return Stringify(e)
 }
 
-// LocalDiffs ..
-type LocalDiffs struct {
+// gitRepoDiffs has the diff for a repoName that is being tracked
+// this is used to send emails / hooks
+type gitRepoDiffs struct {
 	RepoName   string
 	Provider   string
-	References map[string]*BranchCommit
+	References map[string]*gitCommitDiff
 	Others     []*LocalRef
 }
 
-func (e *LocalDiffs) String() string {
+func (e *gitRepoDiffs) String() string {
 	return Stringify(e)
 }
 
-var mailContent = &MailContent{}
-
-// MailContent ..
-type MailContent struct {
-	WebsiteURL string
-	User       string // provider/username
-	Name       string
-	Data       []*LocalDiffs
-}
-
-// LocalRef is used tracking Repo and Branch from the email
+// LocalRef is used tracking Repo and Branch inside the diff
 type LocalRef struct {
 	Title      string
 	References []string
@@ -73,7 +60,6 @@ func (e *LocalRef) String() string {
 }
 
 func forceRunHandler(w http.ResponseWriter, r *http.Request) {
-
 	// Redirect user if not logged in
 	hc := &httpContext{w, r}
 	redirected := hc.redirectUnlessLoggedIn()
@@ -153,27 +139,20 @@ func (userNotFound) Error() string {
 }
 
 // process is called from the cron job
-func process(conf *Setting) (allLocalDiffs []*LocalDiffs, err error) {
+func process(conf *Setting) (allLocalDiffs []*gitRepoDiffs, err error) {
 	if !isValidEmail(conf.usersEmail()) {
 		log.Printf("No email address for %s\n", conf.Auth.UserName)
 		return nil, &userNotFound{}
 	}
 
-	var client GitClient
-	if client, err = getGitClient(conf.Auth.Provider, conf.Auth.Token); err != nil {
-		return nil, err
-	}
+	client := getGitClient(conf.Auth.Provider, conf.Auth.Token)
+	branch := &gitBranchList{}
 
-	branch := &branches{
-		client: client,
-		auth:   conf.Auth,
-	}
-
-	allLocalDiffs = make([]*LocalDiffs, 0, len(conf.Repos))
+	allLocalDiffs = make([]*gitRepoDiffs, 0, len(conf.Repos))
 
 	// loop through repos and their branches
 	for _, repo := range conf.Repos {
-		var localDiffs = &LocalDiffs{
+		var localDiffs = &gitRepoDiffs{
 			RepoName: repo.Repo,
 			Provider: conf.Auth.Provider,
 		}
@@ -183,10 +162,10 @@ func process(conf *Setting) (allLocalDiffs []*LocalDiffs, err error) {
 		branch.repo = repo
 
 		if repo.Branches || len(repo.NamedReferences) > 0 {
-			newBranches, _ := getNewInfo(branch, "branches")
+			newBranches, _ := getNewInfo(client, branch, "branches")
 			if len(repo.NamedReferences) > 0 {
 
-				data := make(map[string]*BranchCommit)
+				data := make(map[string]*gitCommitDiff)
 				b := conf.Info[repo.Repo]
 				// TODO set newInformation as part of the config loader
 				// TODO bug - if we are no longer tracking a branch, we need to remove it from the new list
@@ -195,7 +174,7 @@ func process(conf *Setting) (allLocalDiffs []*LocalDiffs, err error) {
 					b = conf.Info[branch.repo.Repo]
 				}
 				for branch, commitID := range b.Commits {
-					data[branch] = &BranchCommit{
+					data[branch] = &gitCommitDiff{
 						OldCommit: commitID,
 					}
 				}
@@ -223,7 +202,7 @@ func process(conf *Setting) (allLocalDiffs []*LocalDiffs, err error) {
 		}
 
 		if repo.Tags {
-			newTags, _ := getNewInfo(branch, "tags")
+			newTags, _ := getNewInfo(client, branch, "tags")
 			tagsDiff := diffWithOldBranches(newTags, branch, "tags", conf.Info)
 			l := &LocalRef{
 				Title:      "Tags",
@@ -246,168 +225,13 @@ func processDiffForUser(conf *Setting) {
 	}
 }
 
-func processForWebhook(diff []*LocalDiffs, conf *Setting) error {
-	if conf.User.WebhookType == "slack" && conf.User.WebhookURL != "" {
-		log.Println("sending a slack message")
-		return processForSlack(diff, conf.User.WebhookURL)
-	}
-	return nil
-}
-
-// SlackMessage ..
-type SlackMessage struct {
-	Username    string            `json:"username"`
-	Text        string            `json:"text"`
-	Attachments []SlackAttachment `json:"attachments"`
-}
-
-// SlackAttachment ..
-type SlackAttachment struct {
-	Fallback       string                 `json:"fallback"`
-	Title          string                 `json:"title"`
-	Color          string                 `json:"color,omitempty"`
-	PreText        string                 `json:"pretext"`
-	AuthorName     string                 `json:"author_name"`
-	AuthorLink     string                 `json:"author_link"`
-	Fields         []SlackAttachmentField `json:"fields"`
-	MarkdownFormat []string               `json:"mrkdwn_in"`
-	Text           string                 `json:"text"`
-	ThumbnailURL   string                 `json:"thumb_url,omitempty"`
-}
-
-// SlackAttachmentField ..
-type SlackAttachmentField struct {
-	Title string `json:"title"`
-	Value string `json:"value"`
-	Short bool   `json:"short"`
-}
-
-type slackTypeLink struct {
-	Text string
-	Href string
-}
-
-// <http://www.amazon.com|Amazon>
-func (s *slackTypeLink) String() string {
-	return fmt.Sprintf("<%s|%s>", s.Href, s.Text)
-}
-
-// TODO: we are repeating the logic too much. clean it up from text, html emails and this.
-// Make a properly formatted struct / json
-func processForSlack(diff []*LocalDiffs, slackURL string) error {
-	// loop and construct the slack message and send it
-	for _, repo := range diff {
-		attachments := make([]SlackAttachment, 1)
-		for branch, reference := range repo.References {
-			var commitDiffLink string
-			if reference.NewCommit == noneString {
-				commitDiffLink = fmt.Sprintf("Branch is not present")
-			} else if reference.OldCommit == "" {
-				commitDiffLink = fmt.Sprintf("New branch being tracked. Current Commit is %s", &slackTypeLink{shortCommit(reference.NewCommit), TreeLink(repo.Provider, repo.RepoName, reference.NewCommit)})
-			} else if reference.OldCommit == reference.NewCommit {
-				commitDiffLink = fmt.Sprintf("No recent changes. Last Commit is %s", &slackTypeLink{shortCommit(reference.NewCommit), TreeLink(repo.Provider, repo.RepoName, reference.NewCommit)})
-			} else {
-				text := fmt.Sprintf("%s..%s", shortCommit(reference.OldCommit), shortCommit(reference.NewCommit))
-				href := CompareLink(repo.Provider, repo.RepoName, reference.OldCommit, reference.NewCommit)
-				commitDiffLink = fmt.Sprintf("Compare Diff: %s", (&slackTypeLink{text, href}).String())
-			}
-			branchTitle := fmt.Sprintf("Branch: %s", branch)
-
-			attachment := SlackAttachment{
-				Title:          (&slackTypeLink{branchTitle, TreeLink(repo.Provider, repo.RepoName, branch)}).String(),
-				MarkdownFormat: []string{"text"},
-				Text:           commitDiffLink,
-			}
-			attachments = append(attachments, attachment)
-		}
-
-		for _, r := range repo.Others {
-			links := make([]string, 0, 1)
-			for _, treeName := range r.References {
-				href := TreeLink(repo.Provider, repo.RepoName, treeName)
-				links = append(links, (&slackTypeLink{treeName, href}).String())
-			}
-			if len(r.References) == 0 {
-				links = append(links, "None")
-			}
-			attachment := SlackAttachment{
-				Title:          fmt.Sprintf("New %s:", r.Title),
-				Text:           strings.Join(links, "\n"),
-				MarkdownFormat: []string{"text"},
-			}
-			attachments = append(attachments, attachment)
-		}
-
-		message := &SlackMessage{
-			Username:    "gitnotify",
-			Text:        fmt.Sprintf("*Changes for %s*:", &slackTypeLink{repo.RepoName, RepoLink(repo.Provider, repo.RepoName)}),
-			Attachments: attachments,
-		}
-
-		pr, pw := io.Pipe()
-		go func() {
-			// close the writer, so the reader knows there's no more data
-			defer pw.Close()
-
-			// write json data to the PipeReader through the PipeWriter
-			if err := json.NewEncoder(pw).Encode(message); err != nil {
-				log.Print(err)
-			}
-		}()
-
-		if _, err := http.Post(slackURL, "application/json", pr); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func processForMail(diff []*LocalDiffs, conf *Setting) error {
-	mailContent = &MailContent{
-		WebsiteURL: config.ServerProto + config.ServerHost,
-		User:       fmt.Sprintf("%s/%s", conf.Auth.Provider, conf.Auth.UserName),
-		Name:       conf.usersName(),
-	}
-	mailContent.Data = diff
-
-	htmlBuffer := &bytes.Buffer{}
-	displayPage(htmlBuffer, "changes_mail", mailContent)
-	html, _ := ioutil.ReadAll(htmlBuffer)
-
-	textBuffer := &bytes.Buffer{}
-	displayPage(textBuffer, "changes_mail_text", mailContent)
-	text, _ := ioutil.ReadAll(textBuffer)
-	textContent := strings.Replace(string(text), "\n\n", "\n", -1)
-	textContent = strings.Replace(textContent, "\n\n", "\n", -1)
-
-	loc, _ := time.LoadLocation(conf.User.TimeZoneName)
-	t := time.Now().In(loc)
-	subject := "[GitNotify] New Updates from your Repositories - " + t.Format("02 Jan 2006 | 15 Hrs")
-
-	to := &recepient{
-		Name:     conf.usersName(),
-		Address:  conf.usersEmail(),
-		UserName: conf.Auth.UserName,
-		Provider: conf.Auth.Provider,
-	}
-
-	ctx := &emailCtx{
-		Subject:  subject,
-		TextBody: textContent,
-		HTMLBody: string(html),
-	}
-
-	sendEmail(to, ctx)
-	return nil
-}
-
 // option can be tags or branches
-func getNewInfo(branch *branches, option string) ([]*GitRefWithCommit, error) {
+func getNewInfo(client GitRemoteIface, branch *gitBranchList, option string) ([]*GitRefWithCommit, error) {
 	branch.option = option
-	return getBranchTagInfo(branch)
+	return getBranchTagInfo(client, branch)
 }
 
-func diffWithOldBranches(v []*GitRefWithCommit, branch *branches, option string, info map[string]*Information) []string {
+func diffWithOldBranches(v []*GitRefWithCommit, branch *gitBranchList, option string, info map[string]*Information) []string {
 	newBranches := make([]string, len(v))
 	for i, a := range v {
 		newBranches[i] = a.Name
@@ -420,14 +244,16 @@ func diffWithOldBranches(v []*GitRefWithCommit, branch *branches, option string,
 	} else if option == "branches" && t != nil {
 		branch.oldList = t.Branches
 	}
+
 	diff := getNewStrings(branch.oldList, branch.newList)
 	if t == nil {
 		info[branch.repo.Repo] = newInformation()
 		t = info[branch.repo.Repo]
 	}
-	if option == "tags" {
+
+	if option == gitRefTag {
 		t.Tags = branch.newList
-	} else if option == "branches" {
+	} else if option == gitRefBranch {
 		t.Branches = branch.newList
 	}
 
@@ -447,12 +273,12 @@ func getNewStrings(old, new []string) []string {
 // in the branches we are tracking,
 // newcommit is "" // means that we are no longer tracking the branch/ref
 // newcommit is <none> if branch is not found/deleted in remote
-func diffWithOldCommits(v []*GitRefWithCommit, branch *branches, data map[string]*BranchCommit) {
+func diffWithOldCommits(v []*GitRefWithCommit, branch *gitBranchList, data map[string]*gitCommitDiff) {
 	for _, a := range branch.repo.NamedReferences {
 		s := string(a)
 		c := data[s]
 		if c == nil {
-			c = &BranchCommit{}
+			c = &gitCommitDiff{}
 			data[s] = c
 		}
 		c.NewCommit = findBranchCommit(v, s)

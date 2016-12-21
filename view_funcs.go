@@ -2,7 +2,7 @@ package main
 
 import "strings"
 
-// Helper Functions used in views like email, website
+// Helper Functions used in views
 
 // GithubProvider ..
 const GithubProvider = "github"
@@ -12,52 +12,27 @@ const GitlabProvider = "gitlab"
 
 // WebsiteLink ..
 func WebsiteLink(provider string) string {
-	if provider == GithubProvider {
-		return githubWebsiteLink()
-	} else if provider == GitlabProvider {
-		return gitlabWebsiteLink()
-	}
-	return ""
+	return getGitConfig(provider).WebsiteLink()
 }
 
 // RepoLink ..
-func RepoLink(provider string, repo string) string {
-	if provider == GithubProvider {
-		return githubRepoLink(repo)
-	} else if provider == GitlabProvider {
-		return gitlabRepoLink(repo)
-	}
-	return ""
+func RepoLink(provider, repo string) string {
+	return getGitConfig(provider).RepoLink(repo)
 }
 
 // TreeLink ..
-func TreeLink(provider string, repo, ref string) string {
-	if provider == GithubProvider {
-		return githubTreeLink(repo, ref)
-	} else if provider == GitlabProvider {
-		return gitlabTreeLink(repo, ref)
-	}
-	return ""
+func TreeLink(provider, repo, ref string) string {
+	return getGitConfig(provider).TreeLink(repo, ref)
 }
 
 // CommitLink ..
-func CommitLink(provider string, repo, ref string) string {
-	if provider == GithubProvider {
-		return githubCommitLink(repo, ref)
-	} else if provider == GitlabProvider {
-		return gitlabCommitLink(repo, ref)
-	}
-	return ""
+func CommitLink(provider, repo, ref string) string {
+	return getGitConfig(provider).CommitLink(repo, ref)
 }
 
 // CompareLink ..
-func CompareLink(provider string, repo, oldCommit, newCommit string) string {
-	if provider == GithubProvider {
-		return githubCompareLink(repo, oldCommit, newCommit)
-	} else if provider == GitlabProvider {
-		return gitlabCompareLink(repo, oldCommit, newCommit)
-	}
-	return ""
+func CompareLink(provider, repo, oldCommit, newCommit string) string {
+	return getGitConfig(provider).CompareLink(repo, oldCommit, newCommit)
 }
 
 // WebhooksList is used while displaying list of webhooks specific integrations available
