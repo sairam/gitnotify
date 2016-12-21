@@ -32,7 +32,7 @@
 <form action="/" method="post" class="form-horizontal text-left">
 {{ with $repo }}
 
-{{ if eq .Repo "" }}
+{{ if or (eq .Repo "") (in .Repo "#") }}
 
 <a name="new"></a>
 <h2>Track a New Repository</h2>
@@ -129,8 +129,14 @@
   </div>
 </div>
 
-{{ if eq .Repo "" }}
+{{ if or (eq .Repo "") (in .Repo "#") }}
 <script>
+$( document ).ready(function() {
+if ($('#repoNew').val()[0] == '#') {
+  var t = $('#repoNew').val().substring(1);
+  $('#repoNew').val(t).trigger("input").focus();
+}
+})
 
 $('#typeaheadUsage code').on('click', function() {
   var t = $(this).text();
@@ -228,7 +234,8 @@ $('input#repoNew').on('focusout', function() {
 
 {{ end }}
 </form>
-{{ if eq .Repo "" }}{{else}}
+
+{{ if or (eq .Repo "") (in .Repo "#") }}{{else}}
 <form action="/" method="post">
 <input type="hidden" name="repo" value="{{ .Repo }}">
 <input type="hidden" name="_delete" value="true">
@@ -242,7 +249,7 @@ $('input#repoNew').on('focusout', function() {
 <div class="col-md-2">
   <ul class="list-group" style="position:fixed">
     {{ range .Repos }}
-    <li class="list-group-item"><strong>{{ if eq .Repo "" }}<a href="#new">Track new{{else}}<a href="#{{.Repo}}">{{.Repo}}{{end}}</a></strong></li>
+    <li class="list-group-item"><strong>{{ if or (eq .Repo "") (in .Repo "#") }}<a href="#new">Track new{{else}}<a href="#{{.Repo}}">{{.Repo}}{{end}}</a></strong></li>
     {{ end }}
   </ul>
 </div>

@@ -17,6 +17,9 @@ go get -u github.com/sairam/timezone # forked and added a method
 go get -u github.com/spf13/cast
 ```
 
+1. Follow an Organisation or User - Notifies of new repositories that were made public
+1. Make Lists and portray
+
 ### Modify package
 * `gopkg.in/robfig/cron.v2`
 * Edit line 102

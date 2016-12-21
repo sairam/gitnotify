@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -180,6 +181,12 @@ func main() {
 		http.ServeContent(w, r, "robots.txt", time.Now(), strings.NewReader("User-agent: *\n"))
 	})
 
+	r.HandleFunc("/opensearch.xml", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/xml")
+		t, _ := template.New("foo").Parse(opensearchTemplate)
+		t.Execute(w, &struct{ Host string }{config.ServerProto + config.ServerHost})
+	})
+
 	r.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
 		d := fmt.Sprintf("status:%s\ntime:%s\n", "pong", time.Now())
 		http.ServeContent(w, r, "ping", time.Now(), strings.NewReader(d))
@@ -194,3 +201,22 @@ func main() {
 	log.Fatal(srv.ListenAndServe())
 
 }
+
+// TODO - add suggestions for typeahead in firefox format
+// <Url type="application/x-suggestions+json" method="GET" template="{{.Host}}/typeahead/repo?provider=github&amp;repo={searchTerms}"/>
+// http://suggestqueries.google.com/complete/search?output=firefox&q=test
+// output should be of the format ["test",["test match","test ranking","test","testbook","test cricket ranking","test rankings 2016"]]
+// Chrome sends in a typeahead for each character pressed
+
+var opensearchTemplate = `<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/" xmlns:moz="http://www.mozilla.org/2006/browser/search/">
+  <ShortName>gitnotify</ShortName>
+  <Description>Track Code Diffs from Github &amp; Gitlab</Description>
+  <InputEncoding>UTF-8</InputEncoding>
+  <Tags>git notify gitnotify</Tags>
+  <Image height="16" width="16" type="image/x-icon">{{.Host}}/favicon.ico</Image>
+  <SearchForm>{{.Host}}</SearchForm>
+  <Url type="text/html" method="GET" template="{{.Host}}/?repo={searchTerms}&amp;utm_source=opensearch" />
+  <Query role="example" searchTerms="rails/rails" />
+</OpenSearchDescription>
+  `

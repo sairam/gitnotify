@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -213,6 +214,29 @@ func settingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 	settingsHandler(w, r, "update")
 }
 
+// src=github&repo=harshjv/donut&tree=master
+func parseAutoFillOptions(hc *httpContext, q url.Values) *Repo {
+	if len(q["repo"]) == 0 {
+		return &Repo{}
+	}
+
+	if len(q["src"]) > 0 && q["src"][0] != hc.userLoggedinInfo().Provider {
+		// TODO: provide href link for q["src"][0] after validation of provider
+		hc.addFlash("Please login through " + q["src"][0] + ". You are currently logged in via " + hc.userLoggedinInfo().Provider)
+		return &Repo{}
+	}
+
+	// validate q["repo"][0]
+	references := []reference{}
+	if len(q["tree"]) > 0 && q["tree"][0] != "null" {
+		references = append(references, reference(q["tree"][0]))
+	}
+	return &Repo{
+		Repo:            "#" + q["repo"][0],
+		NamedReferences: references,
+	}
+
+}
 func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) {
 	// Redirect user if not logged in
 	hc := &httpContext{w, r}
@@ -313,7 +337,9 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 
 	}
 
-	conf.Repos = append([]*Repo{&Repo{}}, conf.Repos...)
+	newRepo := parseAutoFillOptions(hc, r.URL.Query())
+
+	conf.Repos = append([]*Repo{newRepo}, conf.Repos...)
 
 	t := &SettingsPage{isCronPresentFor(configFile), false}
 	if isValidEmail(conf.usersEmail()) {
