@@ -11,18 +11,6 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// Helpers
-func cleanRepoName(repo string) string {
-	return strings.Replace(repo, "/", "__", 3)
-}
-
-func shortCommit(commit string) string {
-	if len(commit) > 6 {
-		return commit[0:6]
-	}
-	return commit
-}
-
 func githubWebsiteLink() string {
 	return config.GithubURLEndPoint
 }
@@ -48,6 +36,19 @@ func newGithubClient(token string) *githubApp.Client {
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	tc := oauth2.NewClient(oauth2.NoContext, ts)
 	return githubApp.NewClient(tc)
+}
+
+func githubBranchesWithoutRefs(client *githubApp.Client, repoName string) ([]string, error) {
+	listBranches, err := githubBranches(client, repoName)
+	if err != nil {
+		return nil, err
+	}
+
+	branches := make([]string, 0, len(listBranches))
+	for _, b := range listBranches {
+		branches = append(branches, b.Name)
+	}
+	return branches, nil
 }
 
 // caches branch response
@@ -148,23 +149,20 @@ func githubCleanRepoName(search string) string {
 	return search
 }
 
-// TODO run synchronously
+// TODO run asynchronously
 func githubBranchInfo(client *githubApp.Client, repoName string) (*typeAheadBranchList, error) {
 	defaultBranch, err := githubDefaultBranch(client, repoName)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := githubBranches(client, repoName)
+	branches, err := githubBranchesWithoutRefs(client, repoName)
 	if err != nil {
 		return nil, err
 	}
 
-	tab := &typeAheadBranchList{}
-	tab.DefaultBranch = defaultBranch
-	tab.AllBranches = make([]string, 0, len(result))
-	for _, r := range result {
-		tab.AllBranches = append(tab.AllBranches, r.Name)
-	}
-	return tab, nil
+	return &typeAheadBranchList{
+		DefaultBranch: defaultBranch,
+		AllBranches:   branches,
+	}, nil
 }

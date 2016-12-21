@@ -2,7 +2,7 @@ package main
 
 import "strings"
 
-// Helper Functions used in views like email,
+// Helper Functions used in views like email, website
 
 // GithubProvider ..
 const GithubProvider = "github"
@@ -60,7 +60,7 @@ func CompareLink(provider string, repo, oldCommit, newCommit string) string {
 	return ""
 }
 
-// WebhooksList ..
+// WebhooksList is used while displaying list of webhooks specific integrations available
 func WebhooksList() []string {
 	return append([]string{""}, config.WebhookIntegrations...)
 }
@@ -70,4 +70,15 @@ func capitalizeOrNone(option string) string {
 		return "None"
 	}
 	return strings.ToTitle(option)
+}
+
+func cleanRepoName(repo string) string {
+	return strings.Replace(repo, "/", "__", 3)
+}
+
+func shortCommit(commit string) string {
+	if len(commit) > 6 {
+		return commit[0:6]
+	}
+	return commit
 }

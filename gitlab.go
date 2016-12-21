@@ -89,6 +89,7 @@ func gitlabBranchesWithoutRefs(client *gitlabApp.Client, repoID string) ([]strin
 	if err != nil {
 		return nil, err
 	}
+
 	branches := make([]string, 0, len(listBranches))
 	for _, b := range listBranches {
 		branches = append(branches, b.Name)
@@ -116,7 +117,7 @@ func gitlabSearchRepos(client *gitlabApp.Client, search string) ([]*searchRepoIt
 	return t, nil
 }
 
-// TODO run synchronously
+// TODO run asynchronously
 func gitlabBranchInfo(client *gitlabApp.Client, repoName string) (*typeAheadBranchList, error) {
 	defaultBranch, err := gitlabDefaultBranch(client, repoName)
 	if err != nil {

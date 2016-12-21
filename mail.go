@@ -50,6 +50,7 @@ func mailDaemon() {
 			if open {
 				if err := s.Close(); err != nil {
 					log.Println("going to panic. well. not really!")
+					log.Println(err)
 					// panic(err)
 				}
 				open = false

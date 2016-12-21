@@ -25,18 +25,18 @@ type searchRepoItem struct {
 // 2. Branch Name
 func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 
-	// Redirect user if not logged in
 	hc := &httpContext{w, r}
+	// Redirect user if not logged in
 	redirected := hc.redirectUnlessLoggedIn()
 	if redirected {
 		return
 	}
+
 	userInfo := hc.userLoggedinInfo()
 	provider := userInfo.Provider
 
 	search := getRepoName(r.URL.Query())
 	result, err := getGitTypeAhead(provider, userInfo.Token, search)
-
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -56,8 +56,8 @@ type typeAheadBranchList struct {
 
 func branchTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 
-	// Redirect user if not logged in
 	hc := &httpContext{w, r}
+	// Redirect user if not logged in
 	redirected := hc.redirectUnlessLoggedIn()
 	if redirected {
 		return
@@ -72,7 +72,6 @@ func branchTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tab, err := getGitBranchInfoForRepo(provider, userInfo.Token, repoName)
-
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -92,6 +91,7 @@ func getRepoName(q url.Values) string {
 	return q["repo"][0]
 }
 
+// TODO add option for time or end of date or month or year
 func setCacheHeaders(w http.ResponseWriter) {
 	// cache for 1 day
 	cacheUntil := time.Now().AddDate(0, 0, 1).Format(http.TimeFormat)

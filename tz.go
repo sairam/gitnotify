@@ -11,7 +11,7 @@ import (
 var tzByOffset map[int][]timezone.Timezone
 
 func init() {
-	tzByOffset = timezone.GroupLocationByOffset()
+	go func() { tzByOffset = timezone.GroupLocationByOffset() }()
 }
 
 func timezoneTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
@@ -26,7 +26,6 @@ func timezoneTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 		// if offset is of the format 5.5, answer is 5.5*3600
 		// if offset is of the format +0530 - convert 5.5 and then use above
 		offset = int(inputOffset * 3600)
-
 	}
 
 	// allows jsonp via "callback"
