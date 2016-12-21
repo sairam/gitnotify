@@ -136,8 +136,12 @@ func initCron() {
 	crons = cron.New()
 	crons.Start()
 
-	go getData(GithubProvider)
-	go getData(GitlabProvider)
+	if config.Providers["github"] != "" {
+		go getData(GithubProvider)
+	}
+	if config.Providers["gitlab"] != "" {
+		go getData(GitlabProvider)
+	}
 }
 
 // There is no idiomatic way to compare SpecSchedule, put in a sort of adjustment

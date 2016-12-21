@@ -15,20 +15,6 @@ import (
 	"github.com/markbates/goth/providers/gitlab"
 )
 
-// https://github.com/markbates/goth/blob/master/providers/github/github.go
-//	github.AuthURL = "https://github.acme.com/login/oauth/authorize
-//	github.TokenURL = "https://github.acme.com/login/oauth/access_token
-//	github.ProfileURL = "https://github.acme.com/api/v3/user
-// https://developer.github.com/v3/oauth/#scopes
-// for github, add scope: "repo:status" to access private repositories
-
-// Sent PR - https://github.com/markbates/goth/pull/110/files
-// https://github.com/markbates/goth/blob/master/providers/gitlab/gitlab.go
-//	gitlab.AuthURL = "https://gitlab.acme.com/login/oauth/authorize
-//	gitlab.TokenURL = "https://gitlab.acme.com/login/oauth/access_token
-//	gitlab.ProfileURL = "https://gitlab.acme.com/api/v3/user
-// gitlab does not have any scopes, you get full access to the user's account
-
 // Authentication data/$provider/$user/$settingsFile
 type Authentication struct {
 	Provider string `yaml:"provider"` // github/gitlab
@@ -62,78 +48,117 @@ func (userInfo *Authentication) getConfigFile() string {
 	return fmt.Sprintf("%s/%s", userInfo.getConfigDir(), config.SettingsFile)
 }
 
-// ProviderIndex is used for setting up the providers
-type ProviderIndex struct {
-	Providers    []string
-	ProvidersMap map[string]string
-}
-
 func init() {
-	if os.Getenv("GITHUB_KEY") == "" || os.Getenv("GITHUB_SECRET") == "" {
-		panic("Missing Configuration: Github Authentication is not set!")
-	}
 	gothic.Store = store
 	gothic.GetProviderName = getProviderName
 }
 
-// load envconfig via https://github.com/kelseyhightower/envconfig
-func initAuth(p *mux.Router) {
-	goth.UseProviders(
-		github.New(os.Getenv("GITHUB_KEY"), os.Getenv("GITHUB_SECRET"), config.ServerProto+config.ServerHost+"/auth/github/callback", "user:email"),
-		gitlab.New(os.Getenv("GITLAB_KEY"), os.Getenv("GITLAB_SECRET"), config.ServerProto+config.ServerHost+"/auth/gitlab/callback"),
-	)
+func preInitAuth() {
+	// ProviderNames is the map of key/value providers configured
+	config.Providers = make(map[string]string)
 
-	m := map[string]string{
-		"github": "Github",
-		"gitlab": "GitLab",
+	var providers []goth.Provider
+
+	if provider := configureGithub(); provider != nil {
+		providers = append(providers, provider)
 	}
 
+	if provider := configureGitlab(); provider != nil {
+		providers = append(providers, provider)
+	}
+
+	goth.UseProviders(providers...)
+}
+
+func initAuth(p *mux.Router) {
+	p.HandleFunc("/{provider}/callback", authProviderCallbackHandler).Methods("GET")
+	p.HandleFunc("/{provider}", authProviderHandler).Methods("GET")
+	p.HandleFunc("/", authListHandler).Methods("GET")
+}
+
+func configureGithub() goth.Provider {
+	if config.GithubURLEndPoint != "" && config.GithubAPIEndPoint != "" {
+		if os.Getenv("GITHUB_KEY") == "" || os.Getenv("GITHUB_SECRET") == "" {
+			panic("Missing Configuration: Github Authentication is not set!")
+		}
+
+		github.AuthURL = config.GithubURLEndPoint + "login/oauth/authorize"
+		github.TokenURL = config.GithubURLEndPoint + "login/oauth/access_token"
+		github.ProfileURL = config.GithubAPIEndPoint + "user"
+
+		config.Providers["github"] = "Github"
+		// for github, add scope: "repo:status" to access private repositories
+		return github.New(os.Getenv("GITHUB_KEY"), os.Getenv("GITHUB_SECRET"), config.ServerProto+config.ServerHost+"/auth/github/callback", "user:email")
+	}
+	return nil
+}
+
+func configureGitlab() goth.Provider {
+	if config.GitlabURLEndPoint != "" && config.GitlabAPIEndPoint != "" {
+		if os.Getenv("GITLAB_KEY") == "" || os.Getenv("GITLAB_SECRET") == "" {
+			panic("Missing Configuration: Github Authentication is not set!")
+		}
+
+		gitlab.AuthURL = config.GitlabURLEndPoint + "oauth/authorize"
+		gitlab.TokenURL = config.GitlabURLEndPoint + "oauth/token"
+		gitlab.ProfileURL = config.GitlabAPIEndPoint + "user"
+
+		config.Providers["gitlab"] = "Gitlab"
+		// gitlab does not have any scopes, you get full access to the user's account
+		return gitlab.New(os.Getenv("GITLAB_KEY"), os.Getenv("GITLAB_SECRET"), config.ServerProto+config.ServerHost+"/auth/gitlab/callback")
+	}
+	return nil
+
+}
+
+func authListHandler(res http.ResponseWriter, req *http.Request) {
 	var keys []string
-	for k := range m {
+	for k := range config.Providers {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
+	providerIndex := &ProviderIndex{Providers: keys, ProvidersMap: config.Providers}
 
-	providerIndex := &ProviderIndex{Providers: keys, ProvidersMap: m}
+	t, _ := template.New("foo").Parse(indexTemplate)
+	t.Execute(res, providerIndex)
+}
 
-	// p := pat.New()
-	p.HandleFunc("/{provider}/callback", func(res http.ResponseWriter, req *http.Request) {
+func authProviderHandler(res http.ResponseWriter, req *http.Request) {
+	hc := &httpContext{res, req}
+	if hc.isUserLoggedIn() {
+		text := "User is already logged in"
+		displayText(hc, res, text)
+	} else {
+		gothic.BeginAuthHandler(res, req)
+	}
+}
 
-		user, err := gothic.CompleteUserAuth(res, req)
-		if err != nil {
-			fmt.Fprintln(res, err)
-			return
-		}
-		authType, _ := getProviderName(req)
-		auth := &Authentication{
-			Provider: authType,
-			UserName: user.NickName,
-			Name:     user.Name,
-			Email:    user.Email,
-			Token:    user.AccessToken,
-		}
-		auth.save()
+func authProviderCallbackHandler(res http.ResponseWriter, req *http.Request) {
+	user, err := gothic.CompleteUserAuth(res, req)
+	if err != nil {
+		fmt.Fprintln(res, err)
+		return
+	}
+	authType, _ := getProviderName(req)
+	auth := &Authentication{
+		Provider: authType,
+		UserName: user.NickName,
+		Name:     user.Name,
+		Email:    user.Email,
+		Token:    user.AccessToken,
+	}
+	auth.save()
 
-		hc := &httpContext{res, req}
-		hc.setSession(auth, authType)
+	hc := &httpContext{res, req}
+	hc.setSession(auth, authType)
 
-		http.Redirect(res, req, homePageForLoggedIn, 302)
-	}).Methods("GET")
+	http.Redirect(res, req, homePageForLoggedIn, 302)
+}
 
-	p.HandleFunc("/{provider}", func(res http.ResponseWriter, req *http.Request) {
-		hc := &httpContext{res, req}
-		if hc.isUserLoggedIn() {
-			text := "User is already logged in"
-			displayText(hc, res, text)
-		} else {
-			gothic.BeginAuthHandler(res, req)
-		}
-	}).Methods("GET")
-
-	p.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
-		t, _ := template.New("foo").Parse(indexTemplate)
-		t.Execute(res, providerIndex)
-	}).Methods("GET")
+// ProviderIndex is used for setting up the providers
+type ProviderIndex struct {
+	Providers    []string
+	ProvidersMap map[string]string
 }
 
 // See gothic/gothic.go: GetProviderName function
@@ -150,16 +175,3 @@ func getProviderName(req *http.Request) (string, error) {
 var indexTemplate = `{{range $key,$value:=.Providers}}
     <p><a href="/auth/{{$value}}">Log in with {{index $.ProvidersMap $value}}</a></p>
 {{end}}`
-
-var userTemplate = `
-<p>Name: {{.Name}} [{{.LastName}}, {{.FirstName}}]</p>
-<p>Email: {{.Email}}</p>
-<p>NickName: {{.NickName}}</p>
-<p>Location: {{.Location}}</p>
-<p>AvatarURL: {{.AvatarURL}} <img src="{{.AvatarURL}}"></p>
-<p>Description: {{.Description}}</p>
-<p>UserID: {{.UserID}}</p>
-<p>AccessToken: {{.AccessToken}}</p>
-<p>ExpiresAt: {{.ExpiresAt}}</p>
-<p>RefreshToken: {{.RefreshToken}}</p>
-`

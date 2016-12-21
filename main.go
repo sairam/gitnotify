@@ -45,6 +45,8 @@ type AppConfig struct {
 	// "text" for rendering simple text
 	// "user" for user preferences
 	// use "partial name" to render a file
+
+	Providers map[string]string // List of ProviderNames that are configured as per auth
 }
 
 var config = new(AppConfig)
@@ -94,7 +96,7 @@ func newPage(hc *httpContext, title string, pageTitle string, conf interface{}, 
 func init() {
 	loadConfig()
 	go mailDaemon()
-	initCron()
+	go initCron()
 }
 
 var (
@@ -128,6 +130,7 @@ func loadConfig() {
 	config.SMTPUser = os.Getenv("SMTP_USER")
 	config.SMTPPass = os.Getenv("SMTP_PASS")
 
+	// TODO dont send email, but start the server but not the email daemon
 	if config.SMTPUser == "" {
 		panic("Missing Configuration: SMTP username is not set!")
 	}
@@ -135,15 +138,21 @@ func loadConfig() {
 		panic("Missing Configuration: SMTP password is not set!")
 	}
 
-	githubRepoEndPoint = config.GithubURLEndPoint + "%s/"                      // repo/abc
-	githubTreeURLEndPoint = config.GithubURLEndPoint + "%s/tree/%s"            // repo/abc , develop
-	githubCommitURLEndPoint = config.GithubURLEndPoint + "%s/commits/%s"       // repo/abc , develop
-	githubCompareURLEndPoint = config.GithubURLEndPoint + "%s/compare/%s...%s" // repo/abc, base, target commit ref
+	preInitAuth()
 
-	gitlabRepoEndPoint = config.GitlabURLEndPoint + "%s/"                      // repo/abc
-	gitlabTreeURLEndPoint = config.GitlabURLEndPoint + "%s/tree/%s"            // repo/abc , develop
-	gitlabCommitURLEndPoint = config.GitlabURLEndPoint + "%s/commits/%s"       // repo/abc , develop
-	gitlabCompareURLEndPoint = config.GitlabURLEndPoint + "%s/compare/%s...%s" // repo/abc, base, target commit ref
+	if config.Providers["github"] != "" {
+		githubRepoEndPoint = config.GithubURLEndPoint + "%s/"                      // repo/abc
+		githubTreeURLEndPoint = config.GithubURLEndPoint + "%s/tree/%s"            // repo/abc , develop
+		githubCommitURLEndPoint = config.GithubURLEndPoint + "%s/commits/%s"       // repo/abc , develop
+		githubCompareURLEndPoint = config.GithubURLEndPoint + "%s/compare/%s...%s" // repo/abc, base, target commit ref
+	}
+
+	if config.Providers["gitlab"] != "" {
+		gitlabRepoEndPoint = config.GitlabURLEndPoint + "%s/"                      // repo/abc
+		gitlabTreeURLEndPoint = config.GitlabURLEndPoint + "%s/tree/%s"            // repo/abc , develop
+		gitlabCommitURLEndPoint = config.GitlabURLEndPoint + "%s/commits/%s"       // repo/abc , develop
+		gitlabCompareURLEndPoint = config.GitlabURLEndPoint + "%s/compare/%s...%s" // repo/abc, base, target commit ref
+	}
 
 }
 
@@ -156,6 +165,9 @@ func loadConfig() {
 func main() {
 
 	r := mux.NewRouter()
+	auth := r.PathPrefix("/auth").Subrouter()
+	initAuth(auth)
+
 	r.HandleFunc("/", settingsShowHandler).Methods("GET")
 	// POST is responsible for create, update and delete
 	r.HandleFunc("/", settingsSaveHandler).Methods("POST")
@@ -168,8 +180,6 @@ func main() {
 	r.HandleFunc("/typeahead/branch", branchTypeAheadHandler).Methods("GET")
 	r.HandleFunc("/typeahead/tz", timezoneTypeAheadHandler).Methods("GET")
 
-	r.HandleFunc("/home", homeHandler).Methods("GET")
-
 	r.HandleFunc("/logout", func(res http.ResponseWriter, req *http.Request) {
 		hc := &httpContext{w: res, r: req}
 		hc.clearSession()
@@ -177,12 +187,16 @@ func main() {
 		http.Redirect(res, req, homePageForNonLoggedIn, 302)
 	}).Methods("GET")
 
-	auth := r.PathPrefix("/auth").Subrouter()
-	initAuth(auth)
+	r.HandleFunc("/home", func(res http.ResponseWriter, req *http.Request) {
+		hc := &httpContext{w: res, r: req}
+		page := newPage(hc, "Home Page", "Git Notify", nil, nil)
+		displayPage(res, "home", page)
+	}).Methods("GET")
 
 	r.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "favicon.ico")
 	})
+
 	r.HandleFunc("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeContent(w, r, "robots.txt", time.Now(), strings.NewReader("User-agent: *\n"))
 	})
@@ -204,6 +218,7 @@ func main() {
 		WriteTimeout: 60 * time.Second,
 		ReadTimeout:  60 * time.Second,
 	}
+
 	log.Fatal(srv.ListenAndServe())
 
 }
