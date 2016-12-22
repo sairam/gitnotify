@@ -13,10 +13,10 @@ type MailContent struct {
 	WebsiteURL string
 	User       string // provider/username
 	Name       string
-	Data       []repoDiffData
+	Data       []*repoDiffData
 }
 
-func processForMail(diff []repoDiffData, conf *Setting) error {
+func processForMail(diff []*repoDiffData, conf *Setting) error {
 	if config.isEmailSetup() == false {
 		return nil
 	}

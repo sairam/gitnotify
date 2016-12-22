@@ -47,7 +47,7 @@ func (s *slackTypeLink) String() string {
 	return fmt.Sprintf("<%s|%s>", s.Href, s.Text)
 }
 
-func processForWebhook(diff []repoDiffData, conf *Setting) error {
+func processForWebhook(diff []*repoDiffData, conf *Setting) error {
 	if conf.User.isValidWebhook() {
 		log.Print("POSTing on a Slack Hook")
 		return processForSlack(diff, conf.User.WebhookURL)
@@ -55,7 +55,7 @@ func processForWebhook(diff []repoDiffData, conf *Setting) error {
 	return nil
 }
 
-func processForSlack(diffs []repoDiffData, slackURL string) error {
+func processForSlack(diffs []*repoDiffData, slackURL string) error {
 	// loop and construct the slack message and send it
 	for _, repo := range diffs {
 		if repo.Changed == false {

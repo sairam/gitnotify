@@ -226,11 +226,11 @@ func process(conf *Setting) (allLocalDiffs []*gitRepoDiffs, err error) {
 	return allLocalDiffs, nil
 }
 
-func makeRepoDiffs(repoDiffs []*gitRepoDiffs, conf *Setting) *[]repoDiffData {
+func makeRepoDiffs(repoDiffs []*gitRepoDiffs, conf *Setting) []*repoDiffData {
 	// config.websiteURL()
 	madefor := fmt.Sprintf("%s/%s", conf.Auth.Provider, conf.Auth.UserName)
 
-	var diffs []repoDiffData
+	var diffs []*repoDiffData
 
 	for _, diff := range repoDiffs {
 
@@ -291,14 +291,14 @@ func makeRepoDiffs(repoDiffs []*gitRepoDiffs, conf *Setting) *[]repoDiffData {
 			}
 			datum = append(datum, data)
 		}
-		diffs = append(diffs, repoDiffData{
+		diffs = append(diffs, &repoDiffData{
 			Repo:    link{diff.RepoName, RepoLink(diff.Provider, diff.RepoName), diff.RepoName},
 			Changed: repoChanged,
 			Data:    datum,
 			MadeFor: madefor,
 		})
 	}
-	return &diffs
+	return diffs
 }
 
 type repoDiffData struct {
@@ -322,7 +322,7 @@ type link struct {
 }
 
 // check if atleast one of the diffs has changed
-func atleastOneChanged(diff []repoDiffData) bool {
+func atleastOneChanged(diff []*repoDiffData) bool {
 	// check if eligible to send email
 	for _, a := range diff {
 		if a.Changed {
@@ -346,17 +346,17 @@ func processDiffForUser(conf *Setting) {
 	diffs := makeRepoDiffs(diff, conf)
 
 	// TODO save to new file based on hour/date
-	// if err = json.NewEncoder(os.Stdout).Encode(*diffs); err != nil {
+	// if err = json.NewEncoder(os.Stdout).Encode(diffs); err != nil {
 	// 	log.Print(err)
 	// }
 
-	if eligible := atleastOneChanged(*diffs); !eligible {
+	if eligible := atleastOneChanged(diffs); !eligible {
 		log.Printf("None of the Repositories have any changes. Skip Notifications")
 		return
 	}
 
-	processForMail(*diffs, conf)
-	processForWebhook(*diffs, conf)
+	processForMail(diffs, conf)
+	processForWebhook(diffs, conf)
 }
 
 // option can be tags or branches
