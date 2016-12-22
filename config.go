@@ -43,6 +43,10 @@ type AppConfig struct {
 	SourceCodeLink string
 }
 
+func (c *AppConfig) websiteURL() string {
+	return c.ServerProto + c.ServerHost
+}
+
 func (c *AppConfig) isEmailSetup() bool {
 	return c.SMTPHost != ""
 }

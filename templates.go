@@ -64,7 +64,7 @@ func loadPartials() {
 func loadFilesFromDir(dir, pathDir string) {
 	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
-		log.Println(err)
+		log.Print(err)
 		return
 	}
 
@@ -79,7 +79,7 @@ func loadFilesFromDir(dir, pathDir string) {
 		_, err = templates.t.New(pathDir + tmplName).Parse(string(b))
 
 		if err != nil {
-			log.Println(err)
+			log.Print(err)
 		}
 	}
 }

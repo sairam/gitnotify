@@ -41,14 +41,13 @@ func userSettingsShowHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Display next cron entries if cron is valid
 	t := &UserPage{
-		NextRunTimes: checkCronEntries("data/github/sairam/settings.yml"),
+		NextRunTimes: checkCronEntries(conf.Auth.getConfigFile()),
 	}
 
 	page := newPage(hc, "User Settings", "User Settings", conf, t)
 	displayPage(w, "user", page)
 }
 
-// map[email:[sairam.kunala@gmail.com] name:[Sairam] hour:[08 16] weekday:[* 1 2 3 4] tz:[5.5]]
 func userSettingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 	// Redirect user if not logged in
 	hc := &httpContext{w, r}

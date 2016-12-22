@@ -23,8 +23,8 @@ type gitBranchList struct {
 	newList []string
 }
 
-func (e *gitBranchList) String() string {
-	return Stringify(e)
+func (g *gitBranchList) String() string {
+	return Stringify(g)
 }
 
 // gitCommitDiff tracks old and new commits
@@ -33,8 +33,20 @@ type gitCommitDiff struct {
 	NewCommit string
 }
 
-func (e *gitCommitDiff) String() string {
-	return Stringify(e)
+func (g *gitCommitDiff) shortOldCommit() string {
+	return shortCommit(g.OldCommit)
+}
+
+func (g *gitCommitDiff) shortNewCommit() string {
+	return shortCommit(g.NewCommit)
+}
+
+func (g *gitCommitDiff) changed() bool {
+	return g.OldCommit != g.NewCommit
+}
+
+func (g *gitCommitDiff) String() string {
+	return Stringify(g)
 }
 
 // gitRepoDiffs has the diff for a repoName that is being tracked
@@ -106,7 +118,7 @@ func fetchFiles(provider string) []string {
 	dir := fmt.Sprintf("%s/%s", config.DataDir, provider)
 	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
-		log.Println(err)
+		log.Print(err)
 		return []string{}
 	}
 	files := make([]string, len(fis))
@@ -214,19 +226,137 @@ func process(conf *Setting) (allLocalDiffs []*gitRepoDiffs, err error) {
 	return allLocalDiffs, nil
 }
 
+func makeRepoDiffs(repoDiffs []*gitRepoDiffs, conf *Setting) *[]repoDiffData {
+	// config.websiteURL()
+	madefor := fmt.Sprintf("%s/%s", conf.Auth.Provider, conf.Auth.UserName)
+
+	var diffs []repoDiffData
+
+	for _, diff := range repoDiffs {
+
+		var datum []diffData
+		var repoChanged = false
+
+		for branch, commit := range diff.References {
+			var data diffData
+			data.Title = link{branch, TreeLink(diff.Provider, diff.RepoName, branch), "Branch: "}
+			data.ChangeType = "repoBranchDiff"
+			data.Changed = false
+			var changeLink link
+
+			if commit.OldCommit == "" {
+				if commit.NewCommit == noneString {
+					data.Error = "Branch Not Found"
+					data.Changed = true
+					// repoChanged should not be set since this is only a warning
+				} else {
+					data.Changed = true
+					repoChanged = true
+					changeLink = link{
+						"Latest Commit",
+						TreeLink(diff.Provider, diff.RepoName, commit.NewCommit),
+						"Next message will contain the diff.",
+					}
+				}
+			} else if commit.changed() {
+				data.Changed = true
+				repoChanged = true
+				changeLink = link{
+					commit.shortOldCommit() + ".." + commit.shortNewCommit(),
+					CompareLink(diff.Provider, diff.RepoName, commit.OldCommit, commit.NewCommit),
+					"Code Diff:",
+				}
+			} else {
+				data.Changed = false
+			}
+			data.Changes = []link{changeLink}
+			datum = append(datum, data)
+		}
+
+		for _, t := range diff.RefList {
+			var data diffData
+			data.Title = link{t.Title, RepoLink(diff.Provider, diff.RepoName) + "/" + strings.ToLower(t.Title), "New " + strings.Title(t.Title) + ": "}
+			data.ChangeType = "repoRefDiff"
+			var links []link
+
+			if len(t.References) == 0 {
+				data.Changed = false
+			} else {
+				data.Changed = true
+				repoChanged = true
+				for _, ref := range t.References {
+					links = append(links, link{ref, TreeLink(diff.Provider, diff.RepoName, ref), ""})
+				}
+				data.Changes = links
+			}
+			datum = append(datum, data)
+		}
+		diffs = append(diffs, repoDiffData{
+			Repo:    link{diff.RepoName, RepoLink(diff.Provider, diff.RepoName), diff.RepoName},
+			Changed: repoChanged,
+			Data:    datum,
+			MadeFor: madefor,
+		})
+	}
+	return &diffs
+}
+
+type repoDiffData struct {
+	Repo    link       `json:"repo"`
+	Changed bool       `json:"changed"`
+	Data    []diffData `json:"data"`
+	MadeFor string     `json:"made_for"`
+}
+type diffData struct {
+	Title      link   `json:"title"`
+	Error      string `json:"error"`
+	ChangeType string `json:"change_type"`
+	Changed    bool   `json:"changed"`
+	Changes    []link `json:"changes"`
+}
+
+type link struct {
+	Text  string `json:"text"`
+	Href  string `json:"href"`
+	Title string `json:"title"`
+}
+
+// check if atleast one of the diffs has changed
+func atleastOneChanged(diff []repoDiffData) bool {
+	// check if eligible to send email
+	for _, a := range diff {
+		if a.Changed {
+			return true
+		}
+	}
+	return false
+}
+
 func processDiffForUser(conf *Setting) {
 	if !conf.anyValidNotifications() {
 		log.Printf("Not processing conf %s/%s since no valid notification mechanisms are found", conf.Auth.Provider, conf.Auth.UserName)
 		return
 	}
-	diff, err := process(conf)
 
-	if err == nil {
-		processForMail(diff, conf)
-		processForWebhook(diff, conf)
-	} else {
+	diff, err := process(conf)
+	if err != nil {
 		log.Printf("Failure processing %s/%s, %s\n", conf.Auth.Provider, conf.Auth.UserName, err)
 	}
+
+	diffs := makeRepoDiffs(diff, conf)
+
+	// TODO save to new file based on hour/date
+	// if err = json.NewEncoder(os.Stdout).Encode(*diffs); err != nil {
+	// 	log.Print(err)
+	// }
+
+	if eligible := atleastOneChanged(*diffs); !eligible {
+		log.Printf("None of the Repositories have any changes. Skip Notifications")
+		return
+	}
+
+	processForMail(*diffs, conf)
+	processForWebhook(*diffs, conf)
 }
 
 // option can be tags or branches

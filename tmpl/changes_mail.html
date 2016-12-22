@@ -1,95 +1,47 @@
 {{ $contactEmail := "hello@gitnotify.com" }}
-<body align="center">
-  <font size="4">
 
-<p>
-{{ .Name }}, Thanks for using <a href="{{ .WebsiteURL }}">GitNotify</a> for periodic diffs <br>
-<p><font size="2">Kindly provide any feedback/suggestion/improvements you would like to see  to <a href="mailto:{{$contactEmail}}">{{$contactEmail}}</a></font></p>
-Here is the latest diff that was composed
-</p>
-<!-- split into groups of 5 and add to the list  -->
-<table valign="center" border="1">
-  {{ $repoCount := len .Data }}
-  {{ $count := 5}}
-  {{ $lastTd := minus $count 1 }}
-  {{ $c := mod $repoCount $count }}
-  {{ $tdCount := minus $count $c }}
-  {{ range $i, $repo := .Data }}
-  {{ $c := mod $i $count }}
-  {{ if eq $c 0 }}<tr>{{ end }}
-  <td style="padding: 1em;"><a href="#{{cleanRepoName $repo.RepoName}}">{{$repo.RepoName}}</a></td>
-  {{ $c := mod $i $count }}
-  {{ if eq $c $lastTd }}</tr>{{ end }}
-  {{ end }}
-  {{ if eq $tdCount $count }}<tr>{{ end }}
-  <td style="padding: 1em;" align="center" colspan="{{ $tdCount }}"><a href="{{ .WebsiteURL }}">Track a New Repo</a></td>
-</tr></table>
-<br>
-<table width="800" valign="center" border="1">
-<!-- loop through repositories -->
+<p>Hello {{ .Name }},<br><br>Thanks for using <a href="{{ .WebsiteURL }}">GitNotify</a> for periodic diffs. Provide any feedback to <a href="mailto:{{$contactEmail}}">{{$contactEmail}}</a></p>
+<p><strong>NOTE:</strong> Emails will be skipped in case of no changes</p>
+<hr>
+
 {{ range $repo := .Data }}
+{{ if eq $repo.Changed true}}
 {{ with $repo }}
-{{ $provider := .Provider }}
-  <tr>
-    <td align="center" style="padding: 1em;" colspan="2"><a href="{{ RepoLink $provider .RepoName }}">{{ .RepoName }}</a>
-      <a name="{{ cleanRepoName .RepoName }}"></a></td>
-  </tr>
+<h4>Commit Changes for <a href="{{.Repo.Href}}">{{.Repo.Text}}</a></h4>
 
-  <!-- loop through branches -->
-  {{ range $branch, $commit := .References }}
-  {{ if ne $commit.NewCommit "" }}
-  <tr>
-    <td style="padding: 0.7em;" align="right">Branch: <strong><a href="{{ TreeLink $provider $repo.RepoName $branch}}">{{$branch}}</a></strong></td>
-    <td style="padding: 0.7em;">
-    {{ if eq $commit.OldCommit "" }}
-      {{ if eq $commit.NewCommit "<none>" }}
-      Branch Not Found
-      {{ else }}
-      Next message will contain the diff.<br>
-      <pre>Previous Commit: Newly Tracked Branch<br>Latest   Commit: {{ $commit.NewCommit }}</pre>
-      {{ end }}
-    {{ else if eq $commit.OldCommit $commit.NewCommit }}
-      No new Commits created recently
-    {{ else }}
-      <pre>Previous Commit: {{ $commit.OldCommit }}<br>Latest   Commit: {{ $commit.NewCommit}}</pre><br/>
-      Code Diff: <a href="{{ CompareLink $provider $repo.RepoName $commit.OldCommit $commit.NewCommit }}">{{ $repo.RepoName }}/{{ shortCommit $commit.OldCommit}}..{{shortCommit $commit.NewCommit}}</a> <a href="{{ CompareLink $provider $repo.RepoName $commit.OldCommit $commit.NewCommit }}.diff">[text]</a><br>
-    {{ end }}
-    </td>
-  </tr>
-  {{ end }}
-  {{ end }}
-  <!-- END loop through branches -->
+{{ range $diff := .Data }}
+{{ with $diff }}
 
-  {{ range $t := .RefList }}
-  {{ with $t }}
-  <tr>
-    <td style="padding: 0.7em;" align="right">New {{ .Title }}</td>
-    <td style="padding: 0.7em;">
-      {{ $len := len .References }}
-      {{ if eq $len 0 }}
-        No new {{.Title}} created recently
-      {{ else }}
-      <ul>
-        {{ range $ref := .References }}
-        <li><a href="{{ TreeLink $provider $repo.RepoName $ref }}">{{ $ref }}</a></li>
-        {{ end }}
-      </ul>
-      {{ end }}
-    </td>
-  </tr>
-  {{ end }}
-  {{ end }}
-<tr><td colspan="2"></td></tr>
+{{ if eq .Changed true}}
+{{ if eq .ChangeType "repoBranchDiff" }}
+{{ if eq .Error "" }}
+<strong>{{.Title.Text}}:</strong>&nbsp;&nbsp;{{ range $i, $change := .Changes }}<a href="{{$change.Href}}">{{$change.Text}}</a>{{ end }}<br/>
+{{ else }}
+<strong>{{.Title.Text}}:</strong> {{ .Error }} <br/>
+{{ end }}
+{{ else }}
+<p>{{.Title.Title}}</p>
+<ul>{{ range $i, $change := .Changes }}
+<li><a href="{{$change.Href}}">{{$change.Text}}</a></li>
+{{ end }}</ul>
 {{ end }}
 {{ end }}
-<!-- END loop through repositories -->
-</table>
 
-<br><br>
-</font>
-<p>
-content provided by <a href="{{ .WebsiteURL }}">Git Notify</a><br>
-<strong>prepared for: {{ .User }}</strong><br>
-<a href="{{ .WebsiteURL }}">unsubscribe</a> if you do not want these messages on the website.
-</p>
-</body>
+{{ end }}
+{{ end }}
+
+<hr>
+
+{{ end }}
+{{ end }}
+{{ end }}
+
+<p style="font-size:small;-webkit-text-size-adjust:none;color:#666;">&mdash;<br>You are receiving this because you are subscribed on <a href="{{ .WebsiteURL }}">GitNotify</a><br>This email is prepared for oauth user: {{ .User }}<br><a href="{{ .WebsiteURL }}">unsubscribe here</a> if you no longer wish to get these messages</p>
+
+<div itemscope itemtype="http://schema.org/EmailMessage">
+  <div itemprop="potentialAction" itemscope itemtype="http://schema.org/ViewAction">
+    <link itemprop="target" href="https://gitnotify.com/changes/20161222"/>
+    <meta itemprop="name" content="View Changes"/>
+  </div>
+  <meta itemprop="description" content="View this information on GitNotify"/>
+</div>

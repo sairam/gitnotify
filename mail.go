@@ -13,16 +13,16 @@ type MailContent struct {
 	WebsiteURL string
 	User       string // provider/username
 	Name       string
-	Data       []*gitRepoDiffs
+	Data       []repoDiffData
 }
 
-func processForMail(diff []*gitRepoDiffs, conf *Setting) error {
+func processForMail(diff []repoDiffData, conf *Setting) error {
 	if config.isEmailSetup() == false {
 		return nil
 	}
 
 	mailContent := &MailContent{
-		WebsiteURL: config.ServerProto + config.ServerHost,
+		WebsiteURL: config.websiteURL(),
 		User:       fmt.Sprintf("%s/%s", conf.Auth.Provider, conf.Auth.UserName),
 		Name:       conf.usersName(),
 	}

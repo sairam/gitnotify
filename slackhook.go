@@ -47,62 +47,63 @@ func (s *slackTypeLink) String() string {
 	return fmt.Sprintf("<%s|%s>", s.Href, s.Text)
 }
 
-func processForWebhook(diff []*gitRepoDiffs, conf *Setting) error {
-	log.Println(conf.User.WebhookType, conf.User.WebhookURL)
+func processForWebhook(diff []repoDiffData, conf *Setting) error {
 	if conf.User.isValidWebhook() {
-		log.Println("sending a slack message")
+		log.Print("POSTing on a Slack Hook")
 		return processForSlack(diff, conf.User.WebhookURL)
 	}
 	return nil
 }
 
-func processForSlack(diff []*gitRepoDiffs, slackURL string) error {
+func processForSlack(diffs []repoDiffData, slackURL string) error {
 	// loop and construct the slack message and send it
-	for _, repo := range diff {
-		attachments := make([]SlackAttachment, 1)
-		for branch, reference := range repo.References {
-			var commitDiffLink string
-			if reference.NewCommit == noneString {
-				commitDiffLink = fmt.Sprintf("Branch is not present")
-			} else if reference.OldCommit == "" {
-				commitDiffLink = fmt.Sprintf("New branch being tracked. Current Commit is %s", &slackTypeLink{shortCommit(reference.NewCommit), TreeLink(repo.Provider, repo.RepoName, reference.NewCommit)})
-			} else if reference.OldCommit == reference.NewCommit {
-				commitDiffLink = fmt.Sprintf("No recent changes. Last Commit is %s", &slackTypeLink{shortCommit(reference.NewCommit), TreeLink(repo.Provider, repo.RepoName, reference.NewCommit)})
-			} else {
-				text := fmt.Sprintf("%s..%s", shortCommit(reference.OldCommit), shortCommit(reference.NewCommit))
-				href := CompareLink(repo.Provider, repo.RepoName, reference.OldCommit, reference.NewCommit)
-				commitDiffLink = fmt.Sprintf("Compare Diff: %s", (&slackTypeLink{text, href}).String())
-			}
-			branchTitle := fmt.Sprintf("Branch: %s", branch)
-
-			attachment := SlackAttachment{
-				Title:          (&slackTypeLink{branchTitle, TreeLink(repo.Provider, repo.RepoName, branch)}).String(),
-				MarkdownFormat: []string{"text"},
-				Text:           commitDiffLink,
-			}
-			attachments = append(attachments, attachment)
+	for _, repo := range diffs {
+		if repo.Changed == false {
+			continue
 		}
+		attachments := make([]SlackAttachment, 1)
+		for _, diff := range repo.Data {
 
-		for _, r := range repo.RefList {
-			links := make([]string, 0, 1)
-			for _, treeName := range r.References {
-				href := TreeLink(repo.Provider, repo.RepoName, treeName)
-				links = append(links, (&slackTypeLink{treeName, href}).String())
+			if diff.Changed == false {
+				continue
 			}
-			if len(r.References) == 0 {
-				links = append(links, "None")
+			if diff.ChangeType == "repoBranchDiff" && len(diff.Changes) > 0 {
+				if diff.Error == "" {
+					a := diff.Changes[0]
+					attachment := SlackAttachment{
+						Title:          (&slackTypeLink{diff.Title.Text, diff.Title.Href}).String(),
+						Text:           (&slackTypeLink{a.Text, a.Href}).String(),
+						MarkdownFormat: []string{"text"},
+					}
+					attachments = append(attachments, attachment)
+				} else {
+					attachment := SlackAttachment{
+						Title:          diff.Title.Text,
+						Text:           diff.Error,
+						MarkdownFormat: []string{},
+					}
+					attachments = append(attachments, attachment)
+				}
+
+			} else {
+				var links []string
+				for _, change := range diff.Changes {
+					links = append(links, (&slackTypeLink{change.Text, change.Href}).String())
+				}
+
+				attachment := SlackAttachment{
+					Title:          fmt.Sprintf(diff.Title.Title),
+					Text:           strings.Join(links, "\n"),
+					MarkdownFormat: []string{"text"},
+				}
+				attachments = append(attachments, attachment)
+
 			}
-			attachment := SlackAttachment{
-				Title:          fmt.Sprintf("New %s:", r.Title),
-				Text:           strings.Join(links, "\n"),
-				MarkdownFormat: []string{"text"},
-			}
-			attachments = append(attachments, attachment)
 		}
 
 		message := &SlackMessage{
 			Username:    "gitnotify",
-			Text:        fmt.Sprintf("*Changes for %s*:", &slackTypeLink{repo.RepoName, RepoLink(repo.Provider, repo.RepoName)}),
+			Text:        fmt.Sprintf("*Changes for %s*:", &slackTypeLink{repo.Repo.Text, repo.Repo.Href}),
 			Attachments: attachments,
 		}
 

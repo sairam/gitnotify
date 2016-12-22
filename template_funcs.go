@@ -281,6 +281,6 @@ func partial(name string, contextList ...interface{}) template.HTML {
 func executeTemplate(context interface{}, w io.Writer, tmplName string) {
 	err := templates.t.ExecuteTemplate(w, tmplName, context)
 	if err != nil {
-		log.Println(err)
+		log.Print(err)
 	}
 }

@@ -1,53 +1,45 @@
-{{ .Name }}, Thanks for using GitNotify({{ .WebsiteURL }}) for periodic diffs
+{{ $contactEmail := "hello@gitnotify.com" }}
 
-Here is the latest diff that was composed:
+Hello {{ .Name }},
 
------------------------------------------------------------
+Thanks for using GitNotify({{ .WebsiteURL }}) for periodic diffs.
+Kindly provide any feedback you would like to see to {{$contactEmail}}
+
+NOTE: Emails will be skipped in case of no changes
+
+-------------------------------------------------------------------------------
+
 {{ range $repo := .Data }}
+{{ if eq $repo.Changed true}}
 {{ with $repo }}
-{{ $provider := .Provider }}
-{{ .RepoName }}: {{ RepoLink $provider .RepoName }}
-  {{ range $branch, $commit := .References }}
-  {{ if ne $commit.NewCommit "" }}
-  {{$branch}} Branch: {{ TreeLink $provider $repo.RepoName $branch}}
-    {{ if eq $commit.OldCommit "" }}
-    {{ if eq $commit.NewCommit "<none>" }}
-    Branch Not Found
-    {{ else }}
-    Next message will contain the diff.
+Commit Changes for *{{.Repo.Text}}*
 
-    Previous Commit: Newly Tracked Branch
-    Latest   Commit: {{ $commit.NewCommit }}
-    {{ end }}
-    {{ else if eq $commit.OldCommit $commit.NewCommit }}
-    No new Commits created recently
-    {{ else }}
-    Compare Commits: {{ CompareLink $provider $repo.RepoName $commit.OldCommit $commit.NewCommit }}
-          Text Diff: {{ CompareLink $provider $repo.RepoName $commit.OldCommit $commit.NewCommit }}.diff
+{{ range $diff := .Data }}
+{{ with $diff }}
 
-    Previous Commit: {{ $commit.OldCommit }}
-    Latest   Commit: {{ $commit.NewCommit }}
-    {{ end }}
-  {{ end }}
-  {{ end }}
+{{ if eq .Changed true}}
+{{ if eq .ChangeType "repoBranchDiff" }}
+{{ if eq .Error "" }}
+* {{.Title.Text}}: {{ range $i, $change := .Changes }}{{$change.Href}}{{ end }}
+{{ else }}
+^ {{.Title.Text}}: {{ .Error }}
+{{ end }}
 
-  {{ range $t := .RefList }}
-  {{ with $t }}
-  New {{ .Title }}:
-      {{ $len := len .References }}
-      {{ if eq $len 0 }}
-      No new {{.Title}} created recently
-      {{ else }}
-      {{ range $ref := .References }}
-      * {{ $ref }}: {{ TreeLink $provider $repo.RepoName $ref }}
-      {{ end }}
-      {{ end }}
-  {{ end }}
-  {{ end }}
------------------------------------------------------------
+{{ else }}
+{{.Title.Title}}
+{{ range $i, $change := .Changes }}
+* {{$change.Text}} {{$change.Href}}
+{{ end }}
 {{ end }}
 {{ end }}
 
-content provided by GitNotify | {{ .WebsiteURL }}
-prepared for: {{ .User }}
-unsubscribe at {{ .WebsiteURL }} if you do not want these messages on the website.
+{{ end }}
+{{ end }}
+-------------------------------------------------------------------------------
+{{ end }}
+{{ end }}
+{{ end }}
+
+--
+You are receiving this because you are subscribed on GitNotify.
+prepared for: {{ .User }} ; unsubscribe option at: {{ .WebsiteURL }}
