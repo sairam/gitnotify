@@ -10,7 +10,7 @@ githubAPIEndPoint: "https://api.github.com/"    # "https://github.acme.com/api/v
 gitlabURLEndPoint: "https://gitlab.com/"        # "https://gitlab.acme.com/"
 gitlabAPIEndPoint: "https://gitlab.com/api/v3/" # "https://gitlab.acme.com/api/v3/"
 
-webhookIntegrations: ["slack"]                  # , "generic"
+webhookIntegrations: ["generic", "slack"]
 
 # Location of data being saved
 dataDir:     "./data"

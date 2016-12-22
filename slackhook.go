@@ -49,8 +49,35 @@ func (s *slackTypeLink) String() string {
 
 func processForWebhook(diff []*repoDiffData, conf *Setting) error {
 	if conf.User.isValidWebhook() {
-		log.Print("POSTing on a Slack Hook")
-		return processForSlack(diff, conf.User.WebhookURL)
+		if conf.User.WebhookType == "slack" {
+			log.Print("POSTing on a Slack Hook")
+			return processForSlack(diff, conf.User.WebhookURL)
+		}
+		// generic webhook
+		log.Print("POSTing on a Generic Webhook")
+		return processForGenericWebhook(diff, conf.User.WebhookURL)
+	}
+	return nil
+}
+
+func processForGenericWebhook(diffs []*repoDiffData, url string) error {
+	return postJSONtoURL(url, diffs)
+}
+
+func postJSONtoURL(url string, data interface{}) error {
+	pr, pw := io.Pipe()
+	go func() {
+		// close the writer, so the reader knows there's no more data
+		defer pw.Close()
+
+		// write json data to the PipeReader through the PipeWriter
+		if err := json.NewEncoder(pw).Encode(data); err != nil {
+			log.Print(err)
+		}
+	}()
+
+	if _, err := http.Post(url, "application/json", pr); err != nil {
+		return err
 	}
 	return nil
 }
@@ -107,20 +134,7 @@ func processForSlack(diffs []*repoDiffData, slackURL string) error {
 			Attachments: attachments,
 		}
 
-		pr, pw := io.Pipe()
-		go func() {
-			// close the writer, so the reader knows there's no more data
-			defer pw.Close()
-
-			// write json data to the PipeReader through the PipeWriter
-			if err := json.NewEncoder(pw).Encode(message); err != nil {
-				log.Print(err)
-			}
-		}()
-
-		if _, err := http.Post(slackURL, "application/json", pr); err != nil {
-			return err
-		}
+		postJSONtoURL(slackURL, message)
 	}
 	return nil
 }
