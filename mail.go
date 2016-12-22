@@ -14,9 +14,10 @@ type MailContent struct {
 	User       string // provider/username
 	Name       string
 	Data       []*repoDiffData
+	SavedFile  string
 }
 
-func processForMail(diff []*repoDiffData, conf *Setting) error {
+func processForMail(diff []*repoDiffData, conf *Setting, fileName string) error {
 	if config.isEmailSetup() == false {
 		return nil
 	}
@@ -25,8 +26,9 @@ func processForMail(diff []*repoDiffData, conf *Setting) error {
 		WebsiteURL: config.websiteURL(),
 		User:       fmt.Sprintf("%s/%s", conf.Auth.Provider, conf.Auth.UserName),
 		Name:       conf.usersName(),
+		Data:       diff,
+		SavedFile:  fileName,
 	}
-	mailContent.Data = diff
 
 	htmlBuffer := &bytes.Buffer{}
 	displayPage(htmlBuffer, "changes_mail", mailContent)

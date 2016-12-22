@@ -36,12 +36,14 @@
 {{ end }}
 {{ end }}
 
-<p style="font-size:small;-webkit-text-size-adjust:none;color:#666;">&mdash;<br>You are receiving this because you are subscribed on <a href="{{ .WebsiteURL }}">GitNotify</a><br>This email is prepared for oauth user: {{ .User }}<br><a href="{{ .WebsiteURL }}">unsubscribe here</a> if you no longer wish to get these messages</p>
+<p style="font-size:small;-webkit-text-size-adjust:none;color:#666;">&mdash;<br>You are receiving this because you have subscribed at <a href="{{ .WebsiteURL }}">GitNotify</a><br>This email {{if ne .SavedFile ""}}<a href="{{.WebsiteURL}}/changes/{{.SavedFile}}">is prepared</a>{{else}}is prepared{{end}} for oauth user: {{ .User }}<br><a href="{{ .WebsiteURL }}">unsubscribe here</a> if you no longer wish to get these messages</p>
 
+{{ if ne .SavedFile "" }}
 <div itemscope itemtype="http://schema.org/EmailMessage">
   <div itemprop="potentialAction" itemscope itemtype="http://schema.org/ViewAction">
-    <link itemprop="target" href="https://gitnotify.com/changes/20161222"/>
+    <link itemprop="target" href="{{.WebsiteURL}}/changes/{{.SavedFile}}"/>
     <meta itemprop="name" content="View Changes"/>
   </div>
   <meta itemprop="description" content="View this information on GitNotify"/>
 </div>
+{{ end }}

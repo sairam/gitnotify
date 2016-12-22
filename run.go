@@ -1,13 +1,17 @@
 package main
 
 import (
+	"compress/gzip"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/aryann/difflib"
 )
@@ -115,16 +119,16 @@ func isSaveSetToFalse(q url.Values) bool {
 
 // Move to helper. regular directory walk
 func fetchFiles(provider string) []string {
-	dir := fmt.Sprintf("%s/%s", config.DataDir, provider)
+	dir := strings.Join([]string{config.DataDir, provider}, string(os.PathSeparator))
 	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
 		log.Print(err)
 		return []string{}
 	}
-	files := make([]string, len(fis))
-	for i, fi := range fis {
+	files := make([]string, 0, len(fis))
+	for _, fi := range fis {
 		if fi.IsDir() {
-			files[i] = strings.Join([]string{dir, fi.Name(), config.SettingsFile}, string(os.PathSeparator))
+			files = append(files, strings.Join([]string{dir, fi.Name(), config.SettingsFile}, string(os.PathSeparator)))
 		}
 	}
 	return files
@@ -345,18 +349,100 @@ func processDiffForUser(conf *Setting) {
 
 	diffs := makeRepoDiffs(diff, conf)
 
-	// TODO save to new file based on hour/date
-	// if err = json.NewEncoder(os.Stdout).Encode(diffs); err != nil {
-	// 	log.Print(err)
-	// }
+	// save to new file based on hour/date
+	fileName, err := saveDiffToUserDirectory(diffs, conf)
+	if err != nil {
+		fileName = ""
+	}
 
 	if eligible := atleastOneChanged(diffs); !eligible {
 		log.Printf("None of the Repositories have any changes. Skip Notifications")
 		return
 	}
 
-	processForMail(diffs, conf)
+	processForMail(diffs, conf, fileName)
 	processForWebhook(diffs, conf)
+}
+
+func saveDiffToUserDirectory(diffs []*repoDiffData, conf *Setting) (string, error) {
+	t := time.Now()
+
+	dir := strings.Join([]string{conf.Auth.getConfigDir(), "diff"}, string(os.PathSeparator))
+	os.MkdirAll(dir, 0700)
+
+	filenamePrefix := fmt.Sprintf("%d", t.Unix())
+	fileName := strings.Join([]string{conf.Auth.getConfigDir(), "diff", filenamePrefix + ".json"}, string(os.PathSeparator))
+
+	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		fmt.Println("Error opening file ", err)
+		return "", err
+	}
+	defer file.Close()
+
+	out, err := json.Marshal(diffs)
+	if err != nil {
+		fmt.Println("Error saving diff ", err)
+		return "", err
+	}
+
+	fileWriter := gzip.NewWriter(file)
+	fileWriter.Write(out)
+	fileWriter.Close()
+
+	return filenamePrefix, nil
+}
+
+func loadDiffFromUserDirectory(fileNamePrefix string, conf *Setting) ([]*repoDiffData, error) {
+	var v []*repoDiffData
+	fileName := strings.Join([]string{conf.Auth.getConfigDir(), "diff", fileNamePrefix + ".json"}, string(os.PathSeparator))
+	data, err := readCompressedFile(fileName)
+	if err != nil {
+		fmt.Println("error reading compressed file ", err)
+		return v, err
+	}
+	json.Unmarshal(data, &v)
+	return v, nil
+}
+
+func listFiles(conf *Setting) []string {
+	dir := strings.Join([]string{conf.Auth.getConfigDir(), "diff"}, string(os.PathSeparator))
+
+	fis, err := ioutil.ReadDir(dir)
+	if err != nil {
+		log.Print(err)
+		return []string{}
+	}
+	files := make([]string, 0, len(fis))
+	for _, fi := range fis {
+		files = append(files, fi.Name())
+	}
+	sort.Sort(sort.Reverse(sort.StringSlice(files)))
+	return files
+}
+
+func readCompressedFile(fileName string) ([]byte, error) {
+	file, err := os.OpenFile(fileName, os.O_RDONLY, 0600)
+	if err != nil {
+		fmt.Println("Error opening file ", err)
+		return nil, err
+	}
+	defer file.Close()
+
+	fileReader, err := gzip.NewReader(file)
+	if err != nil {
+		fmt.Println("error reading from file ", err)
+		return nil, err
+	}
+	defer fileReader.Close()
+
+	data, err := ioutil.ReadAll(fileReader)
+	if err != nil {
+		fmt.Println("reading content ", err)
+		return nil, err
+	}
+	return data, nil
+
 }
 
 // option can be tags or branches

@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	configFile       = "config.yml"
+	appConfigFile    = "config.yml"
 	runModeDev       = "dev"
 	gitRefBranch     = "branches"
 	gitRefTag        = "tags"

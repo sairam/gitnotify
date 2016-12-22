@@ -43,3 +43,4 @@ Commit Changes for *{{.Repo.Text}}*
 --
 You are receiving this because you are subscribed on GitNotify.
 prepared for: {{ .User }} ; unsubscribe option at: {{ .WebsiteURL }}
+{{if ne .SavedFile ""}}{{.WebsiteURL}}/changes/{{.SavedFile}}{{end}}

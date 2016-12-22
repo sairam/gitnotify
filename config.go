@@ -54,11 +54,11 @@ func (c *AppConfig) isEmailSetup() bool {
 var config = new(AppConfig)
 
 func loadConfig() {
-	if _, err := os.Stat(configFile); os.IsNotExist(err) {
+	if _, err := os.Stat(appConfigFile); os.IsNotExist(err) {
 		panic(err)
 	}
 
-	data, err := ioutil.ReadFile(configFile)
+	data, err := ioutil.ReadFile(appConfigFile)
 	if os.IsNotExist(err) {
 		panic(err)
 	}
