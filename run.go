@@ -43,20 +43,20 @@ type gitRepoDiffs struct {
 	RepoName   string
 	Provider   string
 	References map[string]*gitCommitDiff
-	Others     []*LocalRef
+	RefList    []*gitRefList
 }
 
 func (e *gitRepoDiffs) String() string {
 	return Stringify(e)
 }
 
-// LocalRef is used tracking Repo and Branch inside the diff
-type LocalRef struct {
+// gitRefList is used tracking Repo and Branch inside the diff
+type gitRefList struct {
 	Title      string
 	References []string
 }
 
-func (e *LocalRef) String() string {
+func (e *gitRefList) String() string {
 	return Stringify(e)
 }
 
@@ -193,22 +193,22 @@ func process(conf *Setting) (allLocalDiffs []*gitRepoDiffs, err error) {
 
 			if repo.Branches {
 				branchesDiff := diffWithOldBranches(newBranches, branch, "branches", conf.Info)
-				l := &LocalRef{
+				l := &gitRefList{
 					Title:      "Branches",
 					References: branchesDiff,
 				}
-				localDiffs.Others = append(localDiffs.Others, l)
+				localDiffs.RefList = append(localDiffs.RefList, l)
 			}
 		}
 
 		if repo.Tags {
 			newTags, _ := getNewInfo(client, branch, "tags")
 			tagsDiff := diffWithOldBranches(newTags, branch, "tags", conf.Info)
-			l := &LocalRef{
+			l := &gitRefList{
 				Title:      "Tags",
 				References: tagsDiff,
 			}
-			localDiffs.Others = append(localDiffs.Others, l)
+			localDiffs.RefList = append(localDiffs.RefList, l)
 		}
 	}
 	return allLocalDiffs, nil

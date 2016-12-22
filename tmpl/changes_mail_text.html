@@ -31,7 +31,7 @@ Here is the latest diff that was composed:
   {{ end }}
   {{ end }}
 
-  {{ range $t := .Others }}
+  {{ range $t := .RefList }}
   {{ with $t }}
   New {{ .Title }}:
       {{ $len := len .References }}
@@ -48,6 +48,6 @@ Here is the latest diff that was composed:
 {{ end }}
 {{ end }}
 
-content provided by GitNotify | http://gitnotify.com
+content provided by GitNotify | {{ .WebsiteURL }}
 prepared for: {{ .User }}
 unsubscribe at {{ .WebsiteURL }} if you do not want these messages on the website.

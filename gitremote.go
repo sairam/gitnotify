@@ -69,24 +69,36 @@ func getGitTypeAhead(provider, token, search string) ([]*searchRepoItem, error) 
 	return client.SearchRepos(search)
 }
 
-// TODO run asynchronously
 func getGitBranchInfoForRepo(provider, token, repoName string) (*typeAheadBranchList, error) {
 	client := getGitClient(provider, token)
 
-	defaultBranch, err := client.DefaultBranch(repoName)
-	if err != nil {
-		return nil, err
-	}
+	branchCh := make(chan string)
+	branchListCh := make(chan []string)
 
-	branchList, err := client.BranchesWithoutRefs(repoName)
-	if err != nil {
-		return nil, err
+	go func() {
+		defaultBranch, _ := client.DefaultBranch(repoName)
+		branchCh <- defaultBranch
+		close(branchCh)
+	}()
+
+	go func() {
+		branchList, _ := client.BranchesWithoutRefs(repoName)
+		branchListCh <- branchList
+		close(branchListCh)
+	}()
+
+	defaultBranch := <-branchCh
+	branchList := <-branchListCh
+
+	var err error
+	if len(branchList) == 0 || defaultBranch == "" {
+		err = errors.New("error fetching branches")
 	}
 
 	return &typeAheadBranchList{
 		DefaultBranch: defaultBranch,
 		AllBranches:   branchList,
-	}, nil
+	}, err
 
 }
 

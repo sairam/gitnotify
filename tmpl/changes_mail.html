@@ -1,10 +1,10 @@
-
+{{ $contactEmail := "hello@gitnotify.com" }}
 <body align="center">
   <font size="4">
 
 <p>
 {{ .Name }}, Thanks for using <a href="{{ .WebsiteURL }}">GitNotify</a> for periodic diffs <br>
-<p><font size="2">Kindly provide any feedback/suggestion/improvements you would like to see  to <a href="mailto:hello@gitnotify.com">hello@gitnotify.com</a></font></p>
+<p><font size="2">Kindly provide any feedback/suggestion/improvements you would like to see  to <a href="mailto:{{$contactEmail}}">{{$contactEmail}}</a></font></p>
 Here is the latest diff that was composed
 </p>
 <!-- split into groups of 5 and add to the list  -->
@@ -60,7 +60,7 @@ Here is the latest diff that was composed
   {{ end }}
   <!-- END loop through branches -->
 
-  {{ range $t := .Others }}
+  {{ range $t := .RefList }}
   {{ with $t }}
   <tr>
     <td style="padding: 0.7em;" align="right">New {{ .Title }}</td>
@@ -88,7 +88,7 @@ Here is the latest diff that was composed
 <br><br>
 </font>
 <p>
-content provided by <a href="http://gitnotify.com/">Git Notify</a><br>
+content provided by <a href="{{ .WebsiteURL }}">Git Notify</a><br>
 <strong>prepared for: {{ .User }}</strong><br>
 <a href="{{ .WebsiteURL }}">unsubscribe</a> if you do not want these messages on the website.
 </p>

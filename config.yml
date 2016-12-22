@@ -1,34 +1,36 @@
 # Required to start the server
-serverProto: "http://"
-serverHost:  "localhost:3000"
-localHost:   "localhost:3000"
+serverProto: "http://"        # server protocol exposed to end user
+serverHost:  "localhost:3000" # server host exposed to end user
+localHost:   "localhost:3000" # local server port/host to start the server
 
 # Authentication Options
-githubURLEndPoint: "https://github.com/" # "https://github.acme.com/"
-githubAPIEndPoint: "https://api.github.com/" # "https://github.acme.com/api/v3/"
+githubURLEndPoint: "https://github.com/"        # "https://github.acme.com/"
+githubAPIEndPoint: "https://api.github.com/"    # "https://github.acme.com/api/v3/"
 
-gitlabURLEndPoint: "https://gitlab.com/" # "https://gitlab.acme.com/"
+gitlabURLEndPoint: "https://gitlab.com/"        # "https://gitlab.acme.com/"
 gitlabAPIEndPoint: "https://gitlab.com/api/v3/" # "https://gitlab.acme.com/api/v3/"
+
+webhookIntegrations: ["slack"]                  # , "generic"
 
 # Location of data being saved
 dataDir:     "./data"
 settingsFile: "settings.yml"
 
 # Notification From Name
-fromName:    "Git Notify"
+fromName:    "Git Notify"                         # use "Git Acme" for your company
 
 # Email Setup
-fromEmail:   "hub@gitnotify.com"
+fromEmail:   "hub@gitnotify.com"                  # the from customers recognise and valid at your provider
 smtpHost:    "email-smtp.us-east-1.amazonaws.com"
 # smtpHost:    "" # set as "" to disable emails
 smtpPort:    587
-sesConfigurationSet: "gitnotify"
+sesConfigurationSet: "gitnotify"                  # adds a tag header when using ses
 
-googleAnalytics: ""
-runMode: "dev" # "prod"
-webhookIntegrations: ["slack"] # generic
-templateDir: "tmpl/" # should end with a /
-templatePartialsDir: "tmpl/partials/" # should end with a /
+# Path of view templates required to load
+templateDir: "tmpl/"                  # should end with / Use OS specific delimiters
+templatePartialsDir: "tmpl/partials/" # should end with / Use OS specific delimiters
 
-cacheIncomingRequests: true
+googleAnalytics: ""     # setup id if you want to track simple page view analytics
+runMode: "dev"          # Use "prod" in production to not reload templates and client side cache of typeahead requests
+
 sentryDSN: ""

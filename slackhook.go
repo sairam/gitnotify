@@ -83,7 +83,7 @@ func processForSlack(diff []*gitRepoDiffs, slackURL string) error {
 			attachments = append(attachments, attachment)
 		}
 
-		for _, r := range repo.Others {
+		for _, r := range repo.RefList {
 			links := make([]string, 0, 1)
 			for _, treeName := range r.References {
 				href := TreeLink(repo.Provider, repo.RepoName, treeName)

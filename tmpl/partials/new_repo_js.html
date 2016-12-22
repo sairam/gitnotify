@@ -1,0 +1,101 @@
+{{ $provider := . }}
+<script>
+$( document ).ready(function() {
+if ($('#repoNew').val()[0] == '#') {
+  var t = $('#repoNew').val().substring(1);
+  $('#repoNew').val(t).trigger("input").focus();
+}
+})
+
+$('#typeaheadUsage code').on('click', function() {
+  var t = $(this).text();
+  $('#repoNew').val(t).trigger("input").focus();
+})
+
+var repoNames = new Bloodhound({
+  datumTokenizer: Bloodhound.tokenizers.whitespace,
+  queryTokenizer: Bloodhound.tokenizers.obj.whitespace('full_name', 'description'),
+  remote: {
+    url: '/typeahead/repo?repo=%QUERY&provider={{$provider}}',
+    wildcard: '%QUERY'
+  }
+});
+
+compileOutput = function(result) {
+  var output = "<div><strong>"+result.full_name+"</strong>"
+  if (result.homepage != "") {
+    output += (" | "+result.homepage);
+  }
+  output += "<p>"
+  if (result.description.length > 50) {
+    output += result.description.substr(0,50) + ".."
+  } else {
+    output += result.description
+  }
+  output += "</p>"
+  return output
+}
+
+$('input#repoNew').keypress(function(event){
+  var e = jQuery.Event("keydown");
+  e.keyCode = e.which = 9;
+  if ( event.which == 13 ) { // Enter key = keycode 13
+    $('input#repoNew').trigger(e);
+    return false;
+  } else if ( event.which == 9 ) {
+    var branchInput = $(this).parents('form').find('#references');
+    branchInput.focus();
+  }
+});
+
+$('input#repoNew').typeahead(null, {
+  name: 'repo',
+  limit: 20,
+  hint: false,
+  highlight: false,
+  minLength: 1,
+  source: repoNames,
+  displayKey: 'full_name',
+  templates: {
+    empty: [
+      '<div class="empty-message">',
+        'could not find any repositories matching the criteria',
+      '</div>'
+    ].join('\n'),
+    suggestion: compileOutput
+  }
+});
+
+var selectedRepoName = "";
+
+$('input#repoNew').on('focusout', function() {
+  if ($(this).val().indexOf("/") == -1) {
+    return;
+  }
+  if (selectedRepoName == $(this).val()) {
+    return;
+  }
+  selectedRepoName = $(this).val();
+  var branchInput = $(this).parents('form').find('#references');
+  $.ajax({
+    url: "/typeahead/branch?provider={{$provider}}&repo="+selectedRepoName,
+    format: "json",
+    cache: true,
+    success: function(result) {
+      var data = JSON.parse(result);
+      var branch = data.default_branch;
+
+      var results = [];
+      for(i=0; i < data.branches.length ; i++) {
+        results.push({id: data.branches[i], text: data.branches[i]})
+      }
+      branchInput.select2({data: results, closeOnSelect: false}).select2('open');
+      branchInput.val(branch).trigger('change');
+    },
+    failure: function() {
+      console.log("Repo does not exist")
+    }
+  });
+})
+
+</script>

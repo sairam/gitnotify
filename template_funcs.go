@@ -6,6 +6,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -33,6 +34,7 @@ var (
 		"slice":    slice,
 		"split":    split,
 		"safeHTML": safeHTML,
+		"dict":     dictionary,
 		"minus":    minus,
 		"div":      div,
 		"mod":      mod,
@@ -243,6 +245,24 @@ func split(a interface{}, delimiter string) ([]string, error) {
 		return []string{}, err
 	}
 	return strings.Split(aStr, delimiter), nil
+}
+
+// dictionary creates a map[string]interface{} from the given parameters by
+// walking the parameters and treating them as key-value pairs.  The number
+// of parameters must be even.
+func dictionary(values ...interface{}) (map[string]interface{}, error) {
+	if len(values)%2 != 0 {
+		return nil, errors.New("invalid dict call")
+	}
+	dict := make(map[string]interface{}, len(values)/2)
+	for i := 0; i < len(values); i += 2 {
+		key, ok := values[i].(string)
+		if !ok {
+			return nil, errors.New("dict keys must be strings")
+		}
+		dict[key] = values[i+1]
+	}
+	return dict, nil
 }
 
 func partial(name string, contextList ...interface{}) template.HTML {

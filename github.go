@@ -83,6 +83,7 @@ func (g *localGithub) DefaultBranch(repoName string) (string, error) {
 	gr, _ := g.Client().Do(req, v)
 
 	if gr.StatusCode >= 400 {
+		// gr will be in case of connection interruption
 		// 401 statusCode means the token is no longer valid
 		return "", errors.New("repo not found")
 	}
