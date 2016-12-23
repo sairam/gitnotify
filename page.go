@@ -13,7 +13,7 @@ type Page struct {
 
 // newPage is used by all HTML contexts to display the template
 // Emails do not use Page
-func newPage(hc *httpContext, title string, pageTitle string, conf interface{}, data interface{}) *Page {
+func newPage(hc *httpContext, title string, pageTitle string, ctx interface{}, data interface{}) *Page {
 	var userInfo *Authentication
 	if hc.isUserLoggedIn() {
 		userInfo = hc.userLoggedinInfo()
@@ -26,7 +26,7 @@ func newPage(hc *httpContext, title string, pageTitle string, conf interface{}, 
 		PageTitle: pageTitle,
 		User:      userInfo,
 		Flashes:   hc.getFlashes(),
-		Context:   conf,
+		Context:   ctx,
 		Data:      data,
 	}
 

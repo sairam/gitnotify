@@ -1,17 +1,13 @@
 package main
 
 import (
-	"compress/gzip"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
-	"sort"
 	"strings"
-	"time"
 
 	"github.com/aryann/difflib"
 )
@@ -230,11 +226,11 @@ func process(conf *Setting) (allLocalDiffs []*gitRepoDiffs, err error) {
 	return allLocalDiffs, nil
 }
 
-func makeRepoDiffs(repoDiffs []*gitRepoDiffs, conf *Setting) []*repoDiffData {
-	// config.websiteURL()
+// This is the main logic that converts computed diff to representable diff
+func makeRepoDiffs(repoDiffs []*gitRepoDiffs, conf *Setting) repoDiffDatum {
 	madefor := fmt.Sprintf("%s/%s", conf.Auth.Provider, conf.Auth.UserName)
 
-	var diffs []*repoDiffData
+	var diffs repoDiffDatum
 
 	for _, diff := range repoDiffs {
 
@@ -305,37 +301,6 @@ func makeRepoDiffs(repoDiffs []*gitRepoDiffs, conf *Setting) []*repoDiffData {
 	return diffs
 }
 
-type repoDiffData struct {
-	Repo    link       `json:"repo"`
-	Changed bool       `json:"changed"`
-	Data    []diffData `json:"data"`
-	MadeFor string     `json:"made_for"`
-}
-type diffData struct {
-	Title      link   `json:"title"`
-	Error      string `json:"error"`
-	ChangeType string `json:"change_type"`
-	Changed    bool   `json:"changed"`
-	Changes    []link `json:"changes"`
-}
-
-type link struct {
-	Text  string `json:"text"`
-	Href  string `json:"href"`
-	Title string `json:"title"`
-}
-
-// check if atleast one of the diffs has changed
-func atleastOneChanged(diff []*repoDiffData) bool {
-	// check if eligible to send email
-	for _, a := range diff {
-		if a.Changed {
-			return true
-		}
-	}
-	return false
-}
-
 func processDiffForUser(conf *Setting) {
 	if !conf.anyValidNotifications() {
 		log.Printf("Not processing conf %s/%s since no valid notification mechanisms are found", conf.Auth.Provider, conf.Auth.UserName)
@@ -350,99 +315,18 @@ func processDiffForUser(conf *Setting) {
 	diffs := makeRepoDiffs(diff, conf)
 
 	// save to new file based on hour/date
-	fileName, err := saveDiffToUserDirectory(diffs, conf)
+	fileName, err := diffs.save(conf)
 	if err != nil {
 		fileName = ""
 	}
 
-	if eligible := atleastOneChanged(diffs); !eligible {
+	if eligible := diffs.hasChanges(); !eligible {
 		log.Printf("None of the Repositories have any changes. Skip Notifications")
 		return
 	}
 
 	processForMail(diffs, conf, fileName)
 	processForWebhook(diffs, conf)
-}
-
-func saveDiffToUserDirectory(diffs []*repoDiffData, conf *Setting) (string, error) {
-	t := time.Now()
-
-	dir := strings.Join([]string{conf.Auth.getConfigDir(), "diff"}, string(os.PathSeparator))
-	os.MkdirAll(dir, 0700)
-
-	filenamePrefix := fmt.Sprintf("%d", t.Unix())
-	fileName := strings.Join([]string{conf.Auth.getConfigDir(), "diff", filenamePrefix + ".json"}, string(os.PathSeparator))
-
-	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-	if err != nil {
-		fmt.Println("Error opening file ", err)
-		return "", err
-	}
-	defer file.Close()
-
-	out, err := json.Marshal(diffs)
-	if err != nil {
-		fmt.Println("Error saving diff ", err)
-		return "", err
-	}
-
-	fileWriter := gzip.NewWriter(file)
-	fileWriter.Write(out)
-	fileWriter.Close()
-
-	return filenamePrefix, nil
-}
-
-func loadDiffFromUserDirectory(fileNamePrefix string, conf *Setting) ([]*repoDiffData, error) {
-	var v []*repoDiffData
-	fileName := strings.Join([]string{conf.Auth.getConfigDir(), "diff", fileNamePrefix + ".json"}, string(os.PathSeparator))
-	data, err := readCompressedFile(fileName)
-	if err != nil {
-		fmt.Println("error reading compressed file ", err)
-		return v, err
-	}
-	json.Unmarshal(data, &v)
-	return v, nil
-}
-
-func listFiles(conf *Setting) []string {
-	dir := strings.Join([]string{conf.Auth.getConfigDir(), "diff"}, string(os.PathSeparator))
-
-	fis, err := ioutil.ReadDir(dir)
-	if err != nil {
-		log.Print(err)
-		return []string{}
-	}
-	files := make([]string, 0, len(fis))
-	for _, fi := range fis {
-		files = append(files, fi.Name())
-	}
-	sort.Sort(sort.Reverse(sort.StringSlice(files)))
-	return files
-}
-
-func readCompressedFile(fileName string) ([]byte, error) {
-	file, err := os.OpenFile(fileName, os.O_RDONLY, 0600)
-	if err != nil {
-		fmt.Println("Error opening file ", err)
-		return nil, err
-	}
-	defer file.Close()
-
-	fileReader, err := gzip.NewReader(file)
-	if err != nil {
-		fmt.Println("error reading from file ", err)
-		return nil, err
-	}
-	defer fileReader.Close()
-
-	data, err := ioutil.ReadAll(fileReader)
-	if err != nil {
-		fmt.Println("reading content ", err)
-		return nil, err
-	}
-	return data, nil
-
 }
 
 // option can be tags or branches

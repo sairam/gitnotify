@@ -1,0 +1,9 @@
+{{ partial "header" .}}
+<div class="text-left row">
+{{ range $name := .Context }}
+<div class="col-md-3" style="font-size: 1.2em;">
+  <a href="/changes/{{$name.Reference}}">{{ $name.Display }}</a><br><br>
+</div>
+{{ end }}
+</div>
+{{ partial "footer" .}}

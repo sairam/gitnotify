@@ -1,0 +1,54 @@
+{{ partial "header" .}}
+<div class="text-left row">
+
+{{ range $repo := .Context }}
+{{ if eq $repo.Changed true }}
+  <div class="col-md-6">
+
+{{ with $repo }}
+<h4>Commit Changes for <a target="_blank" href="{{.Repo.Href}}">{{.Repo.Text}}</a></h4>
+
+{{ range $diff := .Data }}
+{{ with $diff }}
+
+{{ if eq .Changed true }}
+{{ if eq .ChangeType "repoBranchDiff" }}
+{{ if eq .Error "" }}
+<strong>{{.Title.Text}}:</strong>&nbsp;&nbsp;{{ range $i, $change := .Changes }}<a target="_blank" href="{{$change.Href}}">{{$change.Text}}</a>{{ end }}<br/>
+{{ else }}
+<strong>{{.Title.Text}}:</strong> {{ .Error }} <br/>
+{{ end }}
+{{ else }}
+<p>{{.Title.Title}}</p>
+<ul>{{ range $i, $change := .Changes }}
+<li><a target="_blank" href="{{$change.Href}}">{{$change.Text}}</a></li>
+{{ end }}</ul>
+{{ end }}
+{{ end }}
+
+{{ end }}
+{{ end }}
+
+<hr>
+
+{{ end }}
+</div>
+{{ end }}
+{{ end }}
+
+
+{{ range $repo := .Context }}
+<div class="col-md-6">
+  {{ if eq $repo.Changed false }}
+  <h4>No Changes for <a target="_blank" href="{{$repo.Repo.Href}}">{{$repo.Repo.Text}}</a></h4>
+  <hr>
+  {{ end }}
+</div>
+{{ end }}
+
+</div>
+<hr>
+
+<a href="/changes" class="btn btn-primary btn-lg">See Older Changes</a>
+
+{{ partial "footer" .}}

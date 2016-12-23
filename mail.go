@@ -17,7 +17,7 @@ type MailContent struct {
 	SavedFile  string
 }
 
-func processForMail(diff []*repoDiffData, conf *Setting, fileName string) error {
+func processForMail(diff repoDiffDatum, conf *Setting, fileName string) error {
 	if config.isEmailSetup() == false {
 		return nil
 	}

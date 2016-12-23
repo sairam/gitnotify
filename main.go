@@ -58,6 +58,10 @@ func main() {
 	r.HandleFunc("/typeahead/branch", branchTypeAheadHandler).Methods("GET")
 	r.HandleFunc("/typeahead/tz", timezoneTypeAheadHandler).Methods("GET")
 
+	r.HandleFunc("/changes", listAllDiffs).Methods("GET")
+	r.HandleFunc("/changes/", listAllDiffs).Methods("GET")
+	r.HandleFunc("/changes/{diffentry}", renderThisDiff).Methods("GET")
+
 	r.HandleFunc("/logout", func(res http.ResponseWriter, req *http.Request) {
 		hc := &httpContext{w: res, r: req}
 		hc.clearSession()
@@ -67,7 +71,7 @@ func main() {
 
 	r.HandleFunc("/home", func(res http.ResponseWriter, req *http.Request) {
 		hc := &httpContext{w: res, r: req}
-		page := newPage(hc, "Home Page", "Git Notify", nil, nil)
+		page := newPage(hc, "Home Page", "Get Daily Code Diffs from Repositories", nil, nil)
 		displayPage(res, "home", page)
 	}).Methods("GET")
 
