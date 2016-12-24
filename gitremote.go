@@ -22,11 +22,14 @@ type GitRemoteIface interface {
 	// Methods containing logic
 	Branches(string) ([]*GitRefWithCommit, error)
 	Tags(string) ([]*GitRefWithCommit, error)
+
 	SearchRepos(string) ([]*searchRepoItem, error)
 	SearchUsers(string) ([]*searchRepoItem, error)
 	DefaultBranch(string) (string, error)
 	BranchesWithoutRefs(string) ([]string, error)
+
 	RemoteOrgType(string) (string, error)
+	ReposForUser(string) ([]string, error)
 }
 
 type providerNotPresent struct {

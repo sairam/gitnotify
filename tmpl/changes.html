@@ -6,7 +6,7 @@
   <div class="col-md-6">
 
 {{ with $repo }}
-<h4>Commit Changes for <a target="_blank" href="{{.Repo.Href}}">{{.Repo.Text}}</a></h4>
+<h4>Changes for <a target="_blank" href="{{.Repo.Href}}">{{.Repo.Text}}</a></h4>
 
 {{ range $diff := .Data }}
 {{ with $diff }}

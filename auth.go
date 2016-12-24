@@ -24,6 +24,11 @@ type Authentication struct {
 	Token    string `yaml:"token"`    // used to query the provider
 }
 
+// UserInfo provides provider/username
+func (userInfo *Authentication) UserInfo() string {
+	return fmt.Sprintf("%s/%s", userInfo.Provider, userInfo.UserName)
+}
+
 func (userInfo *Authentication) save() {
 
 	conf := new(Setting)

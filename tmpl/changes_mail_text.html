@@ -12,7 +12,7 @@ NOTE: Emails will be skipped in case of no changes
 {{ range $repo := .Data }}
 {{ if eq $repo.Changed true}}
 {{ with $repo }}
-Commit Changes for *{{.Repo.Text}}*
+Changes for *{{.Repo.Text}}*
 
 {{ range $diff := .Data }}
 {{ with $diff }}

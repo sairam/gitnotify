@@ -22,6 +22,21 @@ func contains(s []string, e string) bool {
 	return false
 }
 
+func deleteOrg(conf *Setting, delOrg *Organisation) (bool, *Organisation) {
+	var orgs []*Organisation
+	isProcessed := false
+	for _, org := range conf.Orgs {
+		if org.Name == delOrg.Name {
+			delOrg = org
+			isProcessed = true
+		} else {
+			orgs = append(orgs, org)
+		}
+	}
+	conf.Orgs = orgs
+	return isProcessed, delOrg
+}
+
 func deleteRepo(conf *Setting, delRepo *Repo) (bool, *Repo) {
 	var repos []*Repo
 	isProcessed := false
@@ -41,7 +56,7 @@ func upsertOrg(conf *Setting, newOrg *Organisation) bool {
 	var orgs []*Organisation
 	isProcessed := false
 	for _, org := range conf.Orgs {
-		if org.Name == org.Name {
+		if org.Name == newOrg.Name {
 			orgs = append(orgs, newOrg)
 			isProcessed = true
 		} else {
@@ -160,8 +175,8 @@ func actOnOrgs(hc *httpContext, formAction string, r *http.Request, conf *Settin
 			break
 		}
 
-		orgType, err := getRemoteOrgType(provider, conf.Auth.Token, orgName)
-		if err == false {
+		orgType, present := getRemoteOrgType(provider, conf.Auth.Token, orgName)
+		if present == false {
 			hc.addFlash(fmt.Sprintf("Org/User Name Not Found with %s", provider))
 			return
 		}
@@ -188,12 +203,28 @@ func actOnOrgs(hc *httpContext, formAction string, r *http.Request, conf *Settin
 			}
 		}
 	case "delete":
-		orgName := validateRepoName(getFirstValue(r.Form, "org"))
+		orgName := validateOrgName(getFirstValue(r.Form, "org"))
 		if orgName == "" {
-			hc.addFlash("Invalid Repo Name Provided")
+			hc.addFlash("Invalid Org Name Provided")
 			break
 		}
-		// FIXME
+
+		org := &Organisation{
+			Name: orgName,
+		}
+
+		// TODO move method under repo/settings struct
+		var success bool
+		success, org = deleteOrg(conf, org)
+		if success == false {
+			hc.addFlash("Error deleting org/user" + org.Name)
+		} else {
+			if err := conf.save(configFile); err != nil {
+				hc.addFlash("Error saving configuration " + err.Error() + " for " + org.Name)
+			} else {
+				hc.addFlash("Delete config for " + org.Name)
+			}
+		}
 
 	}
 }

@@ -7,12 +7,13 @@
 {{ range $repo := .Data }}
 {{ if eq $repo.Changed true}}
 {{ with $repo }}
-<h4>Commit Changes for <a href="{{.Repo.Href}}">{{.Repo.Text}}</a></h4>
+<h4>Changes for <a href="{{.Repo.Href}}">{{.Repo.Text}}</a></h4>
 
 {{ range $diff := .Data }}
 {{ with $diff }}
 
 {{ if eq .Changed true}}
+
 {{ if eq .ChangeType "repoBranchDiff" }}
 {{ if eq .Error "" }}
 <strong>{{.Title.Text}}:</strong>&nbsp;&nbsp;{{ range $i, $change := .Changes }}<a href="{{$change.Href}}">{{$change.Text}}</a>{{ end }}<br/>

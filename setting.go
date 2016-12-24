@@ -111,8 +111,8 @@ type OrgInformation struct {
 // RepoInformation is all the information fetched from remote location, updated and saved
 // contains the fetched_info
 type RepoInformation struct {
-	Tags     []string       `yaml:"tags,omitempty"`
-	Branches []string       `yaml:"branches,omitempty"`
+	Tags     []string       `yaml:"tags,omitempty,flow"`
+	Branches []string       `yaml:"branches,omitempty,flow"`
 	Commits  LocalCommitRef `yaml:"commits,omitempty"`
 }
 

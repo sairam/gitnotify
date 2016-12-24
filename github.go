@@ -179,7 +179,7 @@ func (g *localGithub) SearchUsers(search string) ([]*searchRepoItem, error) {
 }
 
 func (g *localGithub) RemoteOrgType(name string) (string, error) {
-	searchUsersURL := fmt.Sprintf("%s/users/%s", config.GithubAPIEndPoint, name)
+	searchUsersURL := fmt.Sprintf("%susers/%s", config.GithubAPIEndPoint, name)
 	req, _ := http.NewRequest("GET", searchUsersURL, nil)
 
 	v := new(searchRepoItem)
@@ -189,4 +189,30 @@ func (g *localGithub) RemoteOrgType(name string) (string, error) {
 	}
 	// Organization / User
 	return v.Type, nil
+}
+
+func (g *localGithub) ReposForUser(organisation string) ([]string, error) {
+	type ghListName []struct {
+		Name string `json:"name"`
+	}
+	page := 1
+	var repoList []string
+	for page != 0 {
+		listReposURL := fmt.Sprintf("%susers/%s/repos?sort=created&page=%d", config.GithubAPIEndPoint, organisation, page)
+		req, _ := http.NewRequest("GET", listReposURL, nil)
+
+		v := new(ghListName)
+		gr, _ := g.Client().Do(req, v)
+		if gr.StatusCode >= 400 {
+			continue
+		}
+		var repos = make([]string, 0, len(*v))
+		for _, repo := range *v {
+			repos = append(repos, repo.Name)
+		}
+		repoList = append(repoList, repos...)
+		page = gr.NextPage
+	}
+	return repoList, nil
+
 }

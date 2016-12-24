@@ -228,7 +228,7 @@ func processRepoDiffs(conf *Setting) (allLocalDiffs []*gitRepoDiffs, err error) 
 
 // This is the main logic that converts computed diff to representable diff
 func makeRepoDiffs(repoDiffs []*gitRepoDiffs, conf *Setting) gnDiffDatum {
-	madefor := fmt.Sprintf("%s/%s", conf.Auth.Provider, conf.Auth.UserName)
+	madefor := conf.Auth.UserInfo()
 
 	var diffs gnDiffDatum
 
@@ -343,8 +343,60 @@ func getNewInfo(client GitRemoteIface, branch *gitBranchList, option string) ([]
 	return getBranchTagInfo(client, branch)
 }
 
+func makeDiffForOrg(conf *Setting, o *Organisation, repoList []string) *gnDiffData {
+	var diff = &gnDiffData{}
+	diff.Repo = link{Text: o.Name, Href: RepoLink(o.Provider, o.Name)}
+	diff.MadeFor = conf.Auth.UserInfo()
+
+	if len(repoList) > 0 {
+		diff.Changed = true
+	} else {
+		diff.Changed = false
+		return diff
+	}
+
+	d := diffData{}
+	d.Changed = true
+	d.ChangeType = "orgRepoDiff"
+	d.Title = link{Text: o.Name, Href: RepoLink(o.Provider, o.Name)}
+	for _, repoName := range repoList {
+		d.Changes = append(d.Changes, link{Text: repoName, Href: RepoLink(o.Provider, o.Name+"/"+repoName)})
+	}
+	diff.Data = []diffData{d}
+
+	return diff
+}
+
 func processOrgDiffs(conf *Setting) (gnDiffDatum, error) {
 	var diffs gnDiffDatum
+
+	client := getGitClient(conf.Auth.Provider, conf.Auth.Token)
+	for _, org := range conf.Orgs {
+		reposList, err := client.ReposForUser(org.Name)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		t := conf.Info[org.Name]
+		var orgInfo OrgInformation
+		if t == nil {
+			orgInfo = OrgInformation{
+				OrgType: org.Type,
+				Repos:   []string{},
+			}
+			conf.Info[org.Name] = &Information{Org: orgInfo, Type: "org"}
+		} else {
+			orgInfo = conf.Info[org.Name].Org
+		}
+
+		onlyNew := getNewStrings(orgInfo.Repos, reposList)
+		newDiff := makeDiffForOrg(conf, org, onlyNew)
+		diffs = append(diffs, newDiff)
+		orgInfo.Repos = reposList
+		// we need to set again since this is not a reference
+		conf.Info[org.Name].Org = orgInfo
+	}
 
 	return diffs, nil
 
