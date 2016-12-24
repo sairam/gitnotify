@@ -117,7 +117,7 @@ type ByInt []*changeDetail
 
 func (a ByInt) Len() int           { return len(a) }
 func (a ByInt) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByInt) Less(i, j int) bool { return a[i].Display < a[j].Display }
+func (a ByInt) Less(i, j int) bool { return a[i].Reference < a[j].Reference }
 
 // at a user/repo level
 func (r *gnDiffDatum) ListUserChanges(conf *Setting) []*changeDetail {
