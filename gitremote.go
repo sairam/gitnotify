@@ -23,8 +23,10 @@ type GitRemoteIface interface {
 	Branches(string) ([]*GitRefWithCommit, error)
 	Tags(string) ([]*GitRefWithCommit, error)
 	SearchRepos(string) ([]*searchRepoItem, error)
+	SearchUsers(string) ([]*searchRepoItem, error)
 	DefaultBranch(string) (string, error)
 	BranchesWithoutRefs(string) ([]string, error)
+	RemoteOrgType(string) (string, error)
 }
 
 type providerNotPresent struct {
@@ -109,4 +111,13 @@ func validateRemoteRepoName(provider, token, repoName string) bool {
 		return false
 	}
 	return true
+}
+
+func getRemoteOrgType(provider, token, orgName string) (string, bool) {
+	client := getGitClient(provider, token)
+	orgType, err := client.RemoteOrgType(orgName)
+	if err != nil || orgType == "" {
+		return "", false
+	}
+	return orgType, true
 }

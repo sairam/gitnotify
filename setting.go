@@ -14,6 +14,7 @@ import (
 type Setting struct {
 	Version `yaml:"version"`
 	Repos   []*Repo                 `yaml:"repos"`
+	Orgs    []*Organisation         `yaml:"orgs"`
 	Auth    *Authentication         `yaml:"auth"`
 	User    *UserNotification       `yaml:"user_notification"`
 	Info    map[string]*Information `yaml:"fetched_info"`
@@ -66,26 +67,74 @@ type Frequency struct {
 	WeekDay string `yaml:"weekday"` // 0-6 to point SUN-SAT
 }
 
-// Information is all the information fetched from remote location, updated and saved
+// Information has the type and contains either Org or Repo Information.
+// This is more of an interface/abstract role based on type
 type Information struct {
-	Tags     []string       `yaml:"tags"`
-	Branches []string       `yaml:"branches"`
-	Commits  LocalCommitRef `yaml:"commits"`
+	Repo RepoInformation `yaml:",inline"`
+	Org  OrgInformation  `yaml:",inline"`
+	Type string          `yaml:"type"` // type is either Org or Repo
 }
 
-func newInformation() *Information {
+// UnmarshalYAML overrides the default unmarshaling logic
+func (i *Information) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var infoType struct {
+		Type string `yaml:"type"`
+	}
+	unmarshal(&infoType)
+	if infoType.Type == "repo" || infoType.Type == "" {
+		var r RepoInformation
+		unmarshal(&r)
+		*i = Information{Repo: r, Type: "repo"}
+	} else if infoType.Type == "org" {
+		var r OrgInformation
+		unmarshal(&r)
+		*i = Information{Org: r, Type: "org"}
+	}
+	return nil
+}
+
+func (i *Information) getType() interface{} {
+	if i.Type == "repo" || i.Type == "" {
+		return i.Repo
+	} else if i.Type == "org" {
+		return i.Org
+	}
+	return nil
+}
+
+// OrgInformation is info for org and ref_type
+type OrgInformation struct {
+	OrgType string   `yaml:"org_type,omitempty"`
+	Repos   []string `yaml:"repos,omitempty,flow"`
+}
+
+// RepoInformation is all the information fetched from remote location, updated and saved
+// contains the fetched_info
+type RepoInformation struct {
+	Tags     []string       `yaml:"tags,omitempty"`
+	Branches []string       `yaml:"branches,omitempty"`
+	Commits  LocalCommitRef `yaml:"commits,omitempty"`
+}
+
+func newRepoInformation() *Information {
 	i := &Information{}
-	i.Commits = make(LocalCommitRef)
+	i.Repo = RepoInformation{}
+	i.Repo.Commits = make(LocalCommitRef)
 	return i
 }
-
-// type RepoName string
 
 // LocalCommitRef is of the form map[BranchName] = "1234567890abcdef"
 type LocalCommitRef map[string]string
 
 // Version of the structure
 type Version string
+
+// Organisation is a user/org that is being tracked
+type Organisation struct {
+	Name     string `yaml:"name"`
+	Type     string `yaml:"type"`
+	Provider string
+}
 
 // Repo is a repository that is being tracked
 type Repo struct {
@@ -99,8 +148,7 @@ type reference string
 
 // SettingsPage ..
 type SettingsPage struct {
-	CronRunning  bool
-	EmailPresent bool
+	CronRunning bool
 }
 
 func (c *Setting) String() string {

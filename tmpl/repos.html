@@ -11,32 +11,105 @@
 
 <!-- Post to /run?save=false if you don't want to persist changes -->
 <form action="/run" method="post" style="float:left">
-  {{ if .Data.EmailPresent }}
+  {{ if .Data.CronRunning }}
   <button type="submit" class="btn btn-success">Check Latest Updates</button>
   {{ else }}
-  <a class="btn btn-danger" href="/user">Set Email Address</a>&nbsp;&nbsp;
+  <a class="btn btn-danger" href="/user">Configure Email/Webhook Notification</a>&nbsp;&nbsp;
   {{ end }}
 </form>
 
 </div>
 
 {{ $provider := .User.Provider}}
-
-{{ with .Context }}
 <div class="row">
   <div class="col-md-10">
 
+{{ with .Context }}
+
 {{ range $repo:=.Repos }}
 
-<form action="/" method="post" class="form-horizontal text-left">
 {{ with $repo }}
 
 {{ if or (eq .Repo "") (in .Repo "#") }}
   <a name="new"></a>
-  {{ partial "new_repo" (dict "content" . "provider" $provider ) }}
+
+  <div class="well1">
+    <ul class="nav nav-tabs" role="tablist">
+      <li role="presentation">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</li>
+      <li role="presentation" class="active"><a href="#reposTab" aria-controls="reposTab" role="tab" data-toggle="tab">Track Repos</a></li>
+      <li role="presentation">&nbsp;&nbsp;&nbsp;</li>
+      <li role="presentation"><a href="#orgTab" aria-controls="orgTab" role="tab" data-toggle="tab">Track Organisation</a></li>
+    </ul>
+
+    <div class="tab-content">
+      <div role="tabpanel" class="tab-pane active" id="reposTab">
+        <h3>Track a New Repository</h3>
+
+        <form action="/" method="post" class="form-horizontal text-left">
+        {{ partial "new_repo" (dict "content" . "provider" $provider ) }}
+
+        <div class="form-group">
+          <div class="col-sm-offset-4 col-sm-4">
+            <div class="checkbox">
+              <label>
+                <input type="hidden" name="branches" value="false" />
+                <input type="checkbox" name="branches" value="true" checked="checked" > Track New Branches
+              </label>
+            </div>
+          </div>
+          <div class="col-sm-4">
+            <div class="checkbox">
+              <label>
+                <input type="hidden" name="tags" value="false" />
+                <input type="checkbox" name="tags" value="true" checked="checked" > Track New Tags
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="references" class="col-sm-4 control-label">Track Branches</label>
+          <div class="col-sm-8">
+            <select multiple="multiple" class="form-control" id="references" name="references"></select>
+            <p class="help-block">Track one or more branches</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="col-sm-offset-4 col-sm-8">
+            <button type="submit" class="btn btn-success">Track Repo</button>
+          </div>
+        </div>
+      </form>
+
+      </div>
+      <div role="tabpanel" class="tab-pane" id="orgTab">
+        <h3>Track new repositories from User/Organisation</h3>
+        <form action="/" method="post" class="form-horizontal text-left">
+          <div class="form-group">
+            <label for="org" class="col-sm-4 control-label">User/Orgranisation Name</label>
+            <div class="col-sm-8">
+              <input type="text" class="form-control" id="orgNew" value="{ .Org }" name="org" placeholder="davecheney|dhh|rails|google|facebook|apache|spf13">
+              <p class="help-block">Add the name of the github user/organsiation to track</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="col-sm-offset-4 col-sm-8">
+              <button type="submit" class="btn btn-success">Track Organisation</button>
+            </div>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {{ partial "new_repo_js" $provider }}
 {{ else }}
   <a name="{{cleanRepoName .Repo}}"></a>
-  <h2>Edit "{{ .Repo }}"</h2>
+  <h3>Tracking "{{ .Repo }}"</h3>
+  <form action="/" method="post" class="form-horizontal text-left">
   <div class="form-group">
     <label for="repo" class="col-sm-4 control-label">Repository Name</label>
     <div class="col-sm-8">
@@ -44,59 +117,55 @@
       <p class="form-control-static"><a target="_blank" rel="none" href="{{ WebsiteLink .Provider }}{{.Repo}}">{{ .Repo }}</a></p>
     </div>
   </div>
-{{ end }}
 
-<div class="form-group">
-  <div class="col-sm-offset-4 col-sm-4">
-    <div class="checkbox">
-      <label>
-        <input type="hidden" name="branches" value="false" />
-        <input type="checkbox" name="branches" value="true" {{if .Branches }}checked="checked"{{end}} > Track New Branches
-      </label>
+  <div class="form-group">
+    <div class="col-sm-offset-4 col-sm-4">
+      <div class="checkbox">
+        <label>
+          <input type="hidden" name="branches" value="false" />
+          <input type="checkbox" name="branches" value="true" {{if .Branches }}checked="checked"{{end}} > Track New Branches
+        </label>
+      </div>
+    </div>
+    <div class="col-sm-4">
+      <div class="checkbox">
+        <label>
+          <input type="hidden" name="tags" value="false" />
+          <input type="checkbox" name="tags" value="true" {{if .Tags }}checked="checked"{{end}} > Track New Tags
+        </label>
+      </div>
     </div>
   </div>
-  <div class="col-sm-4">
-    <div class="checkbox">
-      <label>
-        <input type="hidden" name="tags" value="false" />
-        <input type="checkbox" name="tags" value="true" {{if .Tags }}checked="checked"{{end}} > Track New Tags
-      </label>
+
+  <div class="form-group">
+    <label for="references" class="col-sm-4 control-label">Track Branches</label>
+    <div class="col-sm-8">
+      <select multiple="multiple" class="form-control" id="references" name="references">
+      {{ range $i, $x := .NamedReferences }}
+      <option selected="selected" value="{{$x}}">{{$x}}</option>
+      {{ end }}
+      </select>
+      <p class="help-block"></p>
     </div>
   </div>
-</div>
 
-<div class="form-group">
-  <label for="references" class="col-sm-4 control-label">Track Branches</label>
-  <div class="col-sm-8">
-    <select multiple="multiple" class="form-control" id="references" name="references">
-    {{ range $i, $x := .NamedReferences }}
-    <option selected="selected" value="{{$x}}">{{$x}}</option>
-    {{ end }}
-    </select>
-    <p class="help-block"></p>
+  <div class="form-group">
+    <div class="col-sm-offset-4 col-sm-8">
+      <button type="submit" class="btn btn-success">{{ if eq .Repo "" }}Create{{else}}Update{{end}}</button>
+    </div>
   </div>
-</div>
-
-<div class="form-group">
-  <div class="col-sm-offset-4 col-sm-8">
-    <button type="submit" class="btn btn-success">{{ if eq .Repo "" }}Create{{else}}Update{{end}}</button>
-  </div>
-</div>
-
-{{ if or (eq .Repo "") (in .Repo "#") }}
-  {{ partial "new_repo_js" $provider }}
-{{ end }}
-
-{{ end }}
 </form>
 
-{{ if or (eq .Repo "") (in .Repo "#") }}{{else}}
 <form action="/" method="post">
-<input type="hidden" name="repo" value="{{ .Repo }}">
-<input type="hidden" name="_delete" value="true">
-<button type="submit" style="position: relative;left: 50px;top: -50px;" href="" class="btn btn-danger">Remove</button>
+  <input type="hidden" name="repo" value="{{ .Repo }}">
+  <input type="hidden" name="_delete" value="true">
+  <button type="submit" style="position: relative;left: 50px;top: -50px;" href="" class="btn btn-danger">Remove</button>
 </form>
-{{end}}
+
+
+{{ end }}
+{{ end }}
+
 <hr />
 {{ end }}
 

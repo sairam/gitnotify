@@ -127,3 +127,12 @@ func (g *localGitlab) SearchRepos(search string) ([]*searchRepoItem, error) {
 	}
 	return t, nil
 }
+
+func (g *localGitlab) SearchUsers(_ string) ([]*searchRepoItem, error) {
+	return []*searchRepoItem{}, &providerNotPresent{"gitlab"}
+}
+
+// provided not supported
+func (g *localGitlab) RemoteOrgType(_ string) (string, error) {
+	return "", &providerNotPresent{"gitlab"}
+}

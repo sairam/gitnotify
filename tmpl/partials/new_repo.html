@@ -1,10 +1,8 @@
 {{ $provider := .provider }}
 
-<h2>Track a New Repository</h2>
-
 {{ with .content }}
 {{ if eq $provider "github"}}
-<h4>No repos to track? May we offer some suggestions?</h4>
+<h4>May we offer some suggestions?</h4>
 <ul id="typeaheadUsage">
 <li><code>docker</code> <code>rails</code> <code>react</code> <code>awesome-go</code> <code>caddy</code> </li>
 <li><code>rea user:facebook</code> - Finds all repos from "facebook" org having "rea" </li>

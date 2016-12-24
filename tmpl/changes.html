@@ -38,12 +38,12 @@
 
 
 {{ range $repo := .Context }}
-<div class="col-md-6">
   {{ if eq $repo.Changed false }}
+  <div class="col-md-6">
   <h4>No Changes for <a target="_blank" href="{{$repo.Repo.Href}}">{{$repo.Repo.Text}}</a></h4>
   <hr>
+  </div>
   {{ end }}
-</div>
 {{ end }}
 
 </div>

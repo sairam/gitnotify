@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -9,6 +10,7 @@ import (
 
 // Repository is of the name ^ab-c/d_ef$
 var repoValidator = regexp.MustCompile("^[\\p{L}\\d_-]+/[\\.\\p{L}\\d_-]+$")
+var orgValidator = regexp.MustCompile("^[\\p{L}\\d_-]+$")
 
 // move to helper file
 func contains(s []string, e string) bool {
@@ -33,6 +35,24 @@ func deleteRepo(conf *Setting, delRepo *Repo) (bool, *Repo) {
 	}
 	conf.Repos = repos
 	return isProcessed, delRepo
+}
+
+func upsertOrg(conf *Setting, newOrg *Organisation) bool {
+	var orgs []*Organisation
+	isProcessed := false
+	for _, org := range conf.Orgs {
+		if org.Name == org.Name {
+			orgs = append(orgs, newOrg)
+			isProcessed = true
+		} else {
+			orgs = append(orgs, org)
+		}
+	}
+	if isProcessed == false {
+		orgs = append(orgs, newOrg)
+	}
+	conf.Orgs = orgs
+	return !isProcessed
 }
 
 // returns true if newly added row
@@ -89,6 +109,7 @@ func parseAutoFillOptions(hc *httpContext, q url.Values) *Repo {
 	}
 
 }
+
 func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) {
 	// Redirect user if not logged in
 	hc := &httpContext{w, r}
@@ -109,28 +130,84 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 		}
 	}
 
-	var repo *Repo
+	if getFirstValue(r.Form, "repo") != "" {
+		actOnRepos(hc, formAction, r, conf)
+	} else if getFirstValue(r.Form, "org") != "" {
+		actOnOrgs(hc, formAction, r, conf)
+	}
+
+	newRepo := parseAutoFillOptions(hc, r.URL.Query())
+
+	conf.Repos = append([]*Repo{newRepo}, conf.Repos...)
+
+	t := &SettingsPage{isCronPresentFor(configFile)}
+
+	page := newPage(hc, "Edit/Add Repos to Track", "Edit/Add Repos to Track", conf, t)
+	displayPage(w, "repos", page)
+}
+
+func actOnOrgs(hc *httpContext, formAction string, r *http.Request, conf *Setting) {
+	configFile := conf.Auth.getConfigFile()
+
+	switch formAction {
+	case "show":
+	case formUpdateString:
+		var provider = conf.Auth.Provider
+
+		orgName := validateOrgName(getFirstValue(r.Form, "org"))
+		if orgName == "" {
+			hc.addFlash("Invalid Org Name Provided")
+			break
+		}
+
+		orgType, err := getRemoteOrgType(provider, conf.Auth.Token, orgName)
+		if err == false {
+			hc.addFlash(fmt.Sprintf("Org/User Name Not Found with %s", provider))
+			return
+		}
+
+		org := &Organisation{
+			orgName,
+			orgType,
+			provider,
+		}
+
+		// TODO move method under repo/settings struct
+		info := upsertOrg(conf, org)
+		if info {
+			formAction = "create"
+		}
+
+		if err := conf.save(configFile); err != nil {
+			hc.addFlash("Error saving configuration " + err.Error() + " for " + org.Name)
+		} else {
+			if formAction == "create" {
+				hc.addFlash("Started tracking 'user/org:" + org.Name + "'")
+			} else {
+				hc.addFlash("Updated config for 'user/org:" + org.Name + "'")
+			}
+		}
+	case "delete":
+		orgName := validateRepoName(getFirstValue(r.Form, "org"))
+		if orgName == "" {
+			hc.addFlash("Invalid Repo Name Provided")
+			break
+		}
+		// FIXME
+
+	}
+}
+
+func actOnRepos(hc *httpContext, formAction string, r *http.Request, conf *Setting) {
+	configFile := conf.Auth.getConfigFile()
 
 	switch formAction {
 	case "show":
 	case formUpdateString:
 		var references []reference
-		var provider = userInfo.Provider
+		var provider = conf.Auth.Provider
 
-		// TODO based on the provider, we need to load the config file
-		if len(r.Form["provider"]) > 0 {
-			provider = r.Form["provider"][0]
-		}
-
-		for _, t := range r.Form["references"] {
-			str := strings.TrimSpace(t)
-			if str == "" {
-				continue
-			}
-			references = append(references, reference(str))
-		}
-
-		repoName := validateRepoName(r.Form["repo"][0])
+		repoName := validateRepoName(getFirstValue(r.Form, "repo"))
 		if repoName == "" {
 			hc.addFlash("Invalid Repo Name Provided")
 			break
@@ -142,7 +219,15 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 			break
 		}
 
-		repo = &Repo{
+		for _, t := range r.Form["references"] {
+			str := strings.TrimSpace(t)
+			if str == "" {
+				continue
+			}
+			references = append(references, reference(str))
+		}
+
+		repo := &Repo{
 			repoName,
 			references,
 			contains(r.Form["branches"], "true"),
@@ -166,13 +251,13 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 			}
 		}
 	case "delete":
-		repoName := validateRepoName(r.Form["repo"][0])
+		repoName := validateRepoName(getFirstValue(r.Form, "repo"))
 		if repoName == "" {
 			hc.addFlash("Invalid Repo Name Provided")
 			break
 		}
 
-		repo = &Repo{
+		repo := &Repo{
 			Repo: repoName,
 		}
 
@@ -194,21 +279,24 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 
 	}
 
-	newRepo := parseAutoFillOptions(hc, r.URL.Query())
-
-	conf.Repos = append([]*Repo{newRepo}, conf.Repos...)
-
-	t := &SettingsPage{isCronPresentFor(configFile), false}
-	if isValidEmail(conf.usersEmail()) {
-		t.EmailPresent = true
-	}
-
-	page := newPage(hc, "Edit/Add Repos to Track", "Edit/Add Repos to Track", conf, t)
-	displayPage(w, "repos", page)
 }
 
 func validateRepoName(repo string) string {
+	if repo == "" {
+		return ""
+	}
 	data := repoValidator.FindAllString(repo, -1)
+	if len(data) == 1 {
+		return data[0]
+	}
+	return ""
+}
+
+func validateOrgName(org string) string {
+	if org == "" {
+		return ""
+	}
+	data := orgValidator.FindAllString(org, -1)
 	if len(data) == 1 {
 		return data[0]
 	}

@@ -14,6 +14,7 @@ type searchRepoItem struct {
 	Name        string `json:"full_name"`
 	Description string `json:"description"`
 	HomePage    string `json:"homepage"`
+	Type        string `json:"type"`
 }
 
 // this file is responsible for handling 2 types of typeaheads
@@ -31,7 +32,7 @@ func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 	userInfo := hc.userLoggedinInfo()
 	provider := userInfo.Provider
 
-	search := getRepoName(r.URL.Query())
+	search := getFirstValue(r.URL.Query(), "repo")
 	result, err := getGitTypeAhead(provider, userInfo.Token, search)
 	if err != nil {
 		http.NotFound(w, r)
@@ -61,7 +62,7 @@ func branchTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 
 	userInfo := hc.userLoggedinInfo()
 	provider := userInfo.Provider
-	repoName := getRepoName(r.URL.Query())
+	repoName := getFirstValue(r.URL.Query(), "repo")
 	if repoName == "" {
 		http.NotFound(w, r)
 		return
@@ -80,11 +81,12 @@ func branchTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(tab)
 }
 
-func getRepoName(q url.Values) string {
-	if len(q["repo"]) == 0 {
+// move to a common helper file
+func getFirstValue(q url.Values, key string) string {
+	if len(q[key]) == 0 {
 		return ""
 	}
-	return q["repo"][0]
+	return q[key][0]
 }
 
 // TODO add option for time or end of date or month or year

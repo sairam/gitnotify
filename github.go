@@ -148,7 +148,7 @@ func (g *localGithub) SearchRepos(search string) ([]*searchRepoItem, error) {
 	v := new(ghSearchRepo)
 	gr, _ := g.Client().Do(req, v)
 	if gr.StatusCode >= 400 {
-		return nil, errors.New("issue")
+		return nil, errors.New("status code > 400")
 	}
 	return v.Items, nil
 }
@@ -164,4 +164,29 @@ func (g *localGithub) cleanRepoName(search string) string {
 		search = strings.Replace(search, data[0], rep, 1)
 	}
 	return search
+}
+
+func (g *localGithub) SearchUsers(search string) ([]*searchRepoItem, error) {
+	searchUsersURL := fmt.Sprintf("%ssearch/users?page=%d&q=%s", config.GithubAPIEndPoint, 1, search)
+	req, _ := http.NewRequest("GET", searchUsersURL, nil)
+
+	v := new(ghSearchRepo)
+	gr, _ := g.Client().Do(req, v)
+	if gr.StatusCode >= 400 {
+		return nil, errors.New("status code > 400")
+	}
+	return v.Items, nil
+}
+
+func (g *localGithub) RemoteOrgType(name string) (string, error) {
+	searchUsersURL := fmt.Sprintf("%s/users/%s", config.GithubAPIEndPoint, name)
+	req, _ := http.NewRequest("GET", searchUsersURL, nil)
+
+	v := new(searchRepoItem)
+	gr, _ := g.Client().Do(req, v)
+	if gr.StatusCode >= 400 {
+		return "", errors.New("status code > 400")
+	}
+	// Organization / User
+	return v.Type, nil
 }

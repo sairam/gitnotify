@@ -16,9 +16,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type repoDiffDatum []*repoDiffData
+// Generic structure which should fit any notification to be sent the user
+type gnDiffDatum []*gnDiffData
 
-type repoDiffData struct {
+type gnDiffData struct {
 	Repo    link       `json:"repo"`
 	Changed bool       `json:"changed"`
 	Data    []diffData `json:"data"`
@@ -53,7 +54,7 @@ func listAllDiffs(w http.ResponseWriter, r *http.Request) {
 
 	conf := new(Setting)
 	conf.load(configFile)
-	files := (&repoDiffDatum{}).ListUserChanges(conf)
+	files := (&gnDiffDatum{}).ListUserChanges(conf)
 
 	page := newPage(hc, "Changes for "+conf.Auth.UserName, "Recent Changes", files, nil)
 	displayPage(w, "changes_list", page)
@@ -82,7 +83,7 @@ func renderThisDiff(w http.ResponseWriter, r *http.Request) {
 	conf := new(Setting)
 	conf.load(configFile)
 
-	diffs := &repoDiffDatum{}
+	diffs := &gnDiffDatum{}
 	if err := diffs.load(entry, conf); err != nil {
 		http.NotFound(w, r)
 		return
@@ -97,7 +98,7 @@ func renderThisDiff(w http.ResponseWriter, r *http.Request) {
 }
 
 // check if atleast one of the diffs has changed
-func (r *repoDiffDatum) hasChanges() bool {
+func (r *gnDiffDatum) hasChanges() bool {
 	// check if eligible to send email
 	for _, a := range *r {
 		if a.Changed {
@@ -119,7 +120,7 @@ func (a ByInt) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByInt) Less(i, j int) bool { return a[i].Display < a[j].Display }
 
 // at a user/repo level
-func (r *repoDiffDatum) ListUserChanges(conf *Setting) []*changeDetail {
+func (r *gnDiffDatum) ListUserChanges(conf *Setting) []*changeDetail {
 	dir := strings.Join([]string{conf.Auth.getConfigDir(), "diff"}, string(os.PathSeparator))
 
 	fis, err := ioutil.ReadDir(dir)
@@ -146,7 +147,7 @@ func parseUnixTimeToString(i int64, format string, tz string) string {
 	return ti.Format(format)
 }
 
-func (r *repoDiffDatum) save(conf *Setting) (string, error) {
+func (r *gnDiffDatum) save(conf *Setting) (string, error) {
 	var out []byte
 	var err error
 
@@ -170,7 +171,7 @@ func (r *repoDiffDatum) save(conf *Setting) (string, error) {
 	return filenamePrefix, nil
 }
 
-func (r *repoDiffDatum) load(fileNamePrefix string, conf *Setting) error {
+func (r *gnDiffDatum) load(fileNamePrefix string, conf *Setting) error {
 	fileName := strings.Join([]string{conf.Auth.getConfigDir(), "diff", fileNamePrefix + ".json"}, string(os.PathSeparator))
 	data, err := readCompressedFile(fileName)
 	if err != nil {

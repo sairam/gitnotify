@@ -13,12 +13,12 @@ type MailContent struct {
 	WebsiteURL string
 	User       string // provider/username
 	Name       string
-	Data       []*repoDiffData
+	Data       []*gnDiffData
 	SavedFile  string
 }
 
-func processForMail(diff repoDiffDatum, conf *Setting, fileName string) error {
-	if config.isEmailSetup() == false {
+func processForMail(diff gnDiffDatum, conf *Setting, fileName string) error {
+	if config.isEmailSetup() == false || !isValidEmail(conf.usersEmail()) {
 		return nil
 	}
 

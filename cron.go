@@ -52,6 +52,10 @@ func checkCronEntries(filename string) (nextRunTimes []string) {
 	return
 }
 
+func hasUserNotificationSet(s *Setting) bool {
+	return isValidEmail(s.usersEmail()) || s.User.isValidWebhook()
+}
+
 func upsertCronEntry(s *Setting) {
 	cronLocker.Lock()
 	defer cronLocker.Unlock()
@@ -64,14 +68,14 @@ func upsertCronEntry(s *Setting) {
 	a := s.Auth
 	filename := a.getConfigFile()
 
-	if weekday == "" || hour == "" || tzName == "" || (!isValidEmail(s.usersEmail()) && s.User.WebhookURL == "") {
+	if weekday == "" || hour == "" || tzName == "" || !hasUserNotificationSet(s) {
 		log.Printf("Not starting cron for `%s` since attributes are not set\n", s.Auth.UserName)
 		stopCronIfAlreadyRunning(filename)
 		return
 	}
 
 	if s.User.Disabled == true {
-		log.Printf("User `%s` does not want any emails\n", s.Auth.UserName)
+		log.Printf("User `%s` does not want any emails/notifications\n", s.Auth.UserName)
 		stopCronIfAlreadyRunning(filename)
 		return
 	}

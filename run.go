@@ -14,6 +14,12 @@ import (
 
 const noneString = "<none>"
 
+type userNotFound struct{}
+
+func (userNotFound) Error() string {
+	return fmt.Sprintf("No email address found for account. Visit <a href=\"/user\">Settings Page</a>")
+}
+
 // contains oldList, newList of the branches
 // Used for tracking tags/branches/repoNames
 type gitBranchList struct {
@@ -84,7 +90,7 @@ func forceRunHandler(w http.ResponseWriter, r *http.Request) {
 
 	conf := new(Setting)
 	conf.load(configFile)
-	if !isValidEmail(conf.usersEmail()) {
+	if !hasUserNotificationSet(conf) {
 		hc.addFlash("Email is not set. Go to <a href=\"/user\">/user</a> to set")
 	} else {
 		// hidden feature: useful for testing. pass ?save=false in the POST url
@@ -96,6 +102,7 @@ func forceRunHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, homePageForLoggedIn, 302)
 }
 
+// move to helper
 func isValidEmail(email string) bool {
 	if email == "" || strings.Contains(email, "@users.noreply.github.com") {
 		return false
@@ -113,7 +120,7 @@ func isSaveSetToFalse(q url.Values) bool {
 	return false
 }
 
-// Move to helper. regular directory walk
+// move to helper. regular directory walk
 func fetchFiles(provider string) []string {
 	dir := strings.Join([]string{config.DataDir, provider}, string(os.PathSeparator))
 	fis, err := ioutil.ReadDir(dir)
@@ -144,15 +151,8 @@ func getData(provider string) {
 	}
 }
 
-type userNotFound struct{}
-
-func (userNotFound) Error() string {
-	return fmt.Sprintf("No email address found for account. Visit <a href=\"/user\">Settings Page</a>")
-}
-
-// process is called from the cron job
-func process(conf *Setting) (allLocalDiffs []*gitRepoDiffs, err error) {
-	if !isValidEmail(conf.usersEmail()) {
+func processRepoDiffs(conf *Setting) (allLocalDiffs []*gitRepoDiffs, err error) {
+	if !hasUserNotificationSet(conf) {
 		log.Printf("No email address for %s\n", conf.Auth.UserName)
 		return nil, &userNotFound{}
 	}
@@ -182,10 +182,10 @@ func process(conf *Setting) (allLocalDiffs []*gitRepoDiffs, err error) {
 				// TODO set newInformation as part of the config loader
 				// TODO bug - if we are no longer tracking a branch, we need to remove it from the new list
 				if b == nil {
-					conf.Info[branch.repo.Repo] = newInformation()
+					conf.Info[branch.repo.Repo] = newRepoInformation()
 					b = conf.Info[branch.repo.Repo]
 				}
-				for branch, commitID := range b.Commits {
+				for branch, commitID := range b.Repo.Commits {
 					data[branch] = &gitCommitDiff{
 						OldCommit: commitID,
 					}
@@ -197,7 +197,7 @@ func process(conf *Setting) (allLocalDiffs []*gitRepoDiffs, err error) {
 				for i, t := range data {
 					// save new data from commitDiff.data
 					if t.NewCommit != noneString {
-						b.Commits[i] = t.NewCommit
+						b.Repo.Commits[i] = t.NewCommit
 					}
 				}
 				localDiffs.References = data
@@ -227,10 +227,10 @@ func process(conf *Setting) (allLocalDiffs []*gitRepoDiffs, err error) {
 }
 
 // This is the main logic that converts computed diff to representable diff
-func makeRepoDiffs(repoDiffs []*gitRepoDiffs, conf *Setting) repoDiffDatum {
+func makeRepoDiffs(repoDiffs []*gitRepoDiffs, conf *Setting) gnDiffDatum {
 	madefor := fmt.Sprintf("%s/%s", conf.Auth.Provider, conf.Auth.UserName)
 
-	var diffs repoDiffDatum
+	var diffs gnDiffDatum
 
 	for _, diff := range repoDiffs {
 
@@ -291,7 +291,7 @@ func makeRepoDiffs(repoDiffs []*gitRepoDiffs, conf *Setting) repoDiffDatum {
 			}
 			datum = append(datum, data)
 		}
-		diffs = append(diffs, &repoDiffData{
+		diffs = append(diffs, &gnDiffData{
 			Repo:    link{diff.RepoName, RepoLink(diff.Provider, diff.RepoName), diff.RepoName},
 			Changed: repoChanged,
 			Data:    datum,
@@ -301,18 +301,26 @@ func makeRepoDiffs(repoDiffs []*gitRepoDiffs, conf *Setting) repoDiffDatum {
 	return diffs
 }
 
+// Called from the cron job or force run job
 func processDiffForUser(conf *Setting) {
 	if !conf.anyValidNotifications() {
 		log.Printf("Not processing conf %s/%s since no valid notification mechanisms are found", conf.Auth.Provider, conf.Auth.UserName)
 		return
 	}
 
-	diff, err := process(conf)
+	orgDiffs, err := processOrgDiffs(conf)
+
+	repoDiff, err := processRepoDiffs(conf)
 	if err != nil {
 		log.Printf("Failure processing %s/%s, %s\n", conf.Auth.Provider, conf.Auth.UserName, err)
+		return
 	}
 
-	diffs := makeRepoDiffs(diff, conf)
+	repoDiffs := makeRepoDiffs(repoDiff, conf)
+
+	var diffs gnDiffDatum
+	diffs = append(diffs, repoDiffs...)
+	diffs = append(diffs, orgDiffs...)
 
 	// save to new file based on hour/date
 	fileName, err := diffs.save(conf)
@@ -321,7 +329,7 @@ func processDiffForUser(conf *Setting) {
 	}
 
 	if eligible := diffs.hasChanges(); !eligible {
-		log.Printf("None of the Repositories have any changes. Skip Notifications")
+		log.Printf("No changes. Skipping Notifications")
 		return
 	}
 
@@ -335,6 +343,14 @@ func getNewInfo(client GitRemoteIface, branch *gitBranchList, option string) ([]
 	return getBranchTagInfo(client, branch)
 }
 
+func processOrgDiffs(conf *Setting) (gnDiffDatum, error) {
+	var diffs gnDiffDatum
+
+	return diffs, nil
+
+}
+
+// FIXME
 func diffWithOldBranches(v []*GitRefWithCommit, branch *gitBranchList, option string, info map[string]*Information) []string {
 	newBranches := make([]string, len(v))
 	for i, a := range v {
@@ -344,21 +360,21 @@ func diffWithOldBranches(v []*GitRefWithCommit, branch *gitBranchList, option st
 	branch.newList = newBranches
 	t := info[branch.repo.Repo]
 	if option == "tags" && t != nil {
-		branch.oldList = t.Tags
+		branch.oldList = t.Repo.Tags
 	} else if option == "branches" && t != nil {
-		branch.oldList = t.Branches
+		branch.oldList = t.Repo.Branches
 	}
 
 	diff := getNewStrings(branch.oldList, branch.newList)
 	if t == nil {
-		info[branch.repo.Repo] = newInformation()
+		info[branch.repo.Repo] = newRepoInformation()
 		t = info[branch.repo.Repo]
 	}
 
 	if option == gitRefTag {
-		t.Tags = branch.newList
+		t.Repo.Tags = branch.newList
 	} else if option == gitRefBranch {
-		t.Branches = branch.newList
+		t.Repo.Branches = branch.newList
 	}
 
 	return diff
