@@ -86,7 +86,17 @@ func main() {
 	})
 
 	r.HandleFunc("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeContent(w, r, "robots.txt", time.Now(), strings.NewReader("User-agent: *\n"))
+		http.ServeContent(w, r, "robots.txt", time.Now(), strings.NewReader("User-agent: *\nSitemap: /sitemap.xml"))
+	})
+
+	r.HandleFunc("/sitemap.xml", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/xml")
+		t, _ := template.New("foo").Parse(sitemapTemplate)
+		t.Execute(w, &struct {
+			Host    string
+			Pages   []string
+			Changed string
+		}{config.ServerProto + config.ServerHost, []string{"/", "/faq"}, time.Now().Format("2006-01-02T15:00:00-07:00")})
 	})
 
 	r.HandleFunc("/opensearch.xml", func(w http.ResponseWriter, _ *http.Request) {
@@ -108,8 +118,19 @@ func main() {
 	}
 
 	log.Fatal(srv.ListenAndServe())
-
 }
+
+var sitemapTemplate = `<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  {{$host:=.Host}}
+  {{$changed:=.Changed}}
+  {{range $page:=.Pages}}
+  <url>
+    <loc>{{$host}}{{$page}}</loc>
+    <lastmod>{{$changed}}</lastmod>
+  </url>
+  {{end}}
+</urlset>`
 
 var opensearchTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 <OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/" xmlns:moz="http://www.mozilla.org/2006/browser/search/">
