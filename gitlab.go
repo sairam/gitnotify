@@ -128,8 +128,8 @@ func (g *localGitlab) SearchRepos(search string) ([]*searchRepoItem, error) {
 	return t, nil
 }
 
-func (g *localGitlab) SearchUsers(_ string) ([]*searchRepoItem, error) {
-	return []*searchRepoItem{}, &providerNotPresent{"gitlab"}
+func (g *localGitlab) SearchUsers(_ string) ([]*searchUserItem, error) {
+	return []*searchUserItem{}, &providerNotPresent{"gitlab"}
 }
 
 // provided not supported

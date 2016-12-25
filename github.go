@@ -1,10 +1,8 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
-	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -81,65 +79,51 @@ func (g *localGithub) Tags(repoName string) ([]*GitRefWithCommit, error) {
 	return g.branchTagInfo(repoName, gitRefTag)
 }
 
-type ghDefaultBranch struct {
-	DefaultBranch string `json:"default_branch"`
-}
-
 func (g *localGithub) DefaultBranch(repoName string) (string, error) {
-	v := &ghDefaultBranch{}
-	repoURL := fmt.Sprintf("%srepos/%s", config.GithubAPIEndPoint, repoName)
-	req, _ := http.NewRequest("GET", repoURL, nil)
-	gr, _ := g.Client().Do(req, v)
+	ownerRepo := strings.SplitN(repoName, "/", 2)
+	repository, gr, err := g.Client().Repositories.Get(ownerRepo[0], ownerRepo[1])
 
-	if gr.StatusCode >= 400 {
+	if err != nil || gr.StatusCode >= 400 {
 		// gr will be in case of connection interruption
 		// 401 statusCode means the token is no longer valid
-		return "", errors.New("repo not found")
+		return "", err
 	}
-	return v.DefaultBranch, nil
-}
-
-/*
-Example:
-  [{
-    "name": "1-2-stable",
-    "commit": {
-      "sha": "5b3f7563ae1b4a7160fda7fe34240d40c5777dcd",
-      "url": "https://api.github.com/repos/rails/rails/commits/5b3f7563ae1b4a7160fda7fe34240d40c5777dcd"
-    }
-  }]
-*/
-type ghTagInfo struct {
-	Name   string       `json:"name"`
-	Commit *ghCommitRef `json:"commit"`
-}
-
-func (e *ghTagInfo) String() string {
-	return Stringify(e)
-}
-
-type ghCommitRef struct {
-	Sha string `json:"sha"`
-	URL string `json:"url"`
-}
-
-func (e *ghCommitRef) String() string {
-	return Stringify(e)
+	return *repository.DefaultBranch, err
 }
 
 func (g *localGithub) branchTagInfo(repoName, option string) ([]*GitRefWithCommit, error) {
-	v := new([]*ghTagInfo)
-	branchesURL := fmt.Sprintf("%srepos/%s/%s", config.GithubAPIEndPoint, repoName, option)
-	req, _ := http.NewRequest("GET", branchesURL, nil)
-	g.Client().Do(req, v)
-	refs := make([]*GitRefWithCommit, 0, len(*v))
 
-	for _, r := range *v {
-		ref := &GitRefWithCommit{
-			Name:   r.Name,
-			Commit: r.Commit.Sha,
+	var list []*githubApp.Branch
+	var gr *githubApp.Response
+	var err error
+
+	refs := make([]*GitRefWithCommit, 0, 100)
+	ownerRepo := strings.SplitN(repoName, "/", 2)
+	page := 1
+	for page != 0 {
+		opt := &githubApp.ListOptions{Page: page, PerPage: 100}
+		if option == "tags" {
+			list, gr, err = g.Client().Repositories.ListBranches(ownerRepo[0], ownerRepo[1], opt)
+		} else if option == "branches" {
+			list, gr, err = g.Client().Repositories.ListBranches(ownerRepo[0], ownerRepo[1], opt)
 		}
-		refs = append(refs, ref)
+
+		if len(list) == 0 || err != nil || gr.StatusCode >= 400 {
+			page = page + 1
+			if page >= 100 {
+				break
+			}
+			continue
+		}
+
+		for _, r := range list {
+			ref := &GitRefWithCommit{
+				Name:   *r.Name,
+				Commit: *r.Commit.SHA,
+			}
+			refs = append(refs, ref)
+		}
+		page = gr.NextPage
 	}
 
 	return refs, nil
@@ -150,16 +134,24 @@ type ghSearchRepo struct {
 }
 
 // searchRepoItem is used by the interface
-func (g *localGithub) SearchRepos(search string) ([]*searchRepoItem, error) {
-	search = g.cleanRepoName(search)
-	searchRepositoryURL := fmt.Sprintf("%ssearch/repositories?page=%d&q=%s", config.GithubAPIEndPoint, 1, search)
-	req, _ := http.NewRequest("GET", searchRepositoryURL, nil)
-	v := new(ghSearchRepo)
-	gr, _ := g.Client().Do(req, v)
-	if gr.StatusCode >= 400 {
-		return nil, errors.New("status code > 400")
+func (g *localGithub) SearchRepos(query string) ([]*searchRepoItem, error) {
+	query = g.cleanRepoName(query)
+	result, gr, err := g.Client().Search.Repositories(query, nil)
+
+	if err != nil || gr.StatusCode >= 400 {
+		return nil, err
 	}
-	return v.Items, nil
+
+	searchResults := make([]*searchRepoItem, 0, len(result.Repositories))
+	for _, r := range result.Repositories {
+		searchResults = append(searchResults, &searchRepoItem{
+			ID:          *r.Name,
+			Name:        *r.FullName,
+			Description: *r.Description,
+			HomePage:    *r.Homepage,
+		})
+	}
+	return searchResults, nil
 }
 
 func (g *localGithub) cleanRepoName(search string) string {
@@ -175,38 +167,46 @@ func (g *localGithub) cleanRepoName(search string) string {
 	return search
 }
 
-func (g *localGithub) SearchUsers(search string) ([]*searchRepoItem, error) {
-	searchUsersURL := fmt.Sprintf("%ssearch/users?page=%d&q=%s", config.GithubAPIEndPoint, 1, search)
-	req, _ := http.NewRequest("GET", searchUsersURL, nil)
+func (g *localGithub) SearchUsers(query string) ([]*searchUserItem, error) {
+	result, gr, err := g.Client().Search.Users(query, nil)
 
-	v := new(ghSearchRepo)
-	gr, _ := g.Client().Do(req, v)
-	if gr.StatusCode >= 400 {
-		return nil, errors.New("status code > 400")
+	if err != nil || gr.StatusCode >= 400 {
+		return []*searchUserItem{}, err
 	}
-	return v.Items, nil
+
+	searchResults := make([]*searchUserItem, 0, len(result.Users))
+	for _, r := range result.Users {
+		searchResults = append(searchResults, &searchUserItem{
+			ID:    fmt.Sprintf("%d", *r.ID),
+			Login: *r.Login,
+			Type:  *r.Type,
+		})
+	}
+
+	return searchResults, nil
 }
 
 func (g *localGithub) RemoteOrgType(name string) (string, error) {
-	searchUsersURL := fmt.Sprintf("%susers/%s", config.GithubAPIEndPoint, name)
-	req, _ := http.NewRequest("GET", searchUsersURL, nil)
+	user, gr, err := g.Client().Users.Get(name)
 
-	v := new(searchRepoItem)
-	gr, _ := g.Client().Do(req, v)
-	if gr.StatusCode >= 400 {
-		return "", errors.New("status code > 400")
+	if err != nil || gr.StatusCode >= 400 {
+		return "", err
 	}
 	// Organization / User
-	return v.Type, nil
+	return *user.Type, nil
 }
 
 func (g *localGithub) ReposForUser(organisation string) ([]string, error) {
-	page := 1
 	var repoList []string
+	page := 1
 	for page != 0 {
 		opt := &githubApp.RepositoryListOptions{Sort: "created", ListOptions: githubApp.ListOptions{Page: page, PerPage: 100}}
 		repositories, gr, err := g.Client().Repositories.List(organisation, opt)
 		if err != nil || gr.StatusCode >= 400 {
+			page = page + 1
+			if page >= 100 {
+				break
+			}
 			continue
 		}
 		var repos = make([]string, 0, len(repositories))

@@ -24,7 +24,7 @@ type GitRemoteIface interface {
 	Tags(string) ([]*GitRefWithCommit, error)
 
 	SearchRepos(string) ([]*searchRepoItem, error)
-	SearchUsers(string) ([]*searchRepoItem, error)
+	SearchUsers(string) ([]*searchUserItem, error)
 	DefaultBranch(string) (string, error)
 	BranchesWithoutRefs(string) ([]string, error)
 

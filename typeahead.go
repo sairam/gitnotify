@@ -9,6 +9,13 @@ import (
 )
 
 // Used to load github data
+type searchUserItem struct {
+	ID    string `json:"id"`
+	Login string `json:"login"`
+	Type  string `json:"type"`
+}
+
+// Used to load github data
 type searchRepoItem struct {
 	ID          string `json:"name"`
 	Name        string `json:"full_name"`
