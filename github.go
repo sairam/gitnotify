@@ -3,7 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -46,7 +48,14 @@ func newGithubClient(token string) *localGithub {
 	}
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	tc := oauth2.NewClient(oauth2.NoContext, ts)
-	return &localGithub{githubApp.NewClient(tc)}
+	client := githubApp.NewClient(tc)
+	var err error
+	client.BaseURL, err = url.Parse(config.GithubAPIEndPoint)
+	if err != nil {
+		log.Println(err)
+		return &localGithub{}
+	}
+	return &localGithub{client}
 }
 
 func (g *localGithub) BranchesWithoutRefs(repoName string) ([]string, error) {
@@ -192,23 +201,17 @@ func (g *localGithub) RemoteOrgType(name string) (string, error) {
 }
 
 func (g *localGithub) ReposForUser(organisation string) ([]string, error) {
-	type ghListName []struct {
-		Name string `json:"name"`
-	}
 	page := 1
 	var repoList []string
 	for page != 0 {
-		listReposURL := fmt.Sprintf("%susers/%s/repos?sort=created&page=%d", config.GithubAPIEndPoint, organisation, page)
-		req, _ := http.NewRequest("GET", listReposURL, nil)
-
-		v := new(ghListName)
-		gr, _ := g.Client().Do(req, v)
-		if gr.StatusCode >= 400 {
+		opt := &githubApp.RepositoryListOptions{Sort: "created", ListOptions: githubApp.ListOptions{Page: page, PerPage: 100}}
+		repositories, gr, err := g.Client().Repositories.List(organisation, opt)
+		if err != nil || gr.StatusCode >= 400 {
 			continue
 		}
-		var repos = make([]string, 0, len(*v))
-		for _, repo := range *v {
-			repos = append(repos, repo.Name)
+		var repos = make([]string, 0, len(repositories))
+		for _, repo := range repositories {
+			repos = append(repos, *repo.Name)
 		}
 		repoList = append(repoList, repos...)
 		page = gr.NextPage
