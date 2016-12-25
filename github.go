@@ -1,8 +1,10 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -133,10 +135,17 @@ type ghSearchRepo struct {
 	Items []*searchRepoItem `json:"items"`
 }
 
-// searchRepoItem is used by the interface
+// NOTE: the official repo does not support complex queries
+// It only supports simple queries. Github API expects data to be in "abc+code:go"
 func (g *localGithub) SearchRepos(query string) ([]*searchRepoItem, error) {
 	query = g.cleanRepoName(query)
-	result, gr, err := g.Client().Search.Repositories(query, nil)
+	searchRepositoryURL := fmt.Sprintf("%ssearch/repositories?page=%d&q=%s", config.GithubAPIEndPoint, 1, query)
+	req, _ := http.NewRequest("GET", searchRepositoryURL, nil)
+	result := new(githubApp.RepositoriesSearchResult)
+	gr, err := g.Client().Do(req, result)
+	if gr.StatusCode >= 400 {
+		return nil, errors.New("status code > 400")
+	}
 
 	if err != nil || gr.StatusCode >= 400 {
 		return nil, err
@@ -161,7 +170,7 @@ func (g *localGithub) SearchRepos(query string) ([]*searchRepoItem, error) {
 }
 
 func (g *localGithub) cleanRepoName(search string) string {
-	search = strings.Replace(search, " ", "+", -1)
+	search = strings.Trim(search, " ")
 	// Add support for regular searches
 	if strings.Contains(search, "/") {
 		var modifiedRepoValidator = regexp.MustCompile("[\\p{L}\\d_-]+/[\\.\\p{L}\\d_-]*")
@@ -169,7 +178,10 @@ func (g *localGithub) cleanRepoName(search string) string {
 		d := strings.Split(data[0], "/")
 		rep := fmt.Sprintf("%s+user:%s", d[1], d[0])
 		search = strings.Replace(search, data[0], rep, 1)
+		search = strings.Trim(search, "/")
 	}
+	search = strings.Trim(search, " ")
+	search = strings.Replace(search, " ", "+", -1)
 	return search
 }
 
