@@ -82,12 +82,13 @@
     <option{{ if eq $option $type  }} selected="selected"{{end}} value="{{$option}}">{{capitalizeOrNone $option}}</option>
   {{ end }}
   </select>
+  <p class="help-block"><a href="/faq#faq_configure-slack" target="_blank">Slack Configuration</a> and <a href="/faq#faq_generic-webhooks" target="_blank">Webhooks</a> currently supported</p>
   </div>
 
   <div class="form-group">
   <label for="webhookURL">Webhook URL</label>
   <input type="url" name="webhookURL" id="webhookURL" class="form-control input-lg" value="{{.WebhookURL}}">
-  <p class="help-block">JSON will be POSTed based on the type supported above</p>
+  <p class="help-block"><a href="/faq#faq_configure-slack" target="_blank">Slack Configuration</a> and <a href="/faq#faq_generic-webhooks" target="_blank">Webhooks</a> currently supported</p>
   </div>
 
   <button type="submit" class="btn btn-info btn-lg">Save My Preferences</button>

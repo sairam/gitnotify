@@ -1,0 +1,70 @@
+{{ $email := "hello@gitnotify.com" }}
+{{ partial "header" . }}
+<div class="text-left">
+
+<a name="faq_notification-types"></a>
+<h3>What are the notification mechanisms you support?</h3>
+<p>Email, Slack Notifications, Webhook Notifications</p>
+
+<a name="faq_configure-slack"></a>
+<h3>How to Configure Slack Webhooks?</h3>
+<p>
+  <a href="https://my.slack.com/apps/A0F7XDUAZ-incoming-webhooks" target="_blank">Configure an Incoming Webhook at Slack</a>
+  Use the  "Webhook URL" from the above configuration in the format <code>https://hooks.slack.com/TXXXXX/BXXXXX/XXXXXXXXXX</code> and configure it at <a href="/user" target="_blank">User Settings</a> > "Webhook URL" and set the "Webhook Type" to <code>Slack</code>
+  <br>
+  <a href="https://customer.io/actions/slack/" target="_blank">Refer here for a detailed guide on how to create a new Incoming Webhook URL</a>
+
+</p>
+
+<a name="faq_code"></a>
+<h3>Show me the code!</h3>
+<p> The code is <a href="https://github.com/sairam/gitnotify" target="_blank">open source</a></p>
+
+<a name="faq_notifications-request"></a>
+<h3>I want a different type of Notification. How do I? </h3>
+<p> You can use <a href="https://zapier.com" target="_blank">Zapier</a> like services to consume the notification and send it to your own target service</a> <br>
+  Alternatively, you can also email us at <a href="mailto:{{$email}}">{{$email}}</a> for your feature request. </p>
+
+<a name="faq_generic-webhooks"></a>
+<h3>How can I use Generic Webhooks?</h3>
+<p>
+  You can use Generic Webhooks to get notifications to your own applications. You can use <a href="https://zapier.com" target="_blank">Zapier service</a> to configure custom endpoints. We send webhook data in JSON.
+</p>
+<a name="faq_zapier"></a>
+<h3>How to use Webhooks with Zapier?</h3>
+<p><a href="https://zapier.com/blog/how-use-zapier-webhooks/" target="_blank">Zapier has a guide for using webhooks.</a>
+<br><a href="https://zapier.com/zapbook/webhook/" target="_blank">There are some Zaps as well</a></p>
+
+<a name="faq_configure-email"></a>
+<h3>Can I get Email Notifications to a different email?</h3>
+<p>Yes, Go to <a href="/user">User Settings</a> to configure your email address we need to send the email to. We typically ignore sending emails to <code>@users.noreply.github.com</code> since they bounce. </p>
+
+<a name="faq_no-emails-occasionally"></a>
+<h3>Why am I not receiving emails with diffs even though I configured everyday?</h3>
+<p>
+  If the application does not changes in the repositories you are tracking, we skip sending the email.
+  <br><br>
+  You can see/validate the recent checks made by the application at <a href="/changes/" target="_blank">/changes</a>
+  <br><br>
+  Drop an email at <a href="mailto:{{$email}}">{{$email}}</a>
+</p>
+
+<a name="faq_extensions"></a>
+<h3>Do you have browser extensions to track GitNotify?</h3>
+<p>
+  We currently only support <a href="https://chrome.google.com/webstore/detail/gitnotify-for-github/ednpeaemdkcilannlfkbmcjdnjoljhbj" target="_blank">Chrome extension</a> <a href="https://github.com/sairam/gitnotify-chrome-ext" target="_blank">(source code)</a>
+
+  <br>
+  Feel free to contribute for Opera/IE/Safari/Firefox. Drop us an email at <a href="mailto:{{$email}}">{{$email}}</a>
+</p>
+
+<a name="faq_reachus"></a>
+<h3>Reach us</h3>
+<p> Drop an email at <a href="mailto:{{$email}}">{{$email}}</a> </p>
+
+<a name="faq_stop-all-communication"></a>
+<h3>How do I Stop all notifications?</h3>
+<p>Click on the 'Disable all Notifications' in <a href="/user" target="_blank">User Settings</a> field or drop an email to us <a href="mailto:{{$email}}">{{$email}}</a> </p>
+
+</div>
+{{ partial "footer" . }}

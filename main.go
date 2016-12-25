@@ -71,8 +71,14 @@ func main() {
 
 	r.HandleFunc("/home", func(res http.ResponseWriter, req *http.Request) {
 		hc := &httpContext{w: res, r: req}
-		page := newPage(hc, "Home Page", "Get Daily Code Diffs from Repositories", nil, nil)
+		page := newPage(hc, "Get Daily Code Diffs from public Repositories", "Get Daily Code Diffs from Open Source Repositories", nil, nil)
 		displayPage(res, "home", page)
+	}).Methods("GET")
+
+	r.HandleFunc("/faq", func(res http.ResponseWriter, req *http.Request) {
+		hc := &httpContext{w: res, r: req}
+		page := newPage(hc, "Frequently Asked Questions", "Frequently Asked Questions", nil, nil)
+		displayPage(res, "faq", page)
 	}).Methods("GET")
 
 	r.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {

@@ -128,9 +128,12 @@
           </div>
           <div class="col-md-8"><h2 class="text-center">{{.PageTitle}}</h2></div>
           <div class="col-md-2">
-            {{ if eq .User.UserName "" }}{{ else }}
+            {{ if eq .User.UserName "" }}
             <br>
-            <a class="btn btn-danger" href="/logout">Logout</a>
+            <a href="/faq">Frequently Asked Questions</a>
+            {{ else }}
+            <br>
+            <a href="/faq">FAQ</a> | <a class="btn btn-danger" href="/logout">Logout</a>
             @{{.User.UserName}}({{.User.Provider}})</strong> &nbsp;&nbsp;</span>
             {{ end }}
           </div>
