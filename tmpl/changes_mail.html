@@ -15,16 +15,25 @@
 {{ if eq .Changed true}}
 
 {{ if eq .ChangeType "repoBranchDiff" }}
+
 {{ if eq .Error "" }}
 <strong>{{.Title.Text}}:</strong>&nbsp;&nbsp;{{ range $i, $change := .Changes }}<a href="{{$change.Href}}">{{$change.Text}}</a>{{ end }}<br/>
 {{ else }}
 <strong>{{.Title.Text}}:</strong> {{ .Error }} <br/>
 {{ end }}
+
+{{ else if eq .ChangeType "orgRepoDiff" }}
+<p>{{.Title.Title}}</p>
+<ul>{{ range $i, $change := .Changes }}
+<li><a href="{{$change.Href}}">{{$change.Text}}</a> - {{ $change.Title }}</li>
+{{ end }}</ul>
+
 {{ else }}
 <p>{{.Title.Title}}</p>
 <ul>{{ range $i, $change := .Changes }}
 <li><a href="{{$change.Href}}">{{$change.Text}}</a></li>
 {{ end }}</ul>
+
 {{ end }}
 {{ end }}
 

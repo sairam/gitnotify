@@ -137,6 +137,6 @@ func (g *localGitlab) RemoteOrgType(_ string) (string, error) {
 	return "", &providerNotPresent{"gitlab"}
 }
 
-func (g *localGitlab) ReposForUser(_ string) ([]string, error) {
-	return []string{}, &providerNotPresent{"gitlab"}
+func (g *localGitlab) ReposForUser(_ string) ([]*searchRepoItem, error) {
+	return []*searchRepoItem{}, &providerNotPresent{"gitlab"}
 }

@@ -25,6 +25,12 @@ Changes for *{{.Repo.Text}}*
 ^ {{.Title.Text}}: {{ .Error }}
 {{ end }}
 
+{{ else if eq .ChangeType "orgRepoDiff" }}
+{{.Title.Title}}
+{{ range $i, $change := .Changes }}
+* {{$change.Text}} {{$change.Href}} - {{ $change.Title }}
+{{ end }}
+
 {{ else }}
 {{.Title.Title}}
 {{ range $i, $change := .Changes }}

@@ -343,7 +343,7 @@ func getNewInfo(client GitRemoteIface, branch *gitBranchList, option string) ([]
 	return getBranchTagInfo(client, branch)
 }
 
-func makeDiffForOrg(conf *Setting, o *Organisation, repoList []string) *gnDiffData {
+func makeDiffForOrg(conf *Setting, o *Organisation, repoList []string, repoItems []*searchRepoItem) *gnDiffData {
 	var diff = &gnDiffData{}
 	diff.Repo = link{Text: o.Name, Href: RepoLink(o.Provider, o.Name)}
 	diff.MadeFor = conf.Auth.UserInfo()
@@ -359,8 +359,18 @@ func makeDiffForOrg(conf *Setting, o *Organisation, repoList []string) *gnDiffDa
 	d.Changed = true
 	d.ChangeType = "orgRepoDiff"
 	d.Title = link{Text: o.Name, Href: RepoLink(o.Provider, o.Name)}
-	for _, repoName := range repoList {
-		d.Changes = append(d.Changes, link{Text: repoName, Href: RepoLink(o.Provider, o.Name+"/"+repoName)})
+	for _, item := range repoItems {
+		if in(repoList, item.Name) {
+			l := link{
+				Text:  item.Name,
+				Href:  RepoLink(o.Provider, o.Name+"/"+item.Name),
+				Title: item.Description,
+			}
+			if item.HomePage != "" {
+				l.Title += " (" + item.HomePage + ")"
+			}
+			d.Changes = append(d.Changes, l)
+		}
 	}
 	diff.Data = []diffData{d}
 
@@ -390,10 +400,15 @@ func processOrgDiffs(conf *Setting) (gnDiffDatum, error) {
 			orgInfo = conf.Info[org.Name].Org
 		}
 
-		onlyNew := getNewStrings(orgInfo.Repos, reposList)
-		newDiff := makeDiffForOrg(conf, org, onlyNew)
+		var currentList = make([]string, 0, len(reposList))
+		for _, r := range reposList {
+			currentList = append(currentList, r.Name)
+		}
+
+		onlyNew := getNewStrings(orgInfo.Repos, currentList)
+		newDiff := makeDiffForOrg(conf, org, onlyNew, reposList)
 		diffs = append(diffs, newDiff)
-		orgInfo.Repos = reposList
+		orgInfo.Repos = currentList
 		// we need to set again since this is not a reference
 		conf.Info[org.Name].Org = orgInfo
 	}

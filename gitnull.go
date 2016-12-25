@@ -41,6 +41,6 @@ func (g *localGitnull) BranchesWithoutRefs(_ string) ([]string, error) {
 func (g *localGitnull) RemoteOrgType(_ string) (string, error) {
 	return "", &providerNotPresent{g.provider}
 }
-func (g *localGitnull) ReposForUser(_ string) ([]string, error) {
-	return []string{}, &providerNotPresent{g.provider}
+func (g *localGitnull) ReposForUser(_ string) ([]*searchRepoItem, error) {
+	return []*searchRepoItem{}, &providerNotPresent{g.provider}
 }

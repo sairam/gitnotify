@@ -144,12 +144,18 @@ func (g *localGithub) SearchRepos(query string) ([]*searchRepoItem, error) {
 
 	searchResults := make([]*searchRepoItem, 0, len(result.Repositories))
 	for _, r := range result.Repositories {
-		searchResults = append(searchResults, &searchRepoItem{
-			ID:          *r.Name,
-			Name:        *r.FullName,
-			Description: *r.Description,
-			HomePage:    *r.Homepage,
-		})
+		item := &searchRepoItem{
+			ID:   *r.Name,
+			Name: *r.FullName,
+		}
+		if r.Description != nil {
+			item.Description = *r.Description
+		}
+		if r.Homepage != nil {
+			item.HomePage = *r.Homepage
+		}
+
+		searchResults = append(searchResults, item)
 	}
 	return searchResults, nil
 }
@@ -196,8 +202,8 @@ func (g *localGithub) RemoteOrgType(name string) (string, error) {
 	return *user.Type, nil
 }
 
-func (g *localGithub) ReposForUser(organisation string) ([]string, error) {
-	var repoList []string
+func (g *localGithub) ReposForUser(organisation string) ([]*searchRepoItem, error) {
+	var repoList []*searchRepoItem
 	page := 1
 	for page != 0 {
 		opt := &githubApp.RepositoryListOptions{Sort: "created", ListOptions: githubApp.ListOptions{Page: page, PerPage: 100}}
@@ -209,13 +215,22 @@ func (g *localGithub) ReposForUser(organisation string) ([]string, error) {
 			}
 			continue
 		}
-		var repos = make([]string, 0, len(repositories))
+		var repos = make([]*searchRepoItem, 0, len(repositories))
 		for _, repo := range repositories {
-			repos = append(repos, *repo.Name)
+			item := &searchRepoItem{}
+			item.ID = *repo.Name
+			item.Name = *repo.Name
+			if repo.Homepage != nil {
+				item.HomePage = *repo.Homepage
+			}
+			if repo.Description != nil {
+				item.Description = *repo.Description
+			}
+			repos = append(repos, item)
 		}
 		repoList = append(repoList, repos...)
 		page = gr.NextPage
 	}
-	return repoList, nil
 
+	return repoList, nil
 }

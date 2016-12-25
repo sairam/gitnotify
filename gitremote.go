@@ -29,7 +29,7 @@ type GitRemoteIface interface {
 	BranchesWithoutRefs(string) ([]string, error)
 
 	RemoteOrgType(string) (string, error)
-	ReposForUser(string) ([]string, error)
+	ReposForUser(string) ([]*searchRepoItem, error)
 }
 
 type providerNotPresent struct {

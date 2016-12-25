@@ -3,7 +3,7 @@
 
 {{ range $repo := .Context }}
 {{ if eq $repo.Changed true }}
-  <div class="col-md-6">
+  <div class="col-md-10">
 
 {{ with $repo }}
 <h4>Changes for <a target="_blank" href="{{.Repo.Href}}">{{.Repo.Text}}</a></h4>
@@ -18,6 +18,13 @@
 {{ else }}
 <strong>{{.Title.Text}}:</strong> {{ .Error }} <br/>
 {{ end }}
+
+{{ else if eq .ChangeType "orgRepoDiff" }}
+<p>{{.Title.Title}}</p>
+<ul>{{ range $i, $change := .Changes }}
+<li><a href="{{$change.Href}}">{{$change.Text}}</a> - {{ $change.Title }}</li>
+{{ end }}</ul>
+
 {{ else }}
 <p>{{.Title.Title}}</p>
 <ul>{{ range $i, $change := .Changes }}
@@ -39,7 +46,7 @@
 
 {{ range $repo := .Context }}
   {{ if eq $repo.Changed false }}
-  <div class="col-md-6">
+  <div class="col-md-5">
   <h4>No Changes for <a target="_blank" href="{{$repo.Repo.Href}}">{{$repo.Repo.Text}}</a></h4>
   <hr>
   </div>

@@ -21,7 +21,6 @@ type searchRepoItem struct {
 	Name        string `json:"full_name"`
 	Description string `json:"description"`
 	HomePage    string `json:"homepage"`
-	Type        string `json:"type"`
 }
 
 // this file is responsible for handling 2 types of typeaheads
