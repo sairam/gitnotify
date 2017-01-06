@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/sairam/gitnotify.svg?branch=master)](https://travis-ci.org/sairam/gitnotify)
 [![Code Climate](https://codeclimate.com/github/sairam/gitnotify/badges/gpa.svg)](https://codeclimate.com/github/sairam/gitnotify)
 [![Issue Count](https://codeclimate.com/github/sairam/gitnotify/badges/issue_count.svg)](https://codeclimate.com/github/sairam/gitnotify)
 [![Test Coverage](https://codeclimate.com/github/sairam/gitnotify/badges/coverage.svg)](https://codeclimate.com/github/sairam/gitnotify/coverage)
