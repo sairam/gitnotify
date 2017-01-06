@@ -1,4 +1,4 @@
-package main
+package gitnotify
 
 import (
 	"fmt"
@@ -141,7 +141,7 @@ func startCronFor(cronEntry, filename string) {
 	runningCrons[filename] = id
 }
 
-func initCron() {
+func InitCron() {
 	crons = cron.New()
 	crons.Start()
 

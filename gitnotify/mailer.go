@@ -1,4 +1,4 @@
-package main
+package gitnotify
 
 // Mail helper methods
 import (

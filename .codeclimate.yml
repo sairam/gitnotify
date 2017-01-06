@@ -14,3 +14,5 @@ engines:
 ratings:
   paths:
     - "**.go"
+exclude_paths:
+  - "**/**_test.go"

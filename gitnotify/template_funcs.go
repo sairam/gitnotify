@@ -1,4 +1,4 @@
-package main
+package gitnotify
 
 // Most of the code in this file is re-used from
 // https://github.com/spf13/hugo/blob/master/tpl/template_funcs.go

@@ -1,4 +1,4 @@
-package main
+package gitnotify
 
 import (
 	"encoding/json"
@@ -10,7 +10,7 @@ import (
 
 var tzByOffset map[int][]timezone.Timezone
 
-func init() {
+func initTZ() {
 	go func() { tzByOffset = timezone.GroupLocationByOffset() }()
 }
 

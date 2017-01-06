@@ -1,4 +1,4 @@
-package main
+package gitnotify
 
 import (
 	"errors"
@@ -53,7 +53,7 @@ func (userInfo *Authentication) getConfigFile() string {
 	return fmt.Sprintf("%s/%s", userInfo.getConfigDir(), config.SettingsFile)
 }
 
-func init() {
+func initGoth() {
 	gothic.Store = store
 	gothic.GetProviderName = getProviderName
 }

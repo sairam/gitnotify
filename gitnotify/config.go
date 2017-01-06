@@ -1,4 +1,4 @@
-package main
+package gitnotify
 
 import (
 	"io/ioutil"
@@ -53,7 +53,7 @@ func (c *AppConfig) isEmailSetup() bool {
 
 var config = new(AppConfig)
 
-func loadConfig() {
+func LoadConfig() {
 	if _, err := os.Stat(appConfigFile); os.IsNotExist(err) {
 		panic(err)
 	}
@@ -81,6 +81,10 @@ func loadConfig() {
 		}
 	}
 
+	initGoth()
+	initTmpl()
+	initSession()
+	initTZ()
 	preInitAuth()
 
 	// variables used by views

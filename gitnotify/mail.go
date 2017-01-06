@@ -1,9 +1,10 @@
-package main
+package gitnotify
 
 import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"strings"
 	"time"
 )
@@ -15,6 +16,15 @@ type MailContent struct {
 	Name       string
 	Data       []*gnDiffData
 	SavedFile  string
+}
+
+// InitMailer initialises mailer if config is setup
+func InitMailer() {
+	if config.isEmailSetup() {
+		go mailDaemon()
+	} else {
+		log.Print("Email is not configured")
+	}
 }
 
 func processForMail(diff gnDiffDatum, conf *Setting, fileName string) error {

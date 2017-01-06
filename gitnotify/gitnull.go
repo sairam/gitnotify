@@ -1,4 +1,4 @@
-package main
+package gitnotify
 
 type localGitnull struct {
 	provider string

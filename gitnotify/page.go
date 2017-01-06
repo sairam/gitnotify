@@ -1,4 +1,4 @@
-package main
+package gitnotify
 
 //Page has all information about the page
 type Page struct {

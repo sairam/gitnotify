@@ -1,4 +1,4 @@
-package main
+package gitnotify
 
 // Source: https://github.com/google/go-github/blob/master/github/strings.go
 

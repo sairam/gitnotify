@@ -1,4 +1,4 @@
-package main
+package gitnotify
 
 import (
 	"net/http"
@@ -29,7 +29,7 @@ var sv = map[string]string{
 	"token":    "token",
 }
 
-func init() {
+func initSession() {
 	// TODO mark session as httpOnly, secure
 	// http://www.gorillatoolkit.org/pkg/sessions#Options
 	store.Options = &sessions.Options{

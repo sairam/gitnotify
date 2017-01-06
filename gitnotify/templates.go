@@ -1,4 +1,4 @@
-package main
+package gitnotify
 
 import (
 	"html/template"
@@ -20,7 +20,7 @@ var (
 	templates           *simpleTemplate
 )
 
-func init() {
+func initTmpl() {
 	pathPartialTemplate = config.TemplatePartialsDir
 	pathTemplate = config.TemplateDir
 
