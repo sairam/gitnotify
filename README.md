@@ -1,3 +1,7 @@
+[![Code Climate](https://codeclimate.com/github/sairam/gitnotify/badges/gpa.svg)](https://codeclimate.com/github/sairam/gitnotify)
+[![Issue Count](https://codeclimate.com/github/sairam/gitnotify/badges/issue_count.svg)](https://codeclimate.com/github/sairam/gitnotify)
+[![Test Coverage](https://codeclimate.com/github/sairam/gitnotify/badges/coverage.svg)](https://codeclimate.com/github/sairam/gitnotify/coverage)
+
 # gitnotify
 ## Github and Gitlab Release/Branch Version Watcher
 Get periodic emails about the code diff for Gitlab and Github repositories
