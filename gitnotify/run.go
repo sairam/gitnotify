@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/aryann/difflib"
+	"github.com/sairam/kinli"
 )
 
 const noneString = "<none>"
@@ -80,26 +81,25 @@ func (e *gitRefList) String() string {
 
 func forceRunHandler(w http.ResponseWriter, r *http.Request) {
 	// Redirect user if not logged in
-	hc := &httpContext{w, r}
-	redirected := hc.redirectUnlessLoggedIn()
-	if redirected {
+	hc := &kinli.HttpContext{W: w, R: r}
+	if hc.RedirectUnlessAuthed("") {
 		return
 	}
-	userInfo := hc.userLoggedinInfo()
+	userInfo := getUserInfo(hc)
 	configFile := userInfo.getConfigFile()
 
 	conf := new(Setting)
 	conf.load(configFile)
 	if !hasUserNotificationSet(conf) {
-		hc.addFlash("Email is not set. Go to <a href=\"/user\">/user</a> to set")
+		hc.AddFlash("Email is not set. Go to <a href=\"/user\">/user</a> to set")
 	} else {
 		// hidden feature: useful for testing. pass ?save=false in the POST url
 		isSaveFalse := isSaveSetToFalse(r.URL.Query())
 		cronJob{configFile, !isSaveFalse}.Run()
-		hc.addFlash("Check email to see latest changes")
+		hc.AddFlash("Check email to see latest changes")
 	}
 
-	http.Redirect(w, r, homePageForLoggedIn, 302)
+	http.Redirect(w, r, kinli.HomePathAuthed, 302)
 }
 
 // move to helper
@@ -360,7 +360,7 @@ func makeDiffForOrg(conf *Setting, o *Organisation, repoList []string, repoItems
 	d.ChangeType = "orgRepoDiff"
 	d.Title = link{Text: o.Name, Href: RepoLink(o.Provider, o.Name)}
 	for _, item := range repoItems {
-		if in(repoList, item.Name) {
+		if StringIn(repoList, item.Name) {
 			l := link{
 				Text:  item.Name,
 				Href:  RepoLink(o.Provider, o.Name+"/"+item.Name),

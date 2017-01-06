@@ -52,7 +52,7 @@ type UserNotification struct {
 }
 
 func (u *UserNotification) isValidWebhook() bool {
-	return in(config.WebhookIntegrations, u.WebhookType) && u.WebhookURL != ""
+	return StringIn(config.WebhookIntegrations, u.WebhookType) && u.WebhookURL != ""
 }
 
 // Frequency is the cron format along with a TimeZone to process

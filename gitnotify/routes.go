@@ -9,11 +9,10 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/sairam/kinli"
 )
 
 const (
-	appConfigFile    = "config.yml"
-	runModeDev       = "dev"
 	gitRefBranch     = "branches"
 	gitRefTag        = "tags"
 	formUpdateString = "update"
@@ -54,27 +53,27 @@ func InitRouter() {
 	r.HandleFunc("/changes/{diffentry}", renderThisDiff).Methods("GET")
 
 	r.HandleFunc("/logout", func(res http.ResponseWriter, req *http.Request) {
-		hc := &httpContext{w: res, r: req}
-		hc.clearSession()
+		hc := &kinli.HttpContext{W: res, R: req}
+		hc.ClearSession()
 
-		http.Redirect(res, req, homePageForNonLoggedIn, 302)
+		http.Redirect(hc.W, hc.R, kinli.HomePathNonAuthed, 302)
 	}).Methods("GET")
 
 	r.HandleFunc("/home", func(res http.ResponseWriter, req *http.Request) {
-		hc := &httpContext{w: res, r: req}
-		page := newPage(hc, "Get Daily Code Diffs from public Repositories", "Get Daily Code Diffs from Open Source Repositories", nil, nil)
-		displayPage(res, "home", page)
+		hc := &kinli.HttpContext{W: res, R: req}
+		page := kinli.NewPage(hc, "Get Daily Code Diffs from public Repositories", getUserInfo(hc), nil, nil)
+		// TODO send page description as "Get Daily Code Diffs from Open Source Repositories"
+		kinli.DisplayPage(res, "home", page)
 	}).Methods("GET")
 
 	r.HandleFunc("/faq", func(res http.ResponseWriter, req *http.Request) {
-		hc := &httpContext{w: res, r: req}
-		page := newPage(hc, "Frequently Asked Questions", "Frequently Asked Questions", nil, nil)
-		displayPage(res, "faq", page)
+		hc := &kinli.HttpContext{W: res, R: req}
+		page := kinli.NewPage(hc, "Frequently Asked Questions", getUserInfo(hc), nil, nil)
+		kinli.DisplayPage(res, "faq", page)
 	}).Methods("GET")
 
-	r.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "favicon.ico")
-	})
+	s := http.StripPrefix("/static/", http.FileServer(http.Dir("./static/")))
+	r.PathPrefix("/static/").Handler(s)
 
 	r.HandleFunc("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeContent(w, r, "robots.txt", time.Now(), strings.NewReader("User-agent: *\nSitemap: /sitemap.xml"))
@@ -107,6 +106,8 @@ func InitRouter() {
 		WriteTimeout: 60 * time.Second,
 		ReadTimeout:  60 * time.Second,
 	}
+
+	kinli.IsAuthed = isAuthed
 
 	log.Fatal(srv.ListenAndServe())
 }

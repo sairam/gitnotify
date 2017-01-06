@@ -26,7 +26,7 @@ type AppConfig struct {
 	GoogleAnalytics     string   `yaml:"googleAnalytics"`
 	SMTPUser            string   // environment variable
 	SMTPPass            string   // environment variable
-	RunMode             string   `yaml:"runMode"` // when runMode is "dev", we use it to reload templates on every request. else they are loaded only once
+	CacheMode           bool     `yaml:"cacheMode"` // when cacheMode is false, views are loaded on every request
 	WebhookIntegrations []string `yaml:"webhookIntegrations"`
 	SentryURL           string   `yaml:"sentryDSN"`
 
@@ -53,7 +53,8 @@ func (c *AppConfig) isEmailSetup() bool {
 
 var config = new(AppConfig)
 
-func LoadConfig() {
+// LoadConfig loads the config from the file
+func LoadConfig(appConfigFile string) {
 	if _, err := os.Stat(appConfigFile); os.IsNotExist(err) {
 		panic(err)
 	}
@@ -81,15 +82,14 @@ func LoadConfig() {
 		}
 	}
 
-	initGoth()
-	initTmpl()
-	initSession()
+	InitSession()
+	InitView()
 	initTZ()
 	preInitAuth()
 
 	// variables used by views
 
-	if config.Providers["github"] != "" {
+	if config.Providers[GithubProvider] != "" {
 		githubRepoEndPoint = config.GithubURLEndPoint + "%s/"                      // repo/abc
 		githubTreeURLEndPoint = config.GithubURLEndPoint + "%s/tree/%s"            // repo/abc , develop
 		githubCommitURLEndPoint = config.GithubURLEndPoint + "%s/commits/%s"       // repo/abc , develop

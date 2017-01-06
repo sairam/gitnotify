@@ -31,6 +31,6 @@ templateDir: "tmpl/"                  # should end with / Use OS specific delimi
 templatePartialsDir: "tmpl/partials/" # should end with / Use OS specific delimiters
 
 googleAnalytics: ""     # setup id if you want to track simple page view analytics
-runMode: "dev"          # Use "prod" in production to not reload templates and client side cache of typeahead requests
+cacheMode: false        # Use true in production to not reload templates and client side cache of typeahead requests
 
 sentryDSN: ""

@@ -145,7 +145,7 @@ func InitCron() {
 	crons = cron.New()
 	crons.Start()
 
-	if config.Providers["github"] != "" {
+	if config.Providers[GithubProvider] != "" {
 		go getData(GithubProvider)
 	}
 	if config.Providers["gitlab"] != "" {

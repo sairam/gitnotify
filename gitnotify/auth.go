@@ -13,6 +13,7 @@ import (
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/github"
 	"github.com/markbates/goth/providers/gitlab"
+	"github.com/sairam/kinli"
 )
 
 // Authentication data/$provider/$user/$settingsFile
@@ -53,11 +54,6 @@ func (userInfo *Authentication) getConfigFile() string {
 	return fmt.Sprintf("%s/%s", userInfo.getConfigDir(), config.SettingsFile)
 }
 
-func initGoth() {
-	gothic.Store = store
-	gothic.GetProviderName = getProviderName
-}
-
 func preInitAuth() {
 	// ProviderNames is the map of key/value providers configured
 	config.Providers = make(map[string]string)
@@ -91,7 +87,7 @@ func configureGithub() goth.Provider {
 		github.TokenURL = config.GithubURLEndPoint + "login/oauth/access_token"
 		github.ProfileURL = config.GithubAPIEndPoint + "user"
 
-		config.Providers["github"] = "Github"
+		config.Providers[GithubProvider] = "Github"
 		// for github, add scope: "repo:status" to access private repositories
 		return github.New(os.Getenv("GITHUB_KEY"), os.Getenv("GITHUB_SECRET"), config.ServerProto+config.ServerHost+"/auth/github/callback", "user:email")
 	}
@@ -129,10 +125,10 @@ func authListHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 func authProviderHandler(res http.ResponseWriter, req *http.Request) {
-	hc := &httpContext{res, req}
-	if hc.isUserLoggedIn() {
+	hc := &kinli.HttpContext{W: res, R: req}
+	if isAuthed(hc) {
 		text := "User is already logged in"
-		displayText(hc, res, text)
+		kinli.DisplayText(hc, res, text)
 	} else {
 		gothic.BeginAuthHandler(res, req)
 	}
@@ -154,10 +150,9 @@ func authProviderCallbackHandler(res http.ResponseWriter, req *http.Request) {
 	}
 	auth.save()
 
-	hc := &httpContext{res, req}
-	hc.setSession(auth, authType)
-
-	http.Redirect(res, req, homePageForLoggedIn, 302)
+	hc := &kinli.HttpContext{W: res, R: req}
+	loginTheUser(hc, auth, authType)
+	http.Redirect(res, req, kinli.HomePathAuthed, 302)
 }
 
 // ProviderIndex is used for setting up the providers

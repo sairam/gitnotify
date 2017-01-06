@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/sairam/kinli"
 )
 
 // Generic structure which should fit any notification to be sent the user
@@ -42,22 +43,21 @@ type link struct {
 
 func listAllDiffs(w http.ResponseWriter, r *http.Request) {
 
-	hc := &httpContext{w, r}
+	hc := &kinli.HttpContext{W: w, R: r}
 	// Redirect user if not logged in
-	redirected := hc.redirectUnlessLoggedIn()
-	if redirected {
+	if hc.RedirectUnlessAuthed("") {
 		return
 	}
 
-	userInfo := hc.userLoggedinInfo()
+	userInfo := getUserInfo(hc)
 	configFile := userInfo.getConfigFile()
 
 	conf := new(Setting)
 	conf.load(configFile)
 	files := (&gnDiffDatum{}).ListUserChanges(conf)
 
-	page := newPage(hc, "Changes for "+conf.Auth.UserName, "Recent Changes", files, nil)
-	displayPage(w, "changes_list", page)
+	page := kinli.NewPage(hc, "Changes for "+conf.Auth.UserName, userInfo, files, nil) // "Recent Changes"
+	kinli.DisplayPage(w, "changes_list", page)
 
 	// TODO render in Page
 }
@@ -70,14 +70,13 @@ func renderThisDiff(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hc := &httpContext{w, r}
+	hc := &kinli.HttpContext{W: w, R: r}
 	// Redirect user if not logged in
-	redirected := hc.redirectUnlessLoggedIn()
-	if redirected {
+	if hc.RedirectUnlessAuthed("") {
 		return
 	}
 
-	userInfo := hc.userLoggedinInfo()
+	userInfo := getUserInfo(hc)
 	configFile := userInfo.getConfigFile()
 
 	conf := new(Setting)
@@ -93,8 +92,9 @@ func renderThisDiff(w http.ResponseWriter, r *http.Request) {
 	reference := parseUnixTimeToString(intFilename, "02 Jan 2006 | 15 Hrs", conf.User.TimeZoneName)
 
 	title := "New Updates from " + reference
-	page := newPage(hc, "Changes for "+entry, title, diffs, nil)
-	displayPage(w, "changes", page)
+	log.Println("TODO: ", title)
+	page := kinli.NewPage(hc, "Changes for "+entry, userInfo, diffs, nil)
+	kinli.DisplayPage(w, "changes", page)
 }
 
 // check if atleast one of the diffs has changed

@@ -1,14 +1,36 @@
 package gitnotify
 
-import "strings"
-
 // Helper Functions used in views
+
+import (
+	"html/template"
+	"strings"
+
+	"github.com/sairam/kinli"
+)
 
 // GithubProvider ..
 const GithubProvider = "github"
 
 // GitlabProvider ..
 const GitlabProvider = "gitlab"
+
+// InitView initialises the view
+func InitView() {
+	kinli.CacheMode = config.CacheMode
+	kinli.ViewFuncs = template.FuncMap{
+		"WebsiteLink":      WebsiteLink,
+		"RepoLink":         RepoLink,
+		"TreeLink":         TreeLink,
+		"CommitLink":       CommitLink,
+		"CompareLink":      CompareLink,
+		"shortCommit":      shortCommit,
+		"cleanRepoName":    cleanRepoName,
+		"WebhooksList":     WebhooksList,
+		"capitalizeOrNone": capitalizeOrNone,
+	}
+	kinli.InitTmpl()
+}
 
 // WebsiteLink ..
 func WebsiteLink(provider string) string {

@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+
+	"github.com/sairam/kinli"
 )
 
 // Repository is of the name ^ab-c/d_ef$
@@ -102,14 +104,14 @@ func settingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // src=github&repo=harshjv/donut&tree=master
-func parseAutoFillOptions(hc *httpContext, q url.Values) *Repo {
+func parseAutoFillOptions(hc *kinli.HttpContext, provider string, q url.Values) *Repo {
 	if len(q["repo"]) == 0 {
 		return &Repo{}
 	}
 
-	if len(q["src"]) > 0 && q["src"][0] != hc.userLoggedinInfo().Provider {
+	if len(q["src"]) > 0 && q["src"][0] != provider {
 		// TODO: provide href link for q["src"][0] after validation of provider
-		hc.addFlash("Please login through " + q["src"][0] + ". You are currently logged in via " + hc.userLoggedinInfo().Provider)
+		hc.AddFlash("Please login through " + q["src"][0] + ". You are currently logged in via " + provider)
 		return &Repo{}
 	}
 
@@ -127,12 +129,11 @@ func parseAutoFillOptions(hc *httpContext, q url.Values) *Repo {
 
 func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) {
 	// Redirect user if not logged in
-	hc := &httpContext{w, r}
-	redirected := hc.redirectUnlessLoggedIn()
-	if redirected {
+	hc := &kinli.HttpContext{W: w, R: r}
+	if hc.RedirectUnlessAuthed("Kindly Login to customize settings") {
 		return
 	}
-	userInfo := hc.userLoggedinInfo()
+	userInfo := getUserInfo(hc)
 	configFile := userInfo.getConfigFile()
 
 	conf := new(Setting)
@@ -151,17 +152,18 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 		actOnOrgs(hc, formAction, r, conf)
 	}
 
-	newRepo := parseAutoFillOptions(hc, r.URL.Query())
+	newRepo := parseAutoFillOptions(hc, userInfo.Provider, r.URL.Query())
 
 	conf.Repos = append([]*Repo{newRepo}, conf.Repos...)
 
-	t := &SettingsPage{isCronPresentFor(configFile)}
+	t := make(map[string]string)
+	t["IsCronRunning"] = fmt.Sprintf("%v", isCronPresentFor(configFile))
 
-	page := newPage(hc, "Edit/Add Repos to Track", "Edit/Add Repos to Track", conf, t)
-	displayPage(w, "repos", page)
+	page := kinli.NewPage(hc, "Edit/Add Repos to Track", userInfo, conf, t)
+	kinli.DisplayPage(w, "repos", page)
 }
 
-func actOnOrgs(hc *httpContext, formAction string, r *http.Request, conf *Setting) {
+func actOnOrgs(hc *kinli.HttpContext, formAction string, r *http.Request, conf *Setting) {
 	configFile := conf.Auth.getConfigFile()
 
 	switch formAction {
@@ -171,13 +173,13 @@ func actOnOrgs(hc *httpContext, formAction string, r *http.Request, conf *Settin
 
 		orgName := validateOrgName(getFirstValue(r.Form, "org"))
 		if orgName == "" {
-			hc.addFlash("Invalid Org Name Provided")
+			hc.AddFlash("Invalid Org Name Provided")
 			break
 		}
 
 		orgType, present := getRemoteOrgType(provider, conf.Auth.Token, orgName)
 		if present == false {
-			hc.addFlash(fmt.Sprintf("Org/User Name Not Found with %s", provider))
+			hc.AddFlash(fmt.Sprintf("Org/User Name Not Found with %s", provider))
 			return
 		}
 
@@ -194,18 +196,18 @@ func actOnOrgs(hc *httpContext, formAction string, r *http.Request, conf *Settin
 		}
 
 		if err := conf.save(configFile); err != nil {
-			hc.addFlash("Error saving configuration " + err.Error() + " for " + org.Name)
+			hc.AddFlash("Error saving configuration " + err.Error() + " for " + org.Name)
 		} else {
 			if formAction == "create" {
-				hc.addFlash("Started tracking 'user/org:" + org.Name + "'")
+				hc.AddFlash("Started tracking 'user/org:" + org.Name + "'")
 			} else {
-				hc.addFlash("Updated config for 'user/org:" + org.Name + "'")
+				hc.AddFlash("Updated config for 'user/org:" + org.Name + "'")
 			}
 		}
 	case "delete":
 		orgName := validateOrgName(getFirstValue(r.Form, "org"))
 		if orgName == "" {
-			hc.addFlash("Invalid Org Name Provided")
+			hc.AddFlash("Invalid Org Name Provided")
 			break
 		}
 
@@ -217,19 +219,19 @@ func actOnOrgs(hc *httpContext, formAction string, r *http.Request, conf *Settin
 		var success bool
 		success, org = deleteOrg(conf, org)
 		if success == false {
-			hc.addFlash("Error deleting org/user" + org.Name)
+			hc.AddFlash("Error deleting org/user" + org.Name)
 		} else {
 			if err := conf.save(configFile); err != nil {
-				hc.addFlash("Error saving configuration " + err.Error() + " for " + org.Name)
+				hc.AddFlash("Error saving configuration " + err.Error() + " for " + org.Name)
 			} else {
-				hc.addFlash("Delete config for " + org.Name)
+				hc.AddFlash("Delete config for " + org.Name)
 			}
 		}
 
 	}
 }
 
-func actOnRepos(hc *httpContext, formAction string, r *http.Request, conf *Setting) {
+func actOnRepos(hc *kinli.HttpContext, formAction string, r *http.Request, conf *Setting) {
 	configFile := conf.Auth.getConfigFile()
 
 	switch formAction {
@@ -240,13 +242,13 @@ func actOnRepos(hc *httpContext, formAction string, r *http.Request, conf *Setti
 
 		repoName := validateRepoName(getFirstValue(r.Form, "repo"))
 		if repoName == "" {
-			hc.addFlash("Invalid Repo Name Provided")
+			hc.AddFlash("Invalid Repo Name Provided")
 			break
 		}
 
 		repoPresent := validateRemoteRepoName(provider, conf.Auth.Token, repoName)
 		if !repoPresent {
-			hc.addFlash("Could not find Repo on " + provider)
+			hc.AddFlash("Could not find Repo on " + provider)
 			break
 		}
 
@@ -273,18 +275,18 @@ func actOnRepos(hc *httpContext, formAction string, r *http.Request, conf *Setti
 		}
 
 		if err := conf.save(configFile); err != nil {
-			hc.addFlash("Error saving configuration " + err.Error() + " for " + repo.Repo)
+			hc.AddFlash("Error saving configuration " + err.Error() + " for " + repo.Repo)
 		} else {
 			if formAction == "create" {
-				hc.addFlash("Started tracking '" + repo.Repo + "'")
+				hc.AddFlash("Started tracking '" + repo.Repo + "'")
 			} else {
-				hc.addFlash("Updated config for '" + repo.Repo + "'")
+				hc.AddFlash("Updated config for '" + repo.Repo + "'")
 			}
 		}
 	case "delete":
 		repoName := validateRepoName(getFirstValue(r.Form, "repo"))
 		if repoName == "" {
-			hc.addFlash("Invalid Repo Name Provided")
+			hc.AddFlash("Invalid Repo Name Provided")
 			break
 		}
 
@@ -296,12 +298,12 @@ func actOnRepos(hc *httpContext, formAction string, r *http.Request, conf *Setti
 		var success bool
 		success, repo = deleteRepo(conf, repo)
 		if success == false {
-			hc.addFlash("Error deleting Repository " + repo.Repo)
+			hc.AddFlash("Error deleting Repository " + repo.Repo)
 		} else {
 			if err := conf.save(configFile); err != nil {
-				hc.addFlash("Error saving configuration " + err.Error() + " for " + repo.Repo)
+				hc.AddFlash("Error saving configuration " + err.Error() + " for " + repo.Repo)
 			} else {
-				hc.addFlash("Delete config for " + repo.Repo)
+				hc.AddFlash("Delete config for " + repo.Repo)
 			}
 		}
 		// TODO - not going to send an email on Create/Delete

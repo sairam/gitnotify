@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/sairam/kinli"
 )
 
 // Used to load github data
@@ -28,14 +30,13 @@ type searchRepoItem struct {
 // 2. Branch Name
 func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 
-	hc := &httpContext{w, r}
+	hc := &kinli.HttpContext{W: w, R: r}
 	// Redirect user if not logged in
-	redirected := hc.redirectUnlessLoggedIn()
-	if redirected {
+	if hc.RedirectUnlessAuthed("") {
 		return
 	}
 
-	userInfo := hc.userLoggedinInfo()
+	userInfo := getUserInfo(hc)
 	provider := userInfo.Provider
 
 	search := getFirstValue(r.URL.Query(), "repo")
@@ -45,7 +46,7 @@ func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if config.RunMode != runModeDev && provider != GitlabProvider {
+	if !config.CacheMode && provider != GitlabProvider {
 		setCacheHeaders(w)
 	}
 
@@ -59,14 +60,13 @@ type typeAheadBranchList struct {
 
 func branchTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 
-	hc := &httpContext{w, r}
+	hc := &kinli.HttpContext{W: w, R: r}
 	// Redirect user if not logged in
-	redirected := hc.redirectUnlessLoggedIn()
-	if redirected {
+	if hc.RedirectUnlessAuthed("") {
 		return
 	}
 
-	userInfo := hc.userLoggedinInfo()
+	userInfo := getUserInfo(hc)
 	provider := userInfo.Provider
 	repoName := getFirstValue(r.URL.Query(), "repo")
 	if repoName == "" {
@@ -80,7 +80,7 @@ func branchTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if config.RunMode != runModeDev && provider != GitlabProvider {
+	if !config.CacheMode && provider != GitlabProvider {
 		setCacheHeaders(w)
 	}
 
