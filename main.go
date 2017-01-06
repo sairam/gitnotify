@@ -1,6 +1,6 @@
 package main
 
-import "./gitnotify"
+import "github.com/sairam/gitnotify/gitnotify"
 
 func main() {
 	gitnotify.LoadConfig()
