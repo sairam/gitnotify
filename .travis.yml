@@ -3,6 +3,11 @@ language: go
 go:
   - 1.7
 
-addons:
-  code_climate:
-    repo_token: 363a0f3545bcbc246895864b449b6d8a0bbf6946925ef2c5c0232e9fcfb16a30
+before_install:
+  - go get -t -v ./...
+
+script:
+  - ./test.sh
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
