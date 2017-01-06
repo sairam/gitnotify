@@ -129,14 +129,14 @@ func (g *localGitlab) SearchRepos(search string) ([]*searchRepoItem, error) {
 }
 
 func (g *localGitlab) SearchUsers(_ string) ([]*searchUserItem, error) {
-	return []*searchUserItem{}, &providerNotPresent{"gitlab"}
+	return []*searchUserItem{}, &providerNotPresent{GitlabProvider}
 }
 
 // provided not supported
 func (g *localGitlab) RemoteOrgType(_ string) (string, error) {
-	return "", &providerNotPresent{"gitlab"}
+	return "", &providerNotPresent{GitlabProvider}
 }
 
 func (g *localGitlab) ReposForUser(_ string) ([]*searchRepoItem, error) {
-	return []*searchRepoItem{}, &providerNotPresent{"gitlab"}
+	return []*searchRepoItem{}, &providerNotPresent{GitlabProvider}
 }

@@ -31,13 +31,11 @@ func (userInfo *Authentication) UserInfo() string {
 }
 
 func (userInfo *Authentication) save() {
-
 	conf := new(Setting)
 	os.MkdirAll(userInfo.getConfigDir(), 0700)
 	conf.load(userInfo.getConfigFile())
 	conf.Auth = userInfo
 	conf.save(userInfo.getConfigFile())
-
 }
 
 func (userInfo *Authentication) getConfigDir() string {
@@ -89,7 +87,7 @@ func configureGithub() goth.Provider {
 
 		config.Providers[GithubProvider] = "Github"
 		// for github, add scope: "repo:status" to access private repositories
-		return github.New(os.Getenv("GITHUB_KEY"), os.Getenv("GITHUB_SECRET"), config.ServerProto+config.ServerHost+"/auth/github/callback", "user:email")
+		return github.New(os.Getenv("GITHUB_KEY"), os.Getenv("GITHUB_SECRET"), config.websiteURL()+"/auth/github/callback", "user:email")
 	}
 	return nil
 }
@@ -104,9 +102,9 @@ func configureGitlab() goth.Provider {
 		gitlab.TokenURL = config.GitlabURLEndPoint + "oauth/token"
 		gitlab.ProfileURL = config.GitlabAPIEndPoint + "user"
 
-		config.Providers["gitlab"] = "Gitlab"
+		config.Providers[GitlabProvider] = "Gitlab"
 		// gitlab does not have any scopes, you get full access to the user's account
-		return gitlab.New(os.Getenv("GITLAB_KEY"), os.Getenv("GITLAB_SECRET"), config.ServerProto+config.ServerHost+"/auth/gitlab/callback")
+		return gitlab.New(os.Getenv("GITLAB_KEY"), os.Getenv("GITLAB_SECRET"), config.websiteURL()+"/auth/gitlab/callback")
 	}
 	return nil
 

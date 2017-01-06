@@ -1,5 +1,5 @@
 # Required to start the server
-serverProto: "http://"        # server protocol exposed to end user
+serverProto: "http"        # server protocol exposed to end user
 serverHost:  "localhost:3000" # server host exposed to end user
 localHost:   "localhost:3000" # local server port/host to start the server
 

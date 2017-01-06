@@ -45,7 +45,7 @@ func listAllDiffs(w http.ResponseWriter, r *http.Request) {
 
 	hc := &kinli.HttpContext{W: w, R: r}
 	// Redirect user if not logged in
-	if hc.RedirectUnlessAuthed("") {
+	if hc.RedirectUnlessAuthed(loginFlash) {
 		return
 	}
 
@@ -72,7 +72,7 @@ func renderThisDiff(w http.ResponseWriter, r *http.Request) {
 
 	hc := &kinli.HttpContext{W: w, R: r}
 	// Redirect user if not logged in
-	if hc.RedirectUnlessAuthed("") {
+	if hc.RedirectUnlessAuthed(loginFlash) {
 		return
 	}
 

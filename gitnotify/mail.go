@@ -83,7 +83,7 @@ func processForMail(diff gnDiffDatum, conf *Setting, fileName string) error {
 		conf.Auth.Provider, conf.Auth.UserName, conf.Auth.Provider, conf.Auth.UserName, "gitnotify.com")
 	// m.SetHeader("List-Archive", fmt.Sprintf("")) // resource path like https://github.com/spf13/hugo
 	headers["List-Unsubscribe"] = fmt.Sprintf("<mailto:unsub+%s-%s@%s>, <%s>",
-		conf.Auth.Provider, conf.Auth.UserName, config.ServerHost, config.ServerProto+config.ServerHost)
+		conf.Auth.Provider, conf.Auth.UserName, config.ServerHost, config.websiteURL())
 
 	e := &kinli.EmailCtx{
 		From:      fromEmail,

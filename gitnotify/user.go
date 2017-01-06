@@ -15,32 +15,35 @@ const (
 	userInfoEmail    = "email"
 	userInfoUser     = "user"
 	userInfoToken    = "token"
+
+	loginFlash = "Login to customize settings"
 )
 
+// InitSession registers and everything related to the user's session
 func InitSession() {
+	gob.Register(&Authentication{})
 	kinli.SessionName = "_git_notify"
 	kinli.HomePathNonAuthed = "/home"
 	kinli.HomePathAuthed = "/"
-	store := sessions.NewFilesystemStore("./sessions", []byte(os.Getenv("SESSION_FS_STORE")))
+
+	var store = sessions.NewFilesystemStore("./sessions", []byte(os.Getenv("SESSION_FS_STORE")))
 	// TODO mark session as httpOnly, secure
 	// http://www.gorillatoolkit.org/pkg/sessions#Options
 	store.Options = &sessions.Options{
 		Path:     "/",
-		Domain:   "gitnotify.com", // take from config
-		MaxAge:   86400 * 30,      // 30 days
-		HttpOnly: true,            // to avoid cookie stealing and session is on server side
-		Secure:   true,            // for https
+		Domain:   config.serverHostWithoutPort(),  // take from config
+		MaxAge:   86400 * 30,                      // 30 days
+		HttpOnly: true,                            // to avoid cookie stealing and session is on server side
+		Secure:   (config.ServerProto == "https"), // for https
 	}
 
 	kinli.SessionStore = store
+
 	// init Gothic
 	gothic.Store = store
 	gothic.GetProviderName = getProviderName
 
-	gob.Register(&Authentication{})
 }
-
-// TODO flash "Login to customize settings"
 
 // TODO use gob for encoding. See example here - http://www.gorillatoolkit.org/pkg/sessions
 
@@ -70,7 +73,7 @@ func getUserInfo(hc *kinli.HttpContext) *Authentication {
 		data := hc.GetSessionData("user")
 		userInfo, ok = data.(*Authentication)
 	}
-	if isUserAuthed || !ok {
+	if !isUserAuthed || !ok {
 		userInfo = &Authentication{}
 	}
 

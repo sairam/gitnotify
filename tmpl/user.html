@@ -1,6 +1,6 @@
 {{ partial "header" . }}
 
-{{ $nextRunTimeLength := len .Data.NextRunTimes }}
+{{ $nextRunTimeLength := len .Context.NextRunTimes }}
 {{ if eq $nextRunTimeLength 0 }}
 <div class="alert alert-danger" role="alert">Review the below options to recieve emails</div>
 {{ else }}
@@ -8,7 +8,7 @@
 <a class="btn btn-info" href="#scheduled">Scheduled Time for Next {{ $nextRunTimeLength }} Runs</a>
 </div>
 {{ end }}
-{{ with .Context }}
+{{ with .Context.Conf }}
 {{ with .User }}
 <div class="row">
   <div class="col-md-10">
@@ -123,7 +123,7 @@
 <a name="scheduled"></a>
 <h3>Next Jobs will run at</h3>
 <ul class="list-group">
-{{ range $a := .Data.NextRunTimes }}
+{{ range $a := .Context.NextRunTimes }}
 <li class="list-group-item">{{$a}}</li>
 {{ end }}
 </ul>

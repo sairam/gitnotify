@@ -146,11 +146,6 @@ type Repo struct {
 }
 type reference string
 
-// SettingsPage ..
-type SettingsPage struct {
-	CronRunning bool
-}
-
 func (c *Setting) String() string {
 	arr := make([]string, len(c.Repos))
 	for i, repo := range c.Repos {

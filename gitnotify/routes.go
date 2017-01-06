@@ -86,13 +86,13 @@ func InitRouter() {
 			Host    string
 			Pages   []string
 			Changed string
-		}{config.ServerProto + config.ServerHost, []string{"/", "/faq"}, time.Now().Format("2006-01-02T15:00:00-07:00")})
+		}{config.websiteURL(), []string{"/", "/faq"}, time.Now().Format("2006-01-02T15:00:00-07:00")})
 	})
 
 	r.HandleFunc("/opensearch.xml", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/xml")
 		t, _ := template.New("foo").Parse(opensearchTemplate)
-		t.Execute(w, &struct{ Host string }{config.ServerProto + config.ServerHost})
+		t.Execute(w, &struct{ Host string }{config.websiteURL()})
 	})
 
 	r.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {

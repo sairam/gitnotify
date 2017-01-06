@@ -3,6 +3,7 @@ package gitnotify
 import (
 	"io/ioutil"
 	"os"
+	"strings"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -43,8 +44,12 @@ type AppConfig struct {
 	SourceCodeLink string
 }
 
+func (c *AppConfig) serverHostWithoutPort() string {
+	return strings.Split(c.ServerHost, ":")[0]
+}
+
 func (c *AppConfig) websiteURL() string {
-	return c.ServerProto + c.ServerHost
+	return c.ServerProto + "://" + c.ServerHost
 }
 
 func (c *AppConfig) isEmailSetup() bool {
@@ -96,7 +101,7 @@ func LoadConfig(appConfigFile string) {
 		githubCompareURLEndPoint = config.GithubURLEndPoint + "%s/compare/%s...%s" // repo/abc, base, target commit ref
 	}
 
-	if config.Providers["gitlab"] != "" {
+	if config.Providers[GitlabProvider] != "" {
 		gitlabRepoEndPoint = config.GitlabURLEndPoint + "%s/"                      // repo/abc
 		gitlabTreeURLEndPoint = config.GitlabURLEndPoint + "%s/tree/%s"            // repo/abc , develop
 		gitlabCommitURLEndPoint = config.GitlabURLEndPoint + "%s/commits/%s"       // repo/abc , develop

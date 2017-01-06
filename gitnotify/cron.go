@@ -141,6 +141,7 @@ func startCronFor(cronEntry, filename string) {
 	runningCrons[filename] = id
 }
 
+// InitCron initialises the cron related methods
 func InitCron() {
 	crons = cron.New()
 	crons.Start()
@@ -148,7 +149,7 @@ func InitCron() {
 	if config.Providers[GithubProvider] != "" {
 		go getData(GithubProvider)
 	}
-	if config.Providers["gitlab"] != "" {
+	if config.Providers[GitlabProvider] != "" {
 		go getData(GitlabProvider)
 	}
 }

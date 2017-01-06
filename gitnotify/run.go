@@ -82,7 +82,7 @@ func (e *gitRefList) String() string {
 func forceRunHandler(w http.ResponseWriter, r *http.Request) {
 	// Redirect user if not logged in
 	hc := &kinli.HttpContext{W: w, R: r}
-	if hc.RedirectUnlessAuthed("") {
+	if hc.RedirectUnlessAuthed(loginFlash) {
 		return
 	}
 	userInfo := getUserInfo(hc)
@@ -100,14 +100,6 @@ func forceRunHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, kinli.HomePathAuthed, 302)
-}
-
-// move to helper
-func isValidEmail(email string) bool {
-	if email == "" || strings.Contains(email, "@users.noreply.github.com") {
-		return false
-	}
-	return true
 }
 
 func isSaveSetToFalse(q url.Values) bool {

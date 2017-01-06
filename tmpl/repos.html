@@ -2,7 +2,7 @@
 
 <div class="pull-right">
   <div class="pull-left">
-    {{ if .Data.CronRunning }}
+    {{ if eq .Data.IsCronRunning "true" }}
     Emails are scheduled <a class="btn btn-info" href="/user">Modify Settings</a>&nbsp;&nbsp;
     {{ else }}
     To Receive Emails <a class="btn btn-danger" href="/user">Configure Time to Send</a>&nbsp;&nbsp;
@@ -11,7 +11,7 @@
 
 <!-- Post to /run?save=false if you don't want to persist changes -->
 <form action="/run" method="post" style="float:left">
-  {{ if .Data.CronRunning }}
+  {{ if eq .Data.IsCronRunning "true" }}
   <button type="submit" class="btn btn-success">Check Latest Updates</button>
   {{ else }}
   <a class="btn btn-danger" href="/user">Configure Email/Webhook Notification</a>&nbsp;&nbsp;
@@ -215,7 +215,7 @@ $('select#references').each(function(){
 })
 </script>
 
-{{ if not .Data.CronRunning }}
+{{ if ne .Data.IsCronRunning "true" }}
 {{ partial "first_time_user" . }}
 {{ end }}
 {{ partial "footer" . }}

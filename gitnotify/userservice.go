@@ -22,7 +22,7 @@ func userSettingsShowHandler(w http.ResponseWriter, r *http.Request) {
 
 	hc := &kinli.HttpContext{W: w, R: r}
 	// Redirect user if not logged in
-	if hc.RedirectUnlessAuthed("") {
+	if hc.RedirectUnlessAuthed(loginFlash) {
 		return
 	}
 	userInfo := getUserInfo(hc)
@@ -40,11 +40,15 @@ func userSettingsShowHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Display next cron entries if cron is valid
-	// t := &UserPage{
-	// 	NextRunTimes: checkCronEntries(conf.Auth.getConfigFile()),
-	// }
+	pagedata := struct {
+		NextRunTimes []string
+		Conf         *Setting
+	}{
+		NextRunTimes: checkCronEntries(conf.Auth.getConfigFile()),
+		Conf:         conf,
+	}
+	page := kinli.NewPage(hc, "User Settings", userInfo, pagedata, nil)
 
-	page := kinli.NewPage(hc, "User Settings", userInfo, conf, nil)
 	kinli.DisplayPage(w, "user", page)
 }
 
@@ -52,7 +56,7 @@ func userSettingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 	// Redirect user if not logged in
 	hc := &kinli.HttpContext{W: w, R: r}
 	// Redirect user if not logged in
-	if hc.RedirectUnlessAuthed("") {
+	if hc.RedirectUnlessAuthed(loginFlash) {
 		return
 	}
 
@@ -62,10 +66,13 @@ func userSettingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 	conf := new(Setting)
 	conf.load(configFile)
 
-	isReset := len(r.URL.Query()["reset"]) > 0
+	// isReset := len(r.URL.Query()["reset"]) > 0
+	isReset := false
 
 	formAction := "update"
-	if isReset && r.URL.Query()["reset"][0] == "default" && conf.User.Disabled == true {
+	if isReset &&
+		r.URL.Query()["reset"][0] == "default" &&
+		conf.User.Disabled == true {
 	} else if formAction == "update" {
 
 		r.ParseForm()
