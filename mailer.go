@@ -86,6 +86,7 @@ func sendEmail(to *recepient, e *emailCtx) {
 		m.SetHeader("X-SES-CONFIGURATION-SET", config.SMTPSesConfSet)
 	}
 	m.SetHeader("X-SES-MESSAGE-TAGS", fmt.Sprintf("%s=%s", to.Provider, to.UserName))
+	// TODO - change constant gitnotify.com to config value
 	m.SetHeader("List-ID", fmt.Sprintf("%s/%s <%s.%s.%s>", to.Provider, to.UserName, to.Provider, to.UserName, "gitnotify.com"))
 	// m.SetHeader("List-Archive", fmt.Sprintf("")) // resource path like https://github.com/spf13/hugo
 	m.SetHeader("List-Unsubscribe", fmt.Sprintf("<mailto:unsub+%s-%s@%s>, <%s>", to.Provider, to.UserName, config.ServerHost, config.ServerProto+config.ServerHost))

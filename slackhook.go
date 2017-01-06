@@ -37,13 +37,14 @@ type SlackAttachmentField struct {
 	Short bool   `json:"short"`
 }
 
-type slackTypeLink struct {
+// SlackTypeLink ..
+type SlackTypeLink struct {
 	Text string
 	Href string
 }
 
 // <http://www.amazon.com|Amazon>
-func (s *slackTypeLink) String() string {
+func (s *SlackTypeLink) String() string {
 	return fmt.Sprintf("<%s|%s>", s.Href, s.Text)
 }
 
@@ -98,8 +99,8 @@ func processForSlack(diffs []*gnDiffData, slackURL string) error {
 				if diff.Error == "" {
 					a := diff.Changes[0]
 					attachment := SlackAttachment{
-						Title:          (&slackTypeLink{diff.Title.Text, diff.Title.Href}).String(),
-						Text:           (&slackTypeLink{a.Text, a.Href}).String(),
+						Title:          (&SlackTypeLink{diff.Title.Text, diff.Title.Href}).String(),
+						Text:           (&SlackTypeLink{a.Text, a.Href}).String(),
 						MarkdownFormat: []string{"text"},
 					}
 					attachments = append(attachments, attachment)
@@ -115,7 +116,7 @@ func processForSlack(diffs []*gnDiffData, slackURL string) error {
 			} else {
 				var links []string
 				for _, change := range diff.Changes {
-					links = append(links, (&slackTypeLink{change.Text, change.Href}).String())
+					links = append(links, (&SlackTypeLink{change.Text, change.Href}).String())
 				}
 
 				attachment := SlackAttachment{
@@ -124,13 +125,12 @@ func processForSlack(diffs []*gnDiffData, slackURL string) error {
 					MarkdownFormat: []string{"text"},
 				}
 				attachments = append(attachments, attachment)
-
 			}
 		}
 
 		message := &SlackMessage{
 			Username:    "gitnotify",
-			Text:        fmt.Sprintf("*Changes for %s*:", &slackTypeLink{repo.Repo.Text, repo.Repo.Href}),
+			Text:        fmt.Sprintf("*Changes for %s*:", &SlackTypeLink{repo.Repo.Text, repo.Repo.Href}),
 			Attachments: attachments,
 		}
 

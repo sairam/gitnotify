@@ -8,8 +8,8 @@ import (
 	"github.com/gorilla/sessions"
 )
 
-var store = sessions.NewFilesystemStore("./sessions", []byte(os.Getenv("SESSION_FS_STORE")))
 var sessionName = "_git_notify" // can be seen in the cookies list
+var store = sessions.NewFilesystemStore("./sessions", []byte(os.Getenv("SESSION_FS_STORE")))
 
 const (
 	homePageForNonLoggedIn = "/home"
@@ -27,6 +27,18 @@ var sv = map[string]string{
 	"email":    "email",
 	"user":     "user",
 	"token":    "token",
+}
+
+func init() {
+	// TODO mark session as httpOnly, secure
+	// http://www.gorillatoolkit.org/pkg/sessions#Options
+	store.Options = &sessions.Options{
+		Path:     "/",
+		Domain:   "gitnotify.com", // take from config
+		MaxAge:   86400 * 30,      // 30 days
+		HttpOnly: true,            // to avoid cookie stealing and session is on server side
+		Secure:   true,            // for https
+	}
 }
 
 // returns true if redirected
@@ -54,6 +66,7 @@ func (hc *httpContext) getSession() *sessions.Session {
 		http.Error(hc.w, err.Error(), http.StatusInternalServerError)
 		return nil
 	}
+
 	return session
 }
 
@@ -103,6 +116,8 @@ func (hc *httpContext) setSession(userInfo *Authentication, provider string) {
 	if session == nil {
 		return
 	}
+
+	// TODO use gob for encoding. See example here - http://www.gorillatoolkit.org/pkg/sessions
 
 	session.Values[sv["provider"]] = userInfo.Provider
 	session.Values[sv["name"]] = userInfo.Name

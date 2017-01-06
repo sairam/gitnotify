@@ -113,6 +113,7 @@ type changeDetail struct {
 	Reference int64
 }
 
+// ByInt ..
 type ByInt []*changeDetail
 
 func (a ByInt) Len() int           { return len(a) }
