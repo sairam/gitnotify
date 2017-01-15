@@ -22,7 +22,7 @@ const (
 // InitSession registers and everything related to the user's session
 func InitSession() {
 	gob.Register(&Authentication{})
-	kinli.SessionName = "_git_notify"
+	kinli.SessionName = "_git_notify1"
 	kinli.HomePathNonAuthed = "/home"
 	kinli.HomePathAuthed = "/"
 
