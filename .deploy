@@ -1,1 +1,6 @@
-rsync -avrz gitnotify tmpl websites@bitgeek.in:~/
+echo "building binary"
+#env GOOS=linux GOARCH=amd64 go build -o gitnotifybin
+#binary=$(basename $(pwd))
+binary=gitnotifybin
+echo "syncing to server"
+rsync -avrz --progress $binary tmpl static websites@bitgeek.in:/home/websites/projects/gitnotify/

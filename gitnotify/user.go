@@ -30,8 +30,8 @@ func InitSession() {
 	// TODO mark session as httpOnly, secure
 	// http://www.gorillatoolkit.org/pkg/sessions#Options
 	store.Options = &sessions.Options{
-		Path:     "/",
-		Domain:   config.serverHostWithoutPort(),  // take from config
+		Path: "/",
+		// Domain:   config.serverHostWithoutPort(),  // take from config
 		MaxAge:   86400 * 30,                      // 30 days
 		HttpOnly: true,                            // to avoid cookie stealing and session is on server side
 		Secure:   (config.ServerProto == "https"), // for https

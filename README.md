@@ -87,3 +87,7 @@ I started learning Go (~Sep 2016) and this is my first moderate sized project tr
 * Copy `.env.example` to `.env`
 * Fill in data into `.env`
 * environment variables required to be loaded for the server to run
+
+
+## TODO
+Get an update on demand from slack - http://www.hongkiat.com/blog/custom-slash-command-slack/ 
