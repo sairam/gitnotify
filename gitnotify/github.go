@@ -73,27 +73,6 @@ func (g *localGithub) BranchesWithoutRefs(repoName string) ([]string, error) {
 
 // caches branch response
 func (g *localGithub) Branches(repoName string) ([]*GitRefWithCommit, error) {
-	return g.branchTagInfo(repoName, gitRefBranch)
-}
-
-// caches branch response
-func (g *localGithub) Tags(repoName string) ([]*GitRefWithCommit, error) {
-	return g.branchTagInfo(repoName, gitRefTag)
-}
-
-func (g *localGithub) DefaultBranch(repoName string) (string, error) {
-	ownerRepo := strings.SplitN(repoName, "/", 2)
-	repository, gr, err := g.Client().Repositories.Get(ownerRepo[0], ownerRepo[1])
-
-	if err != nil || gr.StatusCode >= 400 {
-		// gr will be in case of connection interruption
-		// 401 statusCode means the token is no longer valid
-		return "", err
-	}
-	return *repository.DefaultBranch, err
-}
-
-func (g *localGithub) branchTagInfo(repoName, option string) ([]*GitRefWithCommit, error) {
 
 	var list []*githubApp.Branch
 	var gr *githubApp.Response
@@ -104,11 +83,7 @@ func (g *localGithub) branchTagInfo(repoName, option string) ([]*GitRefWithCommi
 	page := 1
 	for page != 0 {
 		opt := &githubApp.ListOptions{Page: page, PerPage: 100}
-		if option == "tags" {
-			list, gr, err = g.Client().Repositories.ListBranches(ownerRepo[0], ownerRepo[1], opt)
-		} else if option == "branches" {
-			list, gr, err = g.Client().Repositories.ListBranches(ownerRepo[0], ownerRepo[1], opt)
-		}
+		list, gr, err = g.Client().Repositories.ListBranches(ownerRepo[0], ownerRepo[1], opt)
 
 		if len(list) == 0 || err != nil || gr.StatusCode >= 400 {
 			page = page + 1
@@ -129,6 +104,54 @@ func (g *localGithub) branchTagInfo(repoName, option string) ([]*GitRefWithCommi
 	}
 
 	return refs, nil
+}
+
+// caches branch response
+// TODO - this is exact duplicate above of except for the list type format
+func (g *localGithub) Tags(repoName string) ([]*GitRefWithCommit, error) {
+	var list []*githubApp.RepositoryTag
+	var gr *githubApp.Response
+	var err error
+
+	refs := make([]*GitRefWithCommit, 0, 100)
+	ownerRepo := strings.SplitN(repoName, "/", 2)
+	page := 1
+	for page != 0 {
+		opt := &githubApp.ListOptions{Page: page, PerPage: 100}
+
+		list, gr, err = g.Client().Repositories.ListTags(ownerRepo[0], ownerRepo[1], opt)
+
+		if len(list) == 0 || err != nil || gr.StatusCode >= 400 {
+			page = page + 1
+			if page >= 100 {
+				break
+			}
+			continue
+		}
+
+		for _, r := range list {
+			ref := &GitRefWithCommit{
+				Name:   *r.Name,
+				Commit: *r.Commit.SHA,
+			}
+			refs = append(refs, ref)
+		}
+		page = gr.NextPage
+	}
+
+	return refs, nil
+}
+
+func (g *localGithub) DefaultBranch(repoName string) (string, error) {
+	ownerRepo := strings.SplitN(repoName, "/", 2)
+	repository, gr, err := g.Client().Repositories.Get(ownerRepo[0], ownerRepo[1])
+
+	if err != nil || gr.StatusCode >= 400 {
+		// gr will be in case of connection interruption
+		// 401 statusCode means the token is no longer valid
+		return "", err
+	}
+	return *repository.DefaultBranch, err
 }
 
 type ghSearchRepo struct {
