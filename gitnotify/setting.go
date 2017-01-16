@@ -84,6 +84,13 @@ func (i *Information) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if infoType.Type == "repo" || infoType.Type == "" {
 		var r RepoInformation
 		unmarshal(&r)
+		// TODO - add test case
+		//   hashicorp/terraform:
+		//     type: repo
+		//    // commits is missing
+		if r.Commits == nil {
+			r.Commits = make(LocalCommitRef)
+		}
 		*i = Information{Repo: r, Type: "repo"}
 	} else if infoType.Type == "org" {
 		var r OrgInformation
