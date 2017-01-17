@@ -29,6 +29,9 @@ func InitView() {
 		"WebhooksList":     WebhooksList,
 		"capitalizeOrNone": capitalizeOrNone,
 	}
+	kinli.ClientConfig = map[string]string{
+		"GoogleAnalytics": config.GoogleAnalytics,
+	}
 	kinli.InitTmpl()
 }
 
