@@ -30,6 +30,29 @@ type searchRepoItem struct {
 // 2. Branch Name
 func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 
+	cacher, setCache := w.(CacheWriterIface)
+	var cacheResponse = config.CacheMode
+	provider := getFirstValue(r.URL.Query(), "provider")
+	repoName := getFirstValue(r.URL.Query(), "repo")
+	if repoName == "" {
+		http.NotFound(w, r)
+		return
+	}
+
+	if provider == GithubProvider {
+	} else if provider == GitlabProvider {
+		cacheResponse = false
+	} else {
+		provider = GithubProvider
+	}
+
+	if cacheResponse && setCache {
+		cacher.SetCachePath("repotypeahead/" + provider + "/" + repoName)
+		if cacher.WriteFromCache() {
+			return
+		}
+	}
+
 	hc := &kinli.HttpContext{W: w, R: r}
 	// Redirect user if not logged in
 	if hc.RedirectUnlessAuthed(loginFlash) {
@@ -37,16 +60,18 @@ func repoTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userInfo := getUserInfo(hc)
-	provider := userInfo.Provider
+	provider = userInfo.Provider
+	if cacheResponse && setCache {
+		cacher.SetCachePath("repotypeahead/" + provider + "/" + repoName)
+	}
 
-	search := getFirstValue(r.URL.Query(), "repo")
-	result, err := getGitTypeAhead(provider, userInfo.Token, search)
+	result, err := getGitTypeAhead(provider, userInfo.Token, repoName)
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
 
-	if !config.CacheMode && provider != GitlabProvider {
+	if cacheResponse {
 		setCacheHeaders(w)
 	}
 
@@ -59,6 +84,28 @@ type typeAheadBranchList struct {
 }
 
 func branchTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
+	cacher, setCache := w.(CacheWriterIface)
+	var cacheResponse = config.CacheMode
+	provider := getFirstValue(r.URL.Query(), "provider")
+	repoName := getFirstValue(r.URL.Query(), "repo")
+	if repoName == "" {
+		http.NotFound(w, r)
+		return
+	}
+
+	if provider == GithubProvider {
+	} else if provider == GitlabProvider {
+		cacheResponse = false
+	} else {
+		provider = GithubProvider
+	}
+
+	if cacheResponse && setCache {
+		cacher.SetCachePath("branchtypeahead/" + provider + "/" + repoName)
+		if cacher.WriteFromCache() {
+			return
+		}
+	}
 
 	hc := &kinli.HttpContext{W: w, R: r}
 	// Redirect user if not logged in
@@ -67,11 +114,11 @@ func branchTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userInfo := getUserInfo(hc)
-	provider := userInfo.Provider
-	repoName := getFirstValue(r.URL.Query(), "repo")
-	if repoName == "" {
-		http.NotFound(w, r)
-		return
+	provider = userInfo.Provider
+	// we are setting again in case provider details in url are different from what was requested
+	// we are okay serving from cache in case they are available with the probably incorrect provider from the request
+	if cacheResponse && setCache {
+		cacher.SetCachePath("branchtypeahead/" + provider + "/" + repoName)
 	}
 
 	tab, err := getGitBranchInfoForRepo(provider, userInfo.Token, repoName)
@@ -80,7 +127,7 @@ func branchTypeAheadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !config.CacheMode && provider != GitlabProvider {
+	if cacheResponse {
 		setCacheHeaders(w)
 	}
 

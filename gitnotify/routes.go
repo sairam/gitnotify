@@ -44,9 +44,9 @@ func InitRouter() {
 	r.HandleFunc("/user", userSettingsShowHandler).Methods("GET")
 	r.HandleFunc("/user", userSettingsSaveHandler).Methods("POST")
 
-	r.HandleFunc("/typeahead/repo", repoTypeAheadHandler).Methods("GET")
-	r.HandleFunc("/typeahead/branch", branchTypeAheadHandler).Methods("GET")
-	r.HandleFunc("/typeahead/tz", timezoneTypeAheadHandler).Methods("GET")
+	r.HandleFunc("/typeahead/repo", newCacheHandler(repoTypeAheadHandler)).Methods("GET")
+	r.HandleFunc("/typeahead/branch", newCacheHandler(branchTypeAheadHandler)).Methods("GET")
+	r.HandleFunc("/typeahead/tz", newCacheHandler(timezoneTypeAheadHandler)).Methods("GET")
 
 	r.HandleFunc("/changes", listAllDiffs).Methods("GET")
 	r.HandleFunc("/changes/", listAllDiffs).Methods("GET")
