@@ -1,11 +1,25 @@
-{{ partial "header" . }}
+{{ partial "head" . }}
 
-<h1>Use <span class="logo">GitNotify</span> to track Open Source projects</h1>
+<div id="header" class="full-width">
+
+<div class="content">
+  <div style="background: white;">
+  <img src='//res.cloudinary.com/sai-ram/image/upload/c_scale,w_100/v1489297210/gitnotify/logos/logo.png' alt="GitNotify">
+  </div>
+<h1>Use <span class="highlight">Git Notify</span> to track <span class="highlight">OPEN SOURCE</span> projects</h1>
+
+<br/><br/>
 <h3>Get Daily Code Diffs from Public Github or your Gitlab Repositories</h3>
-<h4>[ Get notified via Email &amp; Slack ]</h4>
-<hr>
+<br/>
+<p>Notifications (via) Email &amp; Slack</p>
+
+<br/>
+{{ partial "display_button" . }}
+</div>
+</div>
+
 <div style="font-size: 1.4em;">
-<h3>Use Cases</h3>
+<h2>Use Cases</h2>
 <ul class="text-left">
   <li>Track <code>awesome</code> lists to get new diffs every day/every week</li>
   <li>Observe interesting projects like <code>rails</code>, <code>kafka</code>, <code>storm</code> </li>
@@ -16,28 +30,29 @@
 <div class="text-center">
   {{ partial "display_button" . }}
   <hr>
-  <h4><a target="_blank" href="https://chrome.google.com/webstore/detail/gitnotify-for-github/ednpeaemdkcilannlfkbmcjdnjoljhbj"> Get the Chrome Extension to track from Github</a></h4>
-  <a target="_blank" href="https://chrome.google.com/webstore/detail/gitnotify-for-github/ednpeaemdkcilannlfkbmcjdnjoljhbj"><img src="//i.imgur.com/2X6dKpx.png" alt="Install from chrome web store" style="padding: 4px; border: 1px solid #aaa;"></a>
+  
+  <h2>Track Changes in Repositories</h2>
+  <a href="/auth/github"><img src="//res.cloudinary.com/sai-ram/image/upload/q_auto/v1489296322/gitnotify/ui-add-repo.png" class="img-responsive img-thumbnail" alt="Track a repository" title="Track a repository"></a>
 
   <br><br>
-  <div class="">
-    <h3>Track Repositories</h3>
-    <a href="/auth/github">
-    <img src="//i.imgur.com/mYOGdKp.png" class="img-responsive img-thumbnail" alt="Track a repository" title="Track a repository">
-  </a>
-    <h3>Get Emails</h3>
-    <a href="/auth/github">
-    <img src="//i.imgur.com/x0riDRa.png" class="img-responsive img-thumbnail" alt="Get Email with changes" title="Get Email with changes">
-  </a>
-  </div>
+
+  <h2>Track New Repositories from Organisations/Users</h2>
+  <a href="/auth/github"><img src="//res.cloudinary.com/sai-ram/image/upload/v1489302162/gitnotify/ui-track-organisation-or-users.png" class="img-responsive img-thumbnail" alt="Track a repository" title="Track a repository"></a>
+
+  <br><br>
+
+  <h2>Get Emails</h2>
+  <a href="/auth/github"><img src="//res.cloudinary.com/sai-ram/image/upload/v1489298977/gitnotify/email-changes.png" class="img-responsive img-thumbnail" alt="Get Email for changes" title="Get Email with changes"></a>
+
   <br><br>
   {{ partial "display_button" . }}
 
-  <h3>
-  <a target="_blank" href="https://chrome.google.com/webstore/detail/gitnotify-for-github/ednpeaemdkcilannlfkbmcjdnjoljhbj">
-    Get the Chrome Extension to track from Github
-  <img src="//i.imgur.com/HMD0pHx.png" alt="Install from chrome web store" style="padding: 4px; border: 1px solid #aaa;"></a>
-  </h3>
+
+  <h2><a target="_blank" href="https://chrome.google.com/webstore/detail/gitnotify-for-github/ednpeaemdkcilannlfkbmcjdnjoljhbj">Use the Chrome Extension easily add through Github<img src="//res.cloudinary.com/sai-ram/image/upload/c_scale,q_auto,w_100/v1489296272/gitnotify/chrome-store.png" alt="Install from chrome web store" class="img-responsive img-thumbnail"></a></h2>
+
+  <a target="_blank" href="https://chrome.google.com/webstore/detail/gitnotify-for-github/ednpeaemdkcilannlfkbmcjdnjoljhbj"><img src="//res.cloudinary.com/sai-ram/image/upload/q_auto/v1489296355/gitnotify/chrome-ext-screenshot.png" alt="Install from chrome web store" class="img-responsive img-thumbnail"></a>
+  <hr>
+
 
 </div>
 

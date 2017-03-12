@@ -5,7 +5,7 @@
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
 
     <link type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    <link href="//fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Roboto:400,700|Rokkitt:400,700" rel="stylesheet">
     <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css" rel="stylesheet" />
     <link type="image/x-icon" rel="icon" href="/static/favicon.ico">
 
@@ -16,6 +16,30 @@
     body {
       font-family: Roboto, Helvetica, Arial, sans-serif;
       margin: 0px auto;
+    }
+    
+    /* source: https://css-tricks.com/full-width-containers-limited-width-parents/ */
+    .full-width {
+      width: 100vw;
+      position: relative;
+      left: 50%;
+      right: 50%;
+      margin-left: -50vw;
+      margin-right: -50vw;
+    }
+    
+    #header {
+      background: url(//res.cloudinary.com/sai-ram/image/upload/q_auto/v1489296221/gitnotify/git-branches-background.png);
+      height: 80%;
+   }
+    #header > .content {
+      padding-bottom: 2vw;
+      background: black;
+      opacity: 0.8;
+      color: white;
+    }
+    a[href="/auth/github"] img{
+      cursor: cell;
     }
 
     /*typeahead*/
@@ -101,7 +125,11 @@
 
 .twitter-typeahead { width: 100%; }
 
-.logo {
+h1, h2, h3, h4, h5, h6 {
+  font-family: Rokkitt, serif;
+}
+.highlight {
+  font-family: Rokkitt, serif;
   font-variant: small-caps;
   letter-spacing: 1px;
   text-decoration: underline;
@@ -122,27 +150,3 @@
   <body>
     <div class="row text-center">
       <div class="col-xs-12 col-sm-12 col-md-offset-3 col-md-6 col-lg-offset-3 col-lg-6">
-        <div class="row">
-          <div class="col-md-2">
-            <h3 class="logo"><a href="/">GitNotify</a></h3>
-          </div>
-          <div class="col-md-8"><h2 class="text-center">{{.Title}}</h2></div>
-          <div class="col-md-2">
-            {{ if eq .User.UserName "" }}
-            <br>
-            <a href="/faq">Frequently Asked Questions</a>
-            {{ else }}
-            <br>
-            <a href="/faq">FAQ</a> | <a class="btn btn-danger" href="/logout">Logout</a>
-            @{{.User.UserName}}({{.User.Provider}})</strong> &nbsp;&nbsp;</span>
-            {{ end }}
-          </div>
-        </div>
-
-        {{ if eq .User.UserName "" }}
-          <div class="alert alert-warning" role="alert"><a href="/auth/github">Kindly login using Github to use the service</a> <a href="/auth/gitlab">Gitlab</a> (or) <a href="https://github.com/sairam/gitnotify/" target="_blank">Checkout the source code</a></div>
-        {{ end }}
-
-        {{ range $x := .Flashes }}
-        <div class="alert alert-info" role="alert">{{ $x | safeHTML }}</div>
-        {{ end }}

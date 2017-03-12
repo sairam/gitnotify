@@ -1,0 +1,25 @@
+{{ partial "head" . }}
+<div class="row">
+  <div class="col-md-2">
+    <h3 class="logo"><a href="/"><img src='//res.cloudinary.com/sai-ram/image/upload/c_scale,w_100/v1489297210/gitnotify/logos/logo.png' alt="GitNotify"></a></h3>
+  </div>
+  <div class="col-md-8"><h2 class="text-center">{{.Title}}</h2></div>
+  <div class="col-md-2 pull-right">
+    {{ if eq .User.UserName "" }}
+    <br>
+    <a href="/faq">Frequently Asked Questions</a>
+    {{ else }}
+    <br>
+    <a href="/faq">FAQ</a> | <a class="btn btn-danger" href="/logout">Logout</a>
+    @{{.User.UserName}}({{.User.Provider}})</strong> &nbsp;&nbsp;</span>
+    {{ end }}
+  </div>
+</div>
+
+{{ if eq .User.UserName "" }}
+  <div class="alert alert-warning" role="alert"><a href="/auth/github">Kindly login using Github to use the service</a> <a href="/auth/gitlab">Gitlab</a> (or) <a href="https://github.com/sairam/gitnotify/" target="_blank">Checkout the source code</a></div>
+{{ end }}
+
+{{ range $x := .Flashes }}
+<div class="alert alert-info" role="alert">{{ $x | safeHTML }}</div>
+{{ end }}
