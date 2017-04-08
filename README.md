@@ -24,9 +24,9 @@ go get -u github.com/spf13/cast
 ```
 
 ### Modify package
-* `gopkg.in/robfig/cron.v2`
-* Edit line 102
-* Replace `t = t.Truncate(time.Hour)` with `t = time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), 0, 0, 0, s.Location)`
+* This patch is required for only +0530 like offets, works fine for +0800 like offsets.
+* Go to source of the package - `gopkg.in/robfig/cron.v2`
+* Apply this patch with `curl https://gist.githubusercontent.com/sairam/99f463f177394f2111bae1128d0edb75/raw/2b9949944de1aa00b7ec9194ab3077779e431a92/cron.v2.patch | patch -p1`
 
 ### How to build for Linux
 * `env GOOS=linux GOARCH=amd64 go build`
