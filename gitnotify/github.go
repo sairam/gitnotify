@@ -1,6 +1,7 @@
 package gitnotify
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -83,7 +84,7 @@ func (g *localGithub) Branches(repoName string) ([]*GitRefWithCommit, error) {
 	page := 1
 	for page != 0 {
 		opt := &githubApp.ListOptions{Page: page, PerPage: 100}
-		list, gr, err = g.Client().Repositories.ListBranches(ownerRepo[0], ownerRepo[1], opt)
+		list, gr, err = g.Client().Repositories.ListBranches(context.TODO(), ownerRepo[0], ownerRepo[1], opt)
 
 		if len(list) == 0 || err != nil || gr.StatusCode >= 400 {
 			page = page + 1
@@ -119,7 +120,7 @@ func (g *localGithub) Tags(repoName string) ([]*GitRefWithCommit, error) {
 	for page != 0 {
 		opt := &githubApp.ListOptions{Page: page, PerPage: 100}
 
-		list, gr, err = g.Client().Repositories.ListTags(ownerRepo[0], ownerRepo[1], opt)
+		list, gr, err = g.Client().Repositories.ListTags(context.TODO(), ownerRepo[0], ownerRepo[1], opt)
 
 		if len(list) == 0 || err != nil || gr.StatusCode >= 400 {
 			page = page + 1
@@ -144,7 +145,7 @@ func (g *localGithub) Tags(repoName string) ([]*GitRefWithCommit, error) {
 
 func (g *localGithub) DefaultBranch(repoName string) (string, error) {
 	ownerRepo := strings.SplitN(repoName, "/", 2)
-	repository, gr, err := g.Client().Repositories.Get(ownerRepo[0], ownerRepo[1])
+	repository, gr, err := g.Client().Repositories.Get(context.TODO(), ownerRepo[0], ownerRepo[1])
 
 	if err != nil || gr.StatusCode >= 400 {
 		// gr will be in case of connection interruption
@@ -165,7 +166,7 @@ func (g *localGithub) SearchRepos(query string) ([]*searchRepoItem, error) {
 	searchRepositoryURL := fmt.Sprintf("%ssearch/repositories?page=%d&q=%s", config.GithubAPIEndPoint, 1, query)
 	req, _ := http.NewRequest("GET", searchRepositoryURL, nil)
 	result := new(githubApp.RepositoriesSearchResult)
-	gr, err := g.Client().Do(req, result)
+	gr, err := g.Client().Do(context.TODO(), req, result)
 	if gr.StatusCode >= 400 {
 		return nil, errors.New("status code > 400")
 	}
@@ -209,7 +210,7 @@ func (g *localGithub) cleanRepoName(search string) string {
 }
 
 func (g *localGithub) SearchUsers(query string) ([]*searchUserItem, error) {
-	result, gr, err := g.Client().Search.Users(query, nil)
+	result, gr, err := g.Client().Search.Users(context.TODO(), query, nil)
 
 	if err != nil || gr.StatusCode >= 400 {
 		return []*searchUserItem{}, err
@@ -228,7 +229,7 @@ func (g *localGithub) SearchUsers(query string) ([]*searchUserItem, error) {
 }
 
 func (g *localGithub) RemoteOrgType(name string) (string, error) {
-	user, gr, err := g.Client().Users.Get(name)
+	user, gr, err := g.Client().Users.Get(context.TODO(), name)
 
 	if err != nil || gr.StatusCode >= 400 {
 		return "", err
@@ -242,7 +243,7 @@ func (g *localGithub) ReposForUser(organisation string) ([]*searchRepoItem, erro
 	page := 1
 	for page != 0 {
 		opt := &githubApp.RepositoryListOptions{Sort: "created", ListOptions: githubApp.ListOptions{Page: page, PerPage: 100}}
-		repositories, gr, err := g.Client().Repositories.List(organisation, opt)
+		repositories, gr, err := g.Client().Repositories.List(context.TODO(), organisation, opt)
 		if err != nil || gr.StatusCode >= 400 {
 			page = page + 1
 			if page >= 100 {

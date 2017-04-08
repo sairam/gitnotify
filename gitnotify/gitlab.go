@@ -80,7 +80,8 @@ func (g *localGitlab) Tags(repoID string) ([]*GitRefWithCommit, error) {
 }
 
 func (g *localGitlab) Branches(repoID string) ([]*GitRefWithCommit, error) {
-	listBranches, _, err := g.Client().Branches.ListBranches(repoID)
+
+	listBranches, _, err := g.Client().Branches.ListBranches(repoID, g.firstPageOpts())
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +97,7 @@ func (g *localGitlab) Branches(repoID string) ([]*GitRefWithCommit, error) {
 }
 
 func (g *localGitlab) BranchesWithoutRefs(repoID string) ([]string, error) {
-	listBranches, _, err := g.Client().Branches.ListBranches(repoID)
+	listBranches, _, err := g.Client().Branches.ListBranches(repoID, g.firstPageOpts())
 	if err != nil {
 		return nil, err
 	}
@@ -139,4 +140,14 @@ func (g *localGitlab) RemoteOrgType(_ string) (string, error) {
 
 func (g *localGitlab) ReposForUser(_ string) ([]*searchRepoItem, error) {
 	return []*searchRepoItem{}, &providerNotPresent{GitlabProvider}
+}
+
+func (g *localGitlab) firstPageOpts() *gitlabApp.ListBranchesOptions {
+	return &gitlabApp.ListBranchesOptions{
+		ListOptions: gitlabApp.ListOptions{
+			Page:    1,
+			PerPage: 10,
+		},
+	}
+
 }
