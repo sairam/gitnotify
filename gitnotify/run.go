@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/aryann/difflib"
 	"github.com/sairam/kinli"
@@ -80,6 +81,7 @@ func (e *gitRefList) String() string {
 }
 
 func forceRunHandler(w http.ResponseWriter, r *http.Request) {
+	statCount("route.run")
 	// Redirect user if not logged in
 	hc := &kinli.HttpContext{W: w, R: r}
 	if hc.RedirectUnlessAuthed(loginFlash) {
@@ -299,6 +301,7 @@ func processDiffForUser(conf *Setting) {
 		log.Printf("Not processing conf %s/%s since no valid notification mechanisms are found", conf.Auth.Provider, conf.Auth.UserName)
 		return
 	}
+	start := time.Now()
 
 	orgDiffs, err := processOrgDiffs(conf)
 
@@ -319,6 +322,8 @@ func processDiffForUser(conf *Setting) {
 	if err != nil {
 		fileName = ""
 	}
+
+	statValue("cron.diff", time.Since(start).Nanoseconds()/1000)
 
 	if eligible := diffs.hasChanges(); !eligible {
 		log.Printf("No changes. Skipping Notifications")

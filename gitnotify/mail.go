@@ -37,6 +37,7 @@ func InitMail() {
 }
 
 func processForMail(diff gnDiffDatum, conf *Setting, fileName string) error {
+	statCount("notify.mail")
 	if config.isEmailSetup() == false || !isValidEmail(conf.usersEmail()) {
 		return nil
 	}

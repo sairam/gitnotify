@@ -164,6 +164,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request, formAction string) 
 }
 
 func actOnOrgs(hc *kinli.HttpContext, formAction string, r *http.Request, conf *Setting) {
+	statCount("settings.org." + formAction)
 	configFile := conf.Auth.getConfigFile()
 
 	switch formAction {
@@ -232,6 +233,7 @@ func actOnOrgs(hc *kinli.HttpContext, formAction string, r *http.Request, conf *
 }
 
 func actOnRepos(hc *kinli.HttpContext, formAction string, r *http.Request, conf *Setting) {
+	statCount("settings.repo." + formAction)
 	configFile := conf.Auth.getConfigFile()
 
 	switch formAction {

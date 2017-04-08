@@ -21,6 +21,7 @@ const (
 
 // InitSession registers and everything related to the user's session
 func InitSession() {
+	statCount("users.init_session")
 	gob.Register(&Authentication{})
 	kinli.SessionName = "_git_notify1"
 	kinli.HomePathNonAuthed = "/home"

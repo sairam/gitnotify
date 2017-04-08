@@ -53,6 +53,7 @@ func InitRouter() {
 	r.HandleFunc("/changes/{diffentry}", renderThisDiff).Methods("GET")
 
 	r.HandleFunc("/logout", func(res http.ResponseWriter, req *http.Request) {
+		statCount("route.logout")
 		hc := &kinli.HttpContext{W: res, R: req}
 		hc.ClearSession()
 
@@ -60,6 +61,7 @@ func InitRouter() {
 	}).Methods("GET")
 
 	r.HandleFunc("/home", func(res http.ResponseWriter, req *http.Request) {
+		statCount("route.home")
 		hc := &kinli.HttpContext{W: res, R: req}
 		page := kinli.NewPage(hc, "Get Daily Code Diffs from public Repositories", getUserInfo(hc), nil, nil)
 		// TODO send page description as "Get Daily Code Diffs from Open Source Repositories"
@@ -67,6 +69,7 @@ func InitRouter() {
 	}).Methods("GET")
 
 	r.HandleFunc("/faq", func(res http.ResponseWriter, req *http.Request) {
+		statCount("route.faq")
 		hc := &kinli.HttpContext{W: res, R: req}
 		page := kinli.NewPage(hc, "Frequently Asked Questions", getUserInfo(hc), nil, nil)
 		kinli.DisplayPage(res, "faq", page)
@@ -109,6 +112,7 @@ func InitRouter() {
 
 	kinli.IsAuthed = isAuthed
 
+	statCount("app_restarted")
 	log.Fatal(srv.ListenAndServe())
 }
 

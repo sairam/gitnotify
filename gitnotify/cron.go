@@ -128,12 +128,14 @@ type cronJob struct {
 func (t cronJob) Run() {
 	filename := t.filename
 	conf := new(Setting)
+	statCount("cron.run")
 	log.Printf("Processing file through cron - %s", filename)
 	conf.load(filename)
 	processDiffForUser(conf)
 	if t.save {
 		conf.save(filename)
 	}
+	statCount("cron.ran")
 }
 
 func startCronFor(cronEntry, filename string) {

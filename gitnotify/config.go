@@ -29,7 +29,9 @@ type AppConfig struct {
 	SMTPPass            string   // environment variable
 	CacheMode           bool     `yaml:"cacheMode"` // when cacheMode is false, views are loaded on every request
 	WebhookIntegrations []string `yaml:"webhookIntegrations"`
-	SentryURL           string   `yaml:"sentryDSN"`
+	StatHatKey          string   `yaml:"stathatKey"`
+	StatHatEnvironment  string   `yaml:"stathatEnvironment"` // Environment string is used to track Stats in StatHatKey
+	// SentryURL           string   `yaml:"sentryDSN"`
 
 	TemplateDir         string `yaml:"templateDir"`         // tmpl/
 	TemplatePartialsDir string `yaml:"templatePartialsDir"` // tmpl/partials/
@@ -54,6 +56,13 @@ func (c *AppConfig) websiteURL() string {
 
 func (c *AppConfig) isEmailSetup() bool {
 	return c.SMTPHost != ""
+}
+
+func (c *AppConfig) getStatHatPrefix() string {
+	if c.StatHatEnvironment != "" {
+		return c.StatHatEnvironment + "."
+	}
+	return "default."
 }
 
 var config = new(AppConfig)

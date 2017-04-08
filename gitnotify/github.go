@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"time"
 
 	githubApp "github.com/google/go-github/github"
 	"golang.org/x/oauth2"
@@ -60,6 +61,7 @@ func newGithubClient(token string) *localGithub {
 }
 
 func (g *localGithub) BranchesWithoutRefs(repoName string) ([]string, error) {
+	statCount("github.branches_without_refs")
 	listBranches, err := g.Branches(repoName)
 	if err != nil {
 		return nil, err
@@ -74,7 +76,7 @@ func (g *localGithub) BranchesWithoutRefs(repoName string) ([]string, error) {
 
 // caches branch response
 func (g *localGithub) Branches(repoName string) ([]*GitRefWithCommit, error) {
-
+	statCount("github.branches")
 	var list []*githubApp.Branch
 	var gr *githubApp.Response
 	var err error
@@ -84,7 +86,10 @@ func (g *localGithub) Branches(repoName string) ([]*GitRefWithCommit, error) {
 	page := 1
 	for page != 0 {
 		opt := &githubApp.ListOptions{Page: page, PerPage: 100}
+		start := time.Now()
 		list, gr, err = g.Client().Repositories.ListBranches(context.TODO(), ownerRepo[0], ownerRepo[1], opt)
+		statValue("github.api_time", time.Since(start).Nanoseconds()/1000)
+		statCount("github.api_call")
 
 		if len(list) == 0 || err != nil || gr.StatusCode >= 400 {
 			page = page + 1
@@ -110,6 +115,7 @@ func (g *localGithub) Branches(repoName string) ([]*GitRefWithCommit, error) {
 // caches branch response
 // TODO - this is exact duplicate above of except for the list type format
 func (g *localGithub) Tags(repoName string) ([]*GitRefWithCommit, error) {
+	statCount("github.tags")
 	var list []*githubApp.RepositoryTag
 	var gr *githubApp.Response
 	var err error
@@ -120,7 +126,10 @@ func (g *localGithub) Tags(repoName string) ([]*GitRefWithCommit, error) {
 	for page != 0 {
 		opt := &githubApp.ListOptions{Page: page, PerPage: 100}
 
+		start := time.Now()
 		list, gr, err = g.Client().Repositories.ListTags(context.TODO(), ownerRepo[0], ownerRepo[1], opt)
+		statValue("github.api_time", time.Since(start).Nanoseconds()/1000)
+		statCount("github.api_call")
 
 		if len(list) == 0 || err != nil || gr.StatusCode >= 400 {
 			page = page + 1
@@ -144,8 +153,12 @@ func (g *localGithub) Tags(repoName string) ([]*GitRefWithCommit, error) {
 }
 
 func (g *localGithub) DefaultBranch(repoName string) (string, error) {
+	statCount("github.default_branch")
 	ownerRepo := strings.SplitN(repoName, "/", 2)
+	start := time.Now()
 	repository, gr, err := g.Client().Repositories.Get(context.TODO(), ownerRepo[0], ownerRepo[1])
+	statValue("github.api_time", time.Since(start).Nanoseconds()/1000)
+	statCount("github.api_call")
 
 	if err != nil || gr.StatusCode >= 400 {
 		// gr will be in case of connection interruption
@@ -162,11 +175,15 @@ type ghSearchRepo struct {
 // NOTE: the official repo does not support complex queries
 // It only supports simple queries. Github API expects data to be in "abc+code:go"
 func (g *localGithub) SearchRepos(query string) ([]*searchRepoItem, error) {
+	statCount("github.search_repos")
 	query = g.cleanRepoName(query)
 	searchRepositoryURL := fmt.Sprintf("%ssearch/repositories?page=%d&q=%s", config.GithubAPIEndPoint, 1, query)
 	req, _ := http.NewRequest("GET", searchRepositoryURL, nil)
 	result := new(githubApp.RepositoriesSearchResult)
+	start := time.Now()
 	gr, err := g.Client().Do(context.TODO(), req, result)
+	statValue("github.api_time", time.Since(start).Nanoseconds()/1000)
+	statCount("github.api_call")
 	if gr.StatusCode >= 400 {
 		return nil, errors.New("status code > 400")
 	}
@@ -210,7 +227,11 @@ func (g *localGithub) cleanRepoName(search string) string {
 }
 
 func (g *localGithub) SearchUsers(query string) ([]*searchUserItem, error) {
+	statCount("github.search_users")
+	start := time.Now()
 	result, gr, err := g.Client().Search.Users(context.TODO(), query, nil)
+	statValue("github.api_time", time.Since(start).Nanoseconds()/1000)
+	statCount("github.api_call")
 
 	if err != nil || gr.StatusCode >= 400 {
 		return []*searchUserItem{}, err
@@ -229,7 +250,11 @@ func (g *localGithub) SearchUsers(query string) ([]*searchUserItem, error) {
 }
 
 func (g *localGithub) RemoteOrgType(name string) (string, error) {
+	statCount("github.remote_org_type")
+	start := time.Now()
 	user, gr, err := g.Client().Users.Get(context.TODO(), name)
+	statValue("github.api_time", time.Since(start).Nanoseconds()/1000)
+	statCount("github.api_call")
 
 	if err != nil || gr.StatusCode >= 400 {
 		return "", err
@@ -239,11 +264,15 @@ func (g *localGithub) RemoteOrgType(name string) (string, error) {
 }
 
 func (g *localGithub) ReposForUser(organisation string) ([]*searchRepoItem, error) {
+	statCount("github.repos_for_user")
 	var repoList []*searchRepoItem
 	page := 1
 	for page != 0 {
 		opt := &githubApp.RepositoryListOptions{Sort: "created", ListOptions: githubApp.ListOptions{Page: page, PerPage: 100}}
+		start := time.Now()
 		repositories, gr, err := g.Client().Repositories.List(context.TODO(), organisation, opt)
+		statValue("github.api_time", time.Since(start).Nanoseconds()/1000)
+		statCount("github.api_call")
 		if err != nil || gr.StatusCode >= 400 {
 			page = page + 1
 			if page >= 100 {

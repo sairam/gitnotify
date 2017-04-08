@@ -128,11 +128,13 @@ func authProviderHandler(res http.ResponseWriter, req *http.Request) {
 		text := "User is already logged in"
 		kinli.DisplayText(hc, res, text)
 	} else {
+		statCount("auth.start")
 		gothic.BeginAuthHandler(res, req)
 	}
 }
 
 func authProviderCallbackHandler(res http.ResponseWriter, req *http.Request) {
+	statCount("auth.complete")
 	user, err := gothic.CompleteUserAuth(res, req)
 	if err != nil {
 		fmt.Fprintln(res, err)

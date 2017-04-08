@@ -19,6 +19,7 @@ type UserPage struct {
 }
 
 func userSettingsShowHandler(w http.ResponseWriter, r *http.Request) {
+	statCount("route.settings_show")
 
 	hc := &kinli.HttpContext{W: w, R: r}
 	// Redirect user if not logged in
@@ -53,6 +54,8 @@ func userSettingsShowHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func userSettingsSaveHandler(w http.ResponseWriter, r *http.Request) {
+	statCount("route.settings_save")
+
 	// Redirect user if not logged in
 	hc := &kinli.HttpContext{W: w, R: r}
 	// Redirect user if not logged in

@@ -96,6 +96,7 @@ const cacheBucket = "gitnotify-caches"
 
 // retrieveFromCache removes the item if its after expiry
 func retrieveFromCache(cachePath string) (string, bool) {
+	statCount("cache.retrieve.request")
 	db, err := bolt.Open("cacher.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
 	defer db.Close()
 
@@ -109,6 +110,7 @@ func retrieveFromCache(cachePath string) (string, bool) {
 		return "", false
 	}
 	if cacheTill > time.Now().Unix() {
+		statCount("cache.retrieve.success")
 		return string(b.Get([]byte(cachePath))), true
 	}
 	b.Delete([]byte(cachePath + "__"))
@@ -117,10 +119,12 @@ func retrieveFromCache(cachePath string) (string, bool) {
 	if err = tx.Commit(); err != nil {
 		return "", false
 	}
+	statCount("cache.retrieve.expired")
 	return "", false
 }
 
 func addToCache(cachePath string, data string) {
+	statCount("cache.add")
 	cacheTill := (time.Now().Add(time.Hour)).Unix()
 	db, err := bolt.Open("cacher.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
 	defer db.Close()

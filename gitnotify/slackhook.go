@@ -50,6 +50,7 @@ func (s *SlackTypeLink) String() string {
 
 func processForWebhook(diff gnDiffDatum, conf *Setting) error {
 	if conf.User.isValidWebhook() {
+		statCount("notify.webhook")
 		if conf.User.WebhookType == "slack" {
 			log.Print("POSTing on a Slack Hook")
 			return processForSlack(diff, conf.User.WebhookURL)
