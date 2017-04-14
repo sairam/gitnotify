@@ -23,14 +23,18 @@ var (
 )
 
 func isCronPresentFor(filename string) bool {
+	cronLocker.Lock()
 	id := runningCrons[filename]
+	cronLocker.Unlock()
 	entry := crons.Entry(id)
 	return entry.Valid()
 }
 
 func checkCronEntries(filename string) (nextRunTimes []string) {
 	nextRunTimes = make([]string, 0, 15)
+	cronLocker.Lock()
 	id := runningCrons[filename]
+	cronLocker.Unlock()
 	entry := crons.Entry(id)
 	if !entry.Valid() {
 		return
@@ -84,6 +88,7 @@ func upsertCronEntry(s *Setting) {
 	toStart := true
 
 	id := runningCrons[filename]
+
 	if id != 0 {
 		// check if entry was not modified
 		var entry cron.Entry
