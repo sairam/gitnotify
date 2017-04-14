@@ -7,9 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"gopkg.in/robfig/cron.v2"
-	// "github.com/robfig/cron"
-	// cron "github.com/sairam/cron1"
+	"gopkg.in/sairam/cron.v2"
 )
 
 // 1. load all files to get cron schedules, next_scheduled_date

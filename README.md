@@ -13,7 +13,7 @@ Get periodic emails about the code diff for Gitlab and Github repositories
 ```bash
 go get -u golang.org/x/oauth2
 go get -u gopkg.in/gomail.v2
-go get -u gopkg.in/robfig/cron.v2 # requires modification to file aka bugfix
+go get -u gopkg.in/sairam/cron.v2
 go get -u gopkg.in/yaml.v2
 go get -u github.com/google/go-github/github
 go get -u github.com/gorilla/mux
@@ -22,11 +22,6 @@ go get -u github.com/markbates/goth
 go get -u github.com/sairam/timezone
 go get -u github.com/spf13/cast
 ```
-
-### Modify package
-* This patch is required for only +0530 like offets, works fine for +0800 like offsets.
-* Go to source of the package - `gopkg.in/robfig/cron.v2`
-* Apply this patch with `curl https://gist.githubusercontent.com/sairam/99f463f177394f2111bae1128d0edb75/raw/2b9949944de1aa00b7ec9194ab3077779e431a92/cron.v2.patch | patch -p1`
 
 ### How to build for Linux
 * `env GOOS=linux GOARCH=amd64 go build`
