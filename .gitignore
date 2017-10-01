@@ -3,3 +3,4 @@ data/
 sessions/
 config.prod.yml
 *.db
+vendor/

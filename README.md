@@ -9,18 +9,22 @@
 Get periodic emails about the code diff for Gitlab and Github repositories
 
 ## How to Setup
-### Fetch Dependencies
-```bash
-go get -u golang.org/x/oauth2
-go get -u gopkg.in/gomail.v2
-go get -u gopkg.in/sairam/cron.v2
-go get -u gopkg.in/yaml.v2
-go get -u github.com/google/go-github/github
-go get -u github.com/gorilla/mux
-go get -u github.com/gorilla/sessions
-go get -u github.com/markbates/goth
-go get -u github.com/sairam/timezone
-go get -u github.com/spf13/cast
+Install `dep` and run `dep ensure` to fetch to local vendor/ directory
+
+List of dependencies used -
+```
+Authorization via Github/Gitlab - golang.org/x/oauth2
+Authentication - github.com/markbates/goth
+Request Router - github.com/gorilla/mux
+Sessions - github.com/gorilla/sessions
+Sending Emails - gopkg.in/gomail.v2
+Cron - gopkg.in/sairam/cron.v2
+Yaml Parser - gopkg.in/yaml.v2
+Github API - github.com/google/go-github/github
+Gitlab API - github.com/xanzy/go-gitlab
+Convert between different Go Types - github.com/spf13/cast
+TimeZone List - github.com/sairam/timezone
+Finding Differences - github.com/aryann/difflib
 ```
 
 ### How to build for Linux
